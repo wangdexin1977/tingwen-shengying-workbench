@@ -178,11 +178,20 @@ function createPublishButton(jobId,filename){
   const button=document.createElement('button');button.textContent='发布到今日头条';button.className='publish-button';
   button.onclick=()=>prepareToutiao(jobId,filename,button);return button;
 }
+let toutiaoPoll=null;
+function showToutiaoStatus(result){
+  $('publishStatus').textContent=result.message;
+  $('publishPath').textContent='视频位置：'+result.path;
+  $('copyPublishPath').onclick=async()=>{try{await navigator.clipboard.writeText(result.path);$('publishStatus').textContent='视频完整路径已复制，可在选择文件窗口按 Command+Shift+G 粘贴。';}catch{ $('publishStatus').textContent='无法自动复制，请选中下方完整路径复制。';}};
+  $('revealPublishVideo').onclick=()=>api('/api/videos/'+result.path.split('/').slice(-2)[0]+'/reveal',{filename:result.filename}).catch(error=>$('publishStatus').textContent=error.message);
+}
 async function prepareToutiao(jobId,filename,button){
   button.disabled=true;
   try{const result=await api('/api/videos/'+jobId+'/publish-toutiao',{filename});
-    $('publishPanel').hidden=false;$('publishStatus').textContent=result.message;$('publishTitle').value=result.title;$('publishPath').textContent='视频位置：'+result.path;
+    $('publishPanel').hidden=false;$('publishTitle').value=result.title;showToutiaoStatus(result);
     $('publishPanel').scrollIntoView({behavior:'smooth',block:'start'});
+    clearInterval(toutiaoPoll);
+    toutiaoPoll=setInterval(async()=>{try{const current=await api('/api/toutiao-publish/'+result.id);showToutiaoStatus(current);if(!['starting','waiting_login','waiting_input','uploading'].includes(current.state))clearInterval(toutiaoPoll);}catch(error){clearInterval(toutiaoPoll);$('publishStatus').textContent=error.message;}},2000);
   }catch(error){showError(error.message);}finally{button.disabled=false;}
 }
 const originalRender=render;

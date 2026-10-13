@@ -13,7 +13,8 @@ ROOT = Path(__file__).resolve().parent
 TTS = ROOT / 'tts'
 EXPERT_PORT = 7862
 EXPERT_LOCK = threading.Lock()
-TOUTIAO_VIDEO_URL = 'https://mp.toutiao.com/profile_v4/xigua/upload-video'
+import toutiao_publish
+TOUTIAO_VIDEO_URL = toutiao_publish.URL
 
 
 def expert_product_paths():
@@ -167,8 +168,15 @@ def install(workbench):
         data = request.get_json() or {}
         path = workbench.archive_video_path(job_id, str(data.get('filename', '')))
         job = workbench.read_job(job_id)
-        subprocess.Popen(['open', '-R', str(path)])
-        subprocess.Popen(['open', TOUTIAO_VIDEO_URL])
-        return jsonify(url=TOUTIAO_VIDEO_URL, path=str(path),
-                       title=job.get('title') or path.stem,
-                       message='已打开今日头条视频发布入口，并在 Finder 中选中 MP4。选择或拖入视频，填写标题与简介后，在今日头条确认发布。首次使用需登录。')
+        try:
+            result = toutiao_publish.start(path.resolve(), job.get('text', '')[:30] or path.stem[:30])
+        except RuntimeError as exc:
+            abort(409, str(exc))
+        return jsonify(result), 202
+
+    @app.get('/api/toutiao-publish/<identifier>')
+    def toutiao_publish_status(identifier):
+        try:
+            return jsonify(toutiao_publish.status(identifier))
+        except (OSError, ValueError):
+            abort(404)

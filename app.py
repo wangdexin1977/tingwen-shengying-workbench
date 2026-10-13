@@ -578,8 +578,8 @@ def add_local_voice():
     suffix = Path(str(data.get('filename', ''))).suffix.lower()
     if not name or len(name) > 100:
         abort(400, '请填写 1–100 字的音色名称')
-    if suffix not in {'.wav', '.mp3', '.m4a', '.flac', '.aiff', '.ogg'}:
-        abort(400, '请选择 WAV、MP3、M4A、FLAC、AIFF 或 OGG 音频')
+    if suffix not in {'.wav', '.mp3', '.m4a', '.flac', '.aiff', '.ogg', '.webm'}:
+        abort(400, '请选择 WAV、MP3、M4A、FLAC、AIFF、OGG 或 WebM 音频')
     if not omnivoice_local.capabilities()['available']:
         abort(400, '本机 OmniVoice 尚未就绪')
     try: raw = base64.b64decode(data.get('audio_data', ''), validate=True)
@@ -591,6 +591,17 @@ def add_local_voice():
     try:
         with tempfile.TemporaryDirectory(prefix='tingwen-voice-') as temporary:
             directory = Path(temporary); source = directory / ('reference' + suffix); source.write_bytes(raw)
+            if suffix == '.webm':
+                converted = directory / 'reference.wav'
+                binary = '/opt/homebrew/bin/ffmpeg' if Path('/opt/homebrew/bin/ffmpeg').exists() else 'ffmpeg'
+                try:
+                    subprocess.run([binary, '-v', 'error', '-xerror', '-y', '-protocol_whitelist', 'file,pipe',
+                                    '-i', str(source), '-map', '0:a:0', '-vn', '-map_metadata', '-1',
+                                    '-c:a', 'pcm_s16le', '-ar', '24000', '-ac', '1', str(converted)],
+                                   check=True, timeout=60, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except (OSError, subprocess.SubprocessError):
+                    abort(400, '录音无法解码，请重新录音或上传 WAV / MP3 音频')
+                source = converted
             try: result = omnivoice_local.run({'operation': 'import', 'file': str(source), 'name': name, 'reference_text': transcript}, directory)
             except (RuntimeError, OSError) as exc: abort(400, str(exc))
     finally:

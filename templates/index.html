@@ -63,11 +63,14 @@
         <small>平静、高兴等为近似表达预设；耳语是原生样式。试听播放参考音频，最终声音以合成为准。</small>
         <div class="subtitle-controls"><div><label for="speechSpeed">语速 <output id="speechSpeedValue">1.00×</output></label><input id="speechSpeed" type="range" min="0.5" max="2" step="0.05" value="1"></div><div><label for="speechSilence">分段停顿（毫秒）</label><input id="speechSilence" type="number" min="0" max="2000" step="50" value="250"></div></div>
         <details id="speechAdvanced"><summary>高级语音参数 · 按模型分别保存</summary><div class="subtitle-controls"><div><label for="speechSeed">随机种子</label><input id="speechSeed" type="number" min="0" max="2147483647" value="42"></div><div><label for="speechTokens">分段长度（文本 token）</label><input id="speechTokens" type="number" min="30" max="300" value="120"></div><div data-index-param><label for="speechTemperature">采样温度</label><input id="speechTemperature" type="number" min="0.1" max="2" step="0.1" value="0.8"></div><div data-omni-param><label for="speechSteps">OmniVoice 推理步数</label><input id="speechSteps" type="number" min="4" max="100" value="32"></div><div data-omni-param><label for="speechGuidance">OmniVoice 引导强度</label><input id="speechGuidance" type="number" min="0" max="10" step="0.1" value="2"></div></div><small>其余模型专用参数、自动/设计音色、多音色和实时播放均在“专业朗读 · 完整功能”中。</small></details>
-        <details id="addOmniVoicePanel"><summary>添加自己的音色</summary>
+        <details id="addOmniVoicePanel"><summary>录音 / 上传自己的音色 · 命名并保存</summary>
           <label for="omniVoiceName">音色名称</label><input id="omniVoiceName" maxlength="100" placeholder="例如：我的新闻口播音色">
-          <label for="omniVoiceFile">参考音频（WAV / MP3 / M4A / FLAC / AIFF / OGG）</label><input id="omniVoiceFile" type="file" accept=".wav,.mp3,.m4a,.flac,.aiff,.ogg,audio/*">
+          <div class="row links"><button id="startVoiceRecording">🎙 开始录音</button><button id="stopVoiceRecording" hidden>停止录音</button><button id="uploadVoiceRecording">上传已有录音</button><button id="discardVoiceRecording" hidden>重新选择 / 清除录音</button></div>
+          <p id="voiceRecordingStatus" role="status">可直接使用麦克风录音，或上传已有音频；录完先试听，再命名保存。</p>
+          <audio id="voiceRecordingPreview" controls preload="metadata" hidden></audio><a id="downloadVoiceRecording" class="button" hidden>下载本次录音</a>
+          <label for="omniVoiceFile">参考音频（WAV / MP3 / M4A / FLAC / AIFF / OGG / WebM）</label><input id="omniVoiceFile" type="file" accept=".wav,.mp3,.m4a,.flac,.aiff,.ogg,.webm,audio/*">
           <label for="omniReferenceText">参考音频中实际说出的文案（选填，准确填写有助于还原音色）</label><textarea id="omniReferenceText" placeholder="请填写与音频一致的内容。"></textarea>
-          <button id="addOmniVoice" class="links">保存到本机音色库</button><small>建议使用清晰、少背景噪声的参考音频，单个文件不超过 20 MB。保存后即可选择；本应用使用自己的音色库，与原应用分别保存。</small>
+          <button id="addOmniVoice" class="links">命名并保存音色</button><small>建议清晰朗读 10–30 秒，少背景噪声。麦克风录音最多 3 分钟，文件不超过 20 MB；点击保存后写入本产品音色库并自动选中。未保存的录音刷新后会丢失。</small>
         </details>
         <p><small id="omniVoiceStatus" role="status">正在检查本机 OmniVoice。</small></p>
         <small>音色、表达和语音来源自动记住。修改只用于新任务或主动重试；本机语音字幕采用估算同步。</small>
@@ -191,7 +194,7 @@
     <footer>听文声影工作台 {{ version }} · 独立保存稿件、音色、任务与成品</footer>
   </div>
 </main>
-<section id="publishPanel" class="full-workspace" hidden><h2>发布到今日头条</h2><p id="publishStatus" role="status"></p><label for="publishTitle">可复制的视频标题</label><input id="publishTitle"><div class="row links"><button id="copyPublishTitle">复制标题</button><a class="button" href="https://mp.toutiao.com/profile_v4/xigua/upload-video" target="_blank" rel="noopener">重新打开今日头条发布页</a></div><p id="publishPath" class="archive-path"></p><small>视频由你在今日头条页面选择上传；标题、简介和最终发布均在平台完成。</small></section>
+<section id="publishPanel" class="full-workspace" hidden><h2>发布到今日头条 · 自动载入 MP4</h2><p id="publishStatus" role="status"></p><label for="publishTitle">默认标题（稿件前 30 字，可复制）</label><input id="publishTitle"><div class="row links"><button id="copyPublishTitle">复制标题</button><button id="copyPublishPath">复制视频完整路径</button><button id="revealPublishVideo">定位这个视频</button></div><p id="publishPath" class="archive-path"></p><small>专用 Chrome 发布窗口首次需登录，登录后自动载入选定视频；后续沿用该窗口的登录状态。请在头条页面核对标题、填写标签等信息，并自行点击最终发布。平台上传或转码可能需要等待。</small></section>
 <section id="queueWorkspace" class="full-workspace" hidden><h2>待制作队列 · 顺序自动合成</h2><p>每个稿件或章节保存为独立项目，按下方顺序制作。配图和参数随项目保存；开始后自动完成 MP3 与 MP4，无需逐项确认。</p><div class="row"><button id="queueRunMp4" class="primary">按顺序一键生成 MP4</button><button id="queueRunMp3">先按顺序生成 MP3</button><button id="queuePause" hidden>暂停队列</button><button id="queueResume" hidden>继续队列</button><button id="queueStop" hidden>停止队列</button><button id="queueRefresh">刷新</button></div><details><summary>预约夜间开始 · 北京时间</summary><label for="queueStartAt">开始日期与时间</label><input id="queueStartAt" type="datetime-local"><label for="queueScheduledOutput">预约输出</label><select id="queueScheduledOutput"><option value="mp4">MP3 → 配图与音乐 → MP4</option><option value="mp3">先生成 MP3，之后继续 MP4</option></select><div class="row links"><button id="queueSchedule">保存开始时间</button><button id="queueCancelSchedule" hidden>取消预约</button></div><small>程序在后台运行，电脑保持开机。预约和制作期间防止自动休眠；手动关机、合盖或退出服务会中断，重开后保留项目与素材。</small></details><p id="queueStatus" role="status"></p><small>某项失败会保留原因和素材，继续下一项；已完成项目不会自动重复制作。收费 AI 图片须先生成并确认后保存入队。</small><div id="queueProjects"></div><input id="queueReplaceFiles" type="file" accept="image/*,.heic,.heif,.avif" multiple hidden><details id="queueDraftPanel" hidden open><summary>保存的稿件</summary><pre id="queueDraftText"></pre></details></section>
 <section id="expertWorkspace" class="full-workspace" hidden><div class="row"><h2>专业朗读工作区</h2><button id="refreshExpertOutputs">刷新语音成品 · 转为视频</button><a class="button" href="http://127.0.0.1:7862/" target="_blank" rel="noopener">单独展开</a></div><p>保留 IndexTTS 的书籍章节、多文档队列、多人轮流朗读、所有模型参数、实时播放与 WAV / MP3 / FLAC 输出。使用同一独立音色库，生成后可送回视频流程。</p><p id="expertStatus" role="status"></p><div id="expertOutputs"></div><iframe id="expertFrame" title="完整专业朗读工作区" hidden></iframe></section>
 <section id="audioProducts" class="full-workspace" hidden><div class="row"><h2>成品文件 · MP3 / MP4</h2><button id="refreshAudioProducts">刷新列表</button><button id="openProductsRoot">打开成品文件夹</button></div><p id="audioProductsStatus" role="status"></p><div id="audioProductsList"></div></section>
@@ -236,7 +239,6 @@ async function loadOmniVoices(selected){$('refreshOmniVoices').disabled=true;try
 $('audioProvider').onchange=rememberAudioOptions;$('omniVoice').onchange=rememberAudioOptions;$('omniExpression').onchange=rememberAudioOptions;
 $('refreshOmniVoices').onclick=()=>loadOmniVoices();
 $('previewOmniVoice').onclick=()=>{if(!$('omniVoice').value)return;preview.pause();preview.src='/api/omnivoice/voices/'+$('omniVoice').value+'/preview';preview.play().catch(()=>{$('omniVoiceStatus').textContent='参考音色试听失败，请刷新音色库后再试。';});};
-$('addOmniVoice').onclick=async()=>{const button=$('addOmniVoice');button.disabled=true;try{const file=$('omniVoiceFile').files?.[0],name=$('omniVoiceName').value.trim();if(!file||!name)throw new Error('请填写音色名称并选择参考音频');if(file.size>20*1024*1024)throw new Error('参考音频请控制在 20 MB 以内');const audio_data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]);r.onerror=()=>reject(new Error('音频读取失败'));r.readAsDataURL(file);});const result=await api('/api/omnivoice/voices',{name,filename:file.name,audio_data,reference_text:$('omniReferenceText').value});await loadOmniVoices(result.voice_id);rememberAudioOptions();$('omniVoiceStatus').textContent=result.created?'音色已保存并选中，可用于生成 MP3。':'该参考音频已在音色库中，已选中已有音色。';$('omniVoiceFile').value='';}catch(e){$('omniVoiceStatus').textContent=e.message;}finally{button.disabled=false;}};
 restoreAudioOptions();loadOmniVoices();
 function showError(text){$('error').textContent=text;$('error').hidden=!text;}
 let sessionRefresh=null;
@@ -459,5 +461,6 @@ history();
 </script>
 <script src="/static/integration.js"></script>
 <script src="/static/preferences.js"></script>
+<script src="/static/voice-recorder.js"></script>
 <script src="/static/production-queue.js"></script>
 </body></html>

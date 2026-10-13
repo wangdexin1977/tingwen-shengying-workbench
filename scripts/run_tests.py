@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT))
 os.chdir(ROOT)
 import production_queue
 
-MODULES = ['test_production_queue', 'test_preferences', 'test_integration', 'test_workbench',
+MODULES = ['test_voice_recording', 'test_toutiao_publish', 'test_production_queue', 'test_preferences', 'test_integration', 'test_workbench',
            'test_local_photos', 'test_audio_import', 'test_background_music', 'test_subtitles',
            'test_poster_title', 'test_narration_title', 'test_speech_timeout', 'test_edge_compat',
            'test_style_preferences']

@@ -77,20 +77,37 @@ class IntegrationTests(unittest.TestCase):
         self.assertIn('.mp3', response.headers['Content-Disposition'])
         response.close()
 
-    def test_publish_opens_official_page_and_selected_video_without_uploading(self):
+    def test_publish_passes_exact_video_to_uploader_and_rejects_outside_files(self):
         job, _ = self.create()
         video = app.video_path(job)
         video.write_bytes(b'test-mp4')
-        with patch.object(integration.subprocess, 'Popen') as popen:
+        with patch.object(integration.toutiao_publish, 'start', return_value={'id': 'pending', 'state': 'starting'}) as upload:
             result = self.post('/api/videos/' + job['id'] + '/publish-toutiao', {'filename': video.name})
-        self.assertEqual(result.status_code, 200)
-        self.assertEqual(popen.call_args_list[0].args[0], ['open', '-R', str(video)])
-        self.assertEqual(popen.call_args_list[1].args[0], ['open', integration.TOUTIAO_VIDEO_URL])
-        self.assertEqual(result.json['path'], str(video))
-        with patch.object(integration.subprocess, 'Popen') as popen:
+        self.assertEqual(result.status_code, 202)
+        upload.assert_called_once_with(video.resolve(), job['text'][:30])
+        with patch.object(integration.toutiao_publish, 'start') as upload:
             invalid = self.post('/api/videos/' + job['id'] + '/publish-toutiao', {'filename': '../outside.mp4'})
             self.assertEqual(invalid.status_code, 404)
-            popen.assert_not_called()
+            upload.assert_not_called()
+
+    def test_publish_component_errors_and_session_guard(self):
+        job, _ = self.create()
+        video = app.video_path(job)
+        video.write_bytes(b'test-mp4')
+        with patch.object(integration.toutiao_publish, 'start', side_effect=RuntimeError('发布组件未安装')) as upload:
+            endpoint = '/api/videos/' + job['id'] + '/publish-toutiao'
+            self.assertEqual(self.client.post(endpoint, json={'filename': video.name}).status_code, 403)
+            upload.assert_not_called()
+            result = self.post(endpoint, {'filename': video.name})
+            self.assertEqual(result.status_code, 409)
+            self.assertIn('未安装', result.json['error'])
+
+    def test_publish_status_endpoint_handles_missing_requests(self):
+        with patch.object(integration.toutiao_publish, 'status', return_value={'state': 'waiting_login'}) as status:
+            result = self.client.get('/api/toutiao-publish/request')
+            self.assertEqual(result.json['state'], 'waiting_login')
+            status.assert_called_once_with('request')
+        self.assertEqual(self.client.get('/api/toutiao-publish/not-a-request').status_code, 404)
 
     def test_original_roots_are_not_used_for_mutable_state(self):
         self.assertEqual(omnivoice_local.project_root(), app.ROOT / 'tts')

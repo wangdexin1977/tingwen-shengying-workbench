@@ -4,11 +4,19 @@ import threading
 import time
 from pathlib import Path
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 LOG_FILE = Path(__file__).resolve().parent / "records" / "events.jsonl"
 LOCK = threading.RLock()
 WRITE_ERROR = False
 RELEASES = [
+    {"version": "1.2.0", "date": "2026-10-13", "origin": "头条自动载入视频与自定义音色录音", "changes": [
+        "头条分享使用专用 Chrome 发布窗口，自动将选定 MP4 交给视频上传控件，首次登录后继续载入",
+        "上传状态显示等待登录、已选中并上传、平台明确就绪或失败；重复点击同一任务不重复上传",
+        "默认标题取文案前 30 字，可复制；保留完整路径复制与 Finder 定位，最终发布由用户在平台完成",
+        "夜间制作队列的成片增加同一头条分享入口；登录状态仅保存在本产品本机目录，不上传 GitHub",
+        "自定义音色增加开始/停止录音、上传已有录音、试听、下载、清除和命名保存，保存后自动选中音色",
+        "麦克风权限失败提供提示；录音停止即释放麦克风，WebM 在本机转换为 WAV 后沿用原音色库保存流程"]},
+
     {"version": "1.1.0", "date": "2026-10-13", "origin": "待制作队列与夜间顺序合成", "changes": [
         "稿件、选定章节、配图和参数可保存为独立待制作项目，章节可分别加入队列",
         "短视频与长视频均支持一键 MP3→MP4、先生成 MP3 后继续 MP4，以及夜间定时开始",

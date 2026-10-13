@@ -13,6 +13,7 @@ __pycache__/
 .launcher-build/
 
 .venv
+.publish-venv/
 settings/
 *.app/
 .DS_Store
