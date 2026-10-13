@@ -4,11 +4,16 @@ import threading
 import time
 from pathlib import Path
 
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 LOG_FILE = Path(__file__).resolve().parent / "records" / "events.jsonl"
 LOCK = threading.RLock()
 WRITE_ERROR = False
 RELEASES = [
+    {"version": "1.2.2", "date": "2026-10-13", "origin": "锁定底部生成操作区", "changes": [
+        "生成 MP3、保存待制作项目与一键 MP4 操作区固定在屏幕最底部，上下滚动不再漂移",
+        "按操作区实际高度为页面末尾留出空间，避免遮挡最后的内容；宽度与按钮换行自适应",
+        "操作区仅在创作工作区显示，切换成品、专业朗读或队列时隐藏；原按钮功能保留"]},
+
     {"version": "1.2.1", "date": "2026-10-13", "origin": "精简音色与语音区域", "changes": [
         "默认只显示当前克隆音色、模型与表达摘要和试听入口，音色搜索及模型选择按需展开",
         "语速、分段停顿、表达和高级参数收入默认折叠的语音参数区；折叠后继续使用已保存配置",

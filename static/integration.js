@@ -45,6 +45,10 @@ const dock=document.createElement('div');dock.id='generateDock';
 const generate=$('generate');dock.append(generate);const dockHint=document.createElement('small');dockHint.id='generateHint';dock.append(dockHint);left.append(dock);
 const queueDraftActions=document.createElement('div');queueDraftActions.className='row';
 for(const [id,label] of [['queueSaveDraft','保存待制作项目'],['queueOneClick','一键生成当前稿件 MP4']]){const button=document.createElement('button');button.id=id;button.textContent=label;queueDraftActions.append(button);}dock.append(queueDraftActions);
+// 为固定底部操作区留出实际高度；换行、缩放和切换工作区时同步更新。
+function reserveGenerateDockSpace(){const height=dock.getBoundingClientRect().height;document.documentElement.style.setProperty('--generate-dock-space',height?Math.ceil(height)+16+'px':'0px');}
+new ResizeObserver(reserveGenerateDockSpace).observe(dock);
+reserveGenerateDockSpace();
 const tools=$('mp4Tools');
 const advanced=document.createElement('details');advanced.id='videoAdvanced';
 const summary=document.createElement('summary');summary.textContent='高级画面设置 · 标题样式 / 字幕 / 背景音乐';advanced.append(summary);
