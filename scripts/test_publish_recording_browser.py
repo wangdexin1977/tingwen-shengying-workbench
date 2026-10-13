@@ -49,7 +49,10 @@ def check_recording(playwright, directory):
     captured = []
     identifier = 'a' * 16
     voices = [{'id': identifier, 'name': '浏览器录音测试', 'is_favorite': False}]
+    stored_preferences = {'controls': {'audioProvider': 'omnivoice', 'omniVoice': identifier,
+                                      'speechSpeed': 1.25, 'speechSilence': 450, 'omniExpression': 'happy'}}
     def fixture_api(route):
+        nonlocal stored_preferences
         endpoint = route.request.url.split('/api/', 1)[1]
         if endpoint == 'omnivoice/voices':
             body = route.request.post_data_json
@@ -58,7 +61,9 @@ def check_recording(playwright, directory):
         elif endpoint == 'omnivoice':
             result = {'available': True, 'voices': voices, 'message': '测试音色库就绪'}
         elif endpoint == 'preferences':
-            result = {'preferences': route.request.post_data_json if route.request.method == 'POST' else {}}
+            if route.request.method == 'POST':
+                stored_preferences = route.request.post_data_json
+            result = {'preferences': stored_preferences}
         elif endpoint == 'queue':
             result = {'order': [], 'projects': [], 'running': False, 'message': '本机测试'}
         elif endpoint == 'jobs':
@@ -71,6 +76,26 @@ def check_recording(playwright, directory):
     page.goto('http://127.0.0.1:8092/')
     expect(page.locator('#settingsSaveStatus')).to_contain_text('配置')
     page.get_by_label('语音来源', exact=True).select_option('omnivoice')
+    expect(page.locator('#currentCloneVoice')).to_contain_text('浏览器录音测试')
+    expect(page.locator('#localBackend')).to_be_hidden()
+    expect(page.locator('#speechSpeed')).to_be_hidden()
+    expect(page.locator('#voiceParametersSummary')).to_contain_text('1.25')
+    page.locator('#cloneVoicePicker > summary').click()
+    expect(page.locator('#localBackend')).to_be_visible()
+    page.locator('#cloneVoicePicker > summary').click()
+    page.locator('#voiceParameters > summary').click()
+    expect(page.locator('#speechSpeed')).to_be_visible()
+    page.get_by_label('分段停顿（毫秒）', exact=True).fill('650')
+    page.locator('#voiceParameters > summary').click()
+    expect(page.locator('#speechSpeed')).to_be_hidden()
+    expect(page.locator('#speechSilence')).to_have_value('650')
+    expect(page.locator('#settingsSaveStatus')).to_have_text('配置已自动保存')
+    page.reload()
+    expect(page.locator('#settingsSaveStatus')).to_have_text('配置已自动保存')
+    expect(page.locator('#speechSilence')).to_have_value('650')
+    expect(page.locator('#speechSpeed')).to_be_hidden()
+    expect(page.locator('#voiceParametersSummary')).to_contain_text('650')
+    print('PASS: 音色/模型和语音参数默认折叠、按需展开、折叠后参数生效及重新打开恢复')
     page.locator('#addOmniVoicePanel summary').click()
     page.get_by_role('button', name='🎙 开始录音', exact=True).click()
     expect(page.locator('#voiceRecordingStatus')).to_contain_text('正在录音')

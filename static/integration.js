@@ -76,7 +76,14 @@ function updateAudioOnly(){
 const originalSourceUI=sourceUI;
 sourceUI=()=>{originalSourceUI();updateAudioOnly();};
 const originalAudioSourceUI=audioSourceUI;
-audioSourceUI=()=>{originalAudioSourceUI();$('textHint').textContent=$('audioProvider').value==='omnivoice'?'本机单次合成最多 100000 个有效字符，长文自动分批；更长书籍可在专业工作区用文档队列分卷制作。':'全文提交，长文自动分段；文案框内可上下滚动。';};
+function updateCloneVoiceSummary(){
+  const choice=$('omniVoice').selectedOptions[0];
+  $('currentCloneVoice').textContent=$('omniVoice').value?choice.text.split(' · ')[0]:'请选择克隆音色';
+  $('cloneModelSummary').textContent=$('localBackend').value+' · '+$('omniExpression').selectedOptions[0].text;
+  $('voiceParametersSummary').textContent='语音参数 · '+Number($('speechSpeed').value).toFixed(2)+'× · 停顿 '+$('speechSilence').value+' ms';
+}
+audioSourceUI=()=>{originalAudioSourceUI();updateCloneVoiceSummary();$('textHint').textContent=$('audioProvider').value==='omnivoice'?'本机单次合成最多 100000 个有效字符，长文自动分批；更长书籍可在专业工作区用文档队列分卷制作。':'全文提交，长文自动分段；文案框内可上下滚动。';};
+for(const id of ['speechSpeed','speechSilence'])$(id).addEventListener('input',updateCloneVoiceSummary);
 audioSourceUI();
 $('shortMode').onclick=()=>creationMode(false);$('longMode').onclick=()=>creationMode(true);$('audioOnly').onchange=updateAudioOnly;
 try{creationMode(localStorage.getItem('shengying-creation-mode')==='long',true);}catch{creationMode(false);}

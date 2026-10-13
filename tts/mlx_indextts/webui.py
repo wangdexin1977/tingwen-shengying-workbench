@@ -5163,6 +5163,7 @@ def build_ui() -> gr.Blocks:
                     </tbody>
                   </table>
                   <div class="about-changelog-title">版本变更日志</div>
+                  <section class="about-release"><div class="about-release-head"><strong>听文声影工作台 v1.2.1</strong><span>2026-10-13</span></div><ul><li>主工作区音色选择、语音模型和参数默认折叠，显示当前音色与参数摘要。</li><li>保留录音上传、试听和命名保存，已保存配置继续生效。</li></ul></section>
                   <section class="about-release"><div class="about-release-head"><strong>听文声影工作台 v1.2.0</strong><span>2026-10-13</span></div><ul><li>主工作区支持麦克风录音、上传、试听及命名保存独立音色。</li><li>头条分享可自动将选定 MP4 送入专用 Chrome 上传页面，首次登录后继续载入。</li><li>保留全部原专业功能，最终发布由用户确认。</li></ul></section>
                   <section class="about-release"><div class="about-release-head"><strong>听文声影工作台 v1.1.0</strong><span>2026-10-13</span></div><ul><li>主工作区新增待制作队列，稿件与章节、配图和参数可保存后按顺序自动生成 MP4。</li><li>支持夜间预约、分步 MP3→MP4、暂停继续与失败后继续下一项。</li><li>保留 1.0.1 的自动配置恢复及章节全选/全取消。</li></ul></section>
                   <section class="about-release"><div class="about-release-head"><strong>听文声影工作台 v1.0.1</strong><span>2026-10-13</span></div><ul><li>首页标题和背景音乐首次默认关闭，主工作区参数自动保存并恢复。</li><li>多人朗读、轮换设置与边生成边播放保存到本机。</li><li>书籍章节增加全部选中与全部取消选中，不改变原文。</li></ul></section>

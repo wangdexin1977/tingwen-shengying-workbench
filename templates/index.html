@@ -55,14 +55,20 @@
         {% for id,name,description in voices %}<button class="voice {{ 'selected' if loop.first else '' }}" data-voice="{{ id }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">{{ name }}<span>{{ description }}</span></button>{% endfor %}
       </div><small id="voiceHint">试听使用随产品保存的本地 MP3，不等待云端合成。</small></div></div>
       <div id="omniVoiceBlock" hidden>
+        <div class="row voice-summary"><div><strong id="currentCloneVoice">正在加载音色…</strong><small id="cloneModelSummary">本机克隆语音</small></div><button id="previewOmniVoice">试听参考音色</button></div>
+        <details id="cloneVoicePicker"><summary>更换音色与模型</summary>
         <label for="localBackend">语音模型</label><select id="localBackend"><option>OmniVoice</option><option>IndexTTS 2.5</option><option>IndexTTS 2.0</option><option>Fish Audio S2 Pro</option><option>VoiceStudio · OmniVoice 原生</option><option>CosyVoice 3</option></select>
         <label for="voiceSearch">查找音色</label><input id="voiceSearch" type="search" placeholder="输入音色名称，快速查找">
         <label for="omniVoice">克隆音色库</label><select id="omniVoice"><option value="">正在加载已有音色…</option></select>
-        <div class="row links"><button id="refreshOmniVoices">刷新音色库</button><button id="previewOmniVoice">试听参考音色</button></div>
+        <div class="row links"><button id="refreshOmniVoices">刷新音色库</button></div>
+        </details>
+        <details id="voiceParameters"><summary id="voiceParametersSummary">语音参数 · 语速、停顿与表达</summary>
         <label for="omniExpression">表达方式</label><select id="omniExpression"><option value="follow_reference">跟随参考音频</option><option value="calm">平静</option><option value="happy">高兴</option><option value="sad">悲伤</option><option value="energetic">激昂</option><option value="serious">严肃</option><option value="whisper">耳语</option></select>
         <small>平静、高兴等为近似表达预设；耳语是原生样式。试听播放参考音频，最终声音以合成为准。</small>
         <div class="subtitle-controls"><div><label for="speechSpeed">语速 <output id="speechSpeedValue">1.00×</output></label><input id="speechSpeed" type="range" min="0.5" max="2" step="0.05" value="1"></div><div><label for="speechSilence">分段停顿（毫秒）</label><input id="speechSilence" type="number" min="0" max="2000" step="50" value="250"></div></div>
         <details id="speechAdvanced"><summary>高级语音参数 · 按模型分别保存</summary><div class="subtitle-controls"><div><label for="speechSeed">随机种子</label><input id="speechSeed" type="number" min="0" max="2147483647" value="42"></div><div><label for="speechTokens">分段长度（文本 token）</label><input id="speechTokens" type="number" min="30" max="300" value="120"></div><div data-index-param><label for="speechTemperature">采样温度</label><input id="speechTemperature" type="number" min="0.1" max="2" step="0.1" value="0.8"></div><div data-omni-param><label for="speechSteps">OmniVoice 推理步数</label><input id="speechSteps" type="number" min="4" max="100" value="32"></div><div data-omni-param><label for="speechGuidance">OmniVoice 引导强度</label><input id="speechGuidance" type="number" min="0" max="10" step="0.1" value="2"></div></div><small>其余模型专用参数、自动/设计音色、多音色和实时播放均在“专业朗读 · 完整功能”中。</small></details>
+        <small>音色、表达和语音来源自动记住。修改只用于新任务或主动重试；本机语音字幕采用估算同步。</small>
+        </details>
         <details id="addOmniVoicePanel"><summary>录音 / 上传自己的音色 · 命名并保存</summary>
           <label for="omniVoiceName">音色名称</label><input id="omniVoiceName" maxlength="100" placeholder="例如：我的新闻口播音色">
           <div class="row links"><button id="startVoiceRecording">🎙 开始录音</button><button id="stopVoiceRecording" hidden>停止录音</button><button id="uploadVoiceRecording">上传已有录音</button><button id="discardVoiceRecording" hidden>重新选择 / 清除录音</button></div>
@@ -73,7 +79,6 @@
           <button id="addOmniVoice" class="links">命名并保存音色</button><small>建议清晰朗读 10–30 秒，少背景噪声。麦克风录音最多 3 分钟，文件不超过 20 MB；点击保存后写入本产品音色库并自动选中。未保存的录音刷新后会丢失。</small>
         </details>
         <p><small id="omniVoiceStatus" role="status">正在检查本机 OmniVoice。</small></p>
-        <small>音色、表达和语音来源自动记住。修改只用于新任务或主动重试；本机语音字幕采用估算同步。</small>
       </div>
     </section>
     <section id="pictureStage">

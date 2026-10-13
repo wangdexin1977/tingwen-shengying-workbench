@@ -4,11 +4,16 @@ import threading
 import time
 from pathlib import Path
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 LOG_FILE = Path(__file__).resolve().parent / "records" / "events.jsonl"
 LOCK = threading.RLock()
 WRITE_ERROR = False
 RELEASES = [
+    {"version": "1.2.1", "date": "2026-10-13", "origin": "精简音色与语音区域", "changes": [
+        "默认只显示当前克隆音色、模型与表达摘要和试听入口，音色搜索及模型选择按需展开",
+        "语速、分段停顿、表达和高级参数收入默认折叠的语音参数区；折叠后继续使用已保存配置",
+        "录音上传、试听、命名保存保留独立折叠入口；在线音色原有更换/收起流程保留"]},
+
     {"version": "1.2.0", "date": "2026-10-13", "origin": "头条自动载入视频与自定义音色录音", "changes": [
         "头条分享使用专用 Chrome 发布窗口，自动将选定 MP4 交给视频上传控件，首次登录后继续载入",
         "上传状态显示等待登录、已选中并上传、平台明确就绪或失败；重复点击同一任务不重复上传",
