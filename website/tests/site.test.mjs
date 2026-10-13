@@ -15,6 +15,9 @@ test('当前规格、下载全文、机器清单和事实资料保持同一版�
  assert.equal(metadata.product_version,'1.2.2');assert.equal(metadata.headings,28);assert.equal(metadata.api_routes,46);
  const current=read('specification/index.html');assert.ok(current.includes('MediaRecorder'));assert.ok(current.includes('Qwen3-ASR-0.6B-8bit'));assert.ok(current.includes('doubao-seedream-5-0-pro-260628'));assert.ok(current.includes('macOS'));assert.ok(current.includes('真实账号上传及完整待发布界面尚待首次登录后验证'));
  const audit=JSON.parse(read('downloads/shengying-api.json'));assert.equal(audit.routes.length,46);
+ const tableCount=source.split('\n').filter(line=>/^\| (?:--- \| ?)+$/.test(line)).length;assert.equal((current.match(/<table>/g)||[]).length,tableCount,'说明书全部Markdown表格必须正常渲染');
+ const apiTable=current.slice(current.indexOf('id="spec-section-28"'));assert.equal((apiTable.match(/<tr>/g)||[]).length,47,'接口附录应渲染46条路由和表头');
+ const offline=read('downloads/shengying-specification.html');assert.ok(offline.includes('<style>'));assert.ok(offline.includes('data:image/svg+xml;base64,'));assert.ok(!offline.includes('src="/assets/'));assert.ok(!offline.includes('href="/assets/'));
  const facts=JSON.parse(read('product-facts.json'));assert.equal(facts.features.voice_backends.length,6);assert.ok(facts.features.queue.includes('失败保留并继续'));assert.equal(facts.features.defaults.music_enabled,false);assert.equal(facts.features.defaults.title_enabled,false);
  assert.ok(read('llms-full.txt').includes(source));assert.ok(read('guide/product-01.html').includes('历史档案'));
  for(const file of ['index.html','faq/index.html','facts/index.html'])assert.ok(!read(file).includes('当前无自动字幕、背景音乐混音'));

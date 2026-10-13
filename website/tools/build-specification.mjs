@@ -19,7 +19,12 @@ export function buildSpecification({shell,write,config}) {
  write('specification/index.html',shell({title:'产品规格说明书 · 模型、架构、使用与自媒体价值',description:'听文声影工作台1.2.2完整规格：六种语音后端、录音克隆、文档章节、配图、字幕音乐、MP3、1080p MP4、夜间队列、头条交接及46条接口。',url:'/specification/',body,schemas:[{'@type':'TechArticle',headline:'听文声影工作台产品规格说明书',dateModified:config.date,inLanguage:'zh-CN',url:config.origin+'/specification/'}]}));
  write('downloads/shengying-specification.md',markdown);
  write('downloads/shengying-api.json',audit);
- write('downloads/shengying-specification.html',shell({title:'产品规格说明书 · 离线阅读与打印',description:'听文声影工作台完整产品规格离线HTML，内容与Markdown相同，可在浏览器打印保存PDF。',url:'/downloads/shengying-specification.html',noindex:true,body:`<div class="wrap reading-main spec-offline"><h1>听文声影工作台产品规格说明书</h1><div class="chapter-tools"><button id="print-page">打印 / 保存 PDF</button><a href="/specification/">返回在线目录</a></div><article class="chapter-content specification-body">${article}</article></div>`}));
+ let offline=shell({title:'产品规格说明书 · 离线阅读与打印',description:'听文声影工作台完整产品规格离线HTML，内容与Markdown相同，可在浏览器打印保存PDF。',url:'/downloads/shengying-specification.html',noindex:true,body:`<div class="wrap reading-main spec-offline"><h1>听文声影工作台产品规格说明书</h1><div class="chapter-tools"><button id="print-page">打印 / 保存 PDF</button><a href="/specification/">返回在线目录</a></div><article class="chapter-content specification-body">${article}</article></div>`});
+ const css=fs.readFileSync(path.join(root,'src/site.css'),'utf8');
+ const diagram=fs.readFileSync(path.join(root,'src/assets/shengying-architecture.svg')).toString('base64');
+ const favicon=fs.readFileSync(path.join(root,'static-output/assets/favicon.svg')).toString('base64');
+ offline=offline.replace('<link rel="stylesheet" href="/assets/site.css">',`<style>${css}\n.site-header,.site-footer,dialog{display:none}</style>`).replaceAll('src="/assets/diagrams/shengying-architecture.svg"',`src="data:image/svg+xml;base64,${diagram}"`).replace('href="/assets/favicon.svg"',`href="data:image/svg+xml;base64,${favicon}"`).replace('<script src="/assets/site.js" defer></script>','<script>document.getElementById("print-page").addEventListener("click",()=>window.print());</script>').replace('href="/specification/"',`href="${config.origin}/specification/"`);
+ write('downloads/shengying-specification.html',offline);
  write('specification-source.json',JSON.stringify({product_version:config.version,updated_at:config.date,markdown_sha256:crypto.createHash('sha256').update(markdown).digest('hex'),headings:toc.length,api_routes:JSON.parse(audit).routes.length},null,2)+'\n');
  return {markdown,toc};
 }
