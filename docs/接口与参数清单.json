@@ -1,0 +1,403 @@
+{
+  "product_version": "1.2.2",
+  "audit_date": "2026-10-13",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/",
+      "function": "index",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/music",
+      "function": "music_library",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/music/<track_id>/preview",
+      "function": "music_preview",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/music",
+      "function": "add_music",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/omnivoice",
+      "function": "local_voice_capabilities",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/omnivoice/voices/<voice_id>/preview",
+      "function": "local_voice_preview",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/omnivoice/voices",
+      "function": "add_local_voice",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/title/preview",
+      "function": "title_preview",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/subtitles/preview",
+      "function": "subtitle_preview",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/session",
+      "function": "local_session",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "function": "health",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/records",
+      "function": "record_list",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/records/export",
+      "function": "record_export",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs",
+      "function": "jobs",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/videos",
+      "function": "all_videos",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/videos/<job_id>/media",
+      "function": "archive_video_media",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/videos/<job_id>/reveal",
+      "function": "reveal_archived_video",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/videos/reveal-root",
+      "function": "reveal_all_videos",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/drawthings/check",
+      "function": "check_drawthings",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/jobs",
+      "function": "create",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/jobs/import-audio",
+      "function": "create_from_audio",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/<job_id>",
+      "function": "status",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/jobs/<job_id>/use-image",
+      "function": "use_image",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/jobs/<job_id>/select-images",
+      "function": "select_images",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/<job_id>/images/<int:index>",
+      "function": "gallery_image",
+      "module": "app.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/jobs/<job_id>/<action>",
+      "function": "action",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/<job_id>/media/<kind>",
+      "function": "media",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/preview/<voice>",
+      "function": "preview",
+      "module": "app.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/preferences",
+      "function": "get_preferences",
+      "module": "integration.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/preferences",
+      "function": "save_preferences",
+      "module": "integration.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/documents/import",
+      "function": "import_document",
+      "module": "integration.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/expert/start",
+      "function": "start_expert",
+      "module": "integration.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/expert/outputs",
+      "function": "expert_outputs",
+      "module": "integration.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/expert/state",
+      "function": "expert_state",
+      "module": "integration.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/expert/audio/<key>",
+      "function": "expert_audio",
+      "module": "integration.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/expert/audio/<key>/reveal",
+      "function": "reveal_expert_audio",
+      "module": "integration.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/products/audio",
+      "function": "audio_products",
+      "module": "integration.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/videos/<job_id>/publish-toutiao",
+      "function": "prepare_toutiao_publish",
+      "module": "integration.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/toutiao-publish/<identifier>",
+      "function": "toutiao_publish_status",
+      "module": "integration.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/queue",
+      "function": "list_queue",
+      "module": "production_queue.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/projects",
+      "function": "save_projects",
+      "module": "production_queue.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/queue/projects/<identifier>",
+      "function": "get_project",
+      "module": "production_queue.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/projects/<identifier>/images",
+      "function": "replace_images",
+      "module": "production_queue.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/start",
+      "function": "start_queue",
+      "module": "production_queue.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/schedule",
+      "function": "schedule_queue",
+      "module": "production_queue.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/queue/<action>",
+      "function": "queue_action",
+      "module": "production_queue.py"
+    }
+  ],
+  "defaults": {
+    "preferences.py:RANGES": {
+      "speechSpeed": [
+        0.5,
+        2
+      ],
+      "speechSilence": [
+        0,
+        2000
+      ],
+      "speechSeed": [
+        0,
+        2147483647
+      ],
+      "speechTokens": [
+        30,
+        300
+      ],
+      "speechTemperature": [
+        0.1,
+        2
+      ],
+      "speechSteps": [
+        4,
+        100
+      ],
+      "speechGuidance": [
+        0,
+        10
+      ],
+      "drawthingsPort": [
+        1024,
+        65535
+      ],
+      "titleSize": [
+        48,
+        320
+      ],
+      "subtitlePosition": [
+        6,
+        94
+      ],
+      "musicVolume": [
+        0,
+        100
+      ]
+    },
+    "preferences.py:PROFILE_FIELDS": {
+      "speed": "speechSpeed",
+      "interval_silence": "speechSilence",
+      "seed": "speechSeed",
+      "max_text_tokens": "speechTokens",
+      "temperature": "speechTemperature",
+      "omnivoice_num_steps": "speechSteps",
+      "omnivoice_guidance_scale": "speechGuidance"
+    },
+    "background_music.py:DEFAULTS": {
+      "enabled": false,
+      "track_id": "vaporware",
+      "volume": 15,
+      "loop_seconds": 180
+    },
+    "subtitles.py:DEFAULT_STYLE": {
+      "enabled": true,
+      "color": "#FFFFFF",
+      "font": "sans",
+      "size": 48,
+      "position": 90
+    },
+    "tts/mlx_indextts/webui.py:MAX_SYNTHESIS_CHARACTERS": 100000,
+    "tts/mlx_indextts/webui.py:SYNTHESIS_BATCH_CHARACTERS": 2500,
+    "tts/mlx_indextts/webui.py:DEFAULT_SETTINGS": {
+      "model_backend": "OmniVoice",
+      "emotion": "跟随参考音频",
+      "emotion_strength": 0.6,
+      "speed": 1.0,
+      "seed": 42,
+      "interval_silence": 250,
+      "segment_overlap_ms": 50,
+      "max_text_tokens": 120,
+      "temperature": 0.8,
+      "diffusion_steps": 25,
+      "max_mel_tokens": 1500,
+      "top_p": 0.8,
+      "top_k": 30,
+      "repetition_penalty": 10.0,
+      "cfg_rate": 0.7,
+      "fast_vocoder": false
+    },
+    "tts/mlx_indextts/webui.py:DEFAULT_OMNIVOICE_SETTINGS": {
+      "omnivoice_mode": "clone",
+      "omnivoice_language": "chinese",
+      "omnivoice_ref_text": "",
+      "omnivoice_instruct": "",
+      "omnivoice_duration_s": 0.0,
+      "omnivoice_num_steps": 32,
+      "omnivoice_guidance_scale": 2.0,
+      "omnivoice_class_temperature": 0.0,
+      "omnivoice_position_temperature": 5.0,
+      "omnivoice_layer_penalty_factor": 5.0,
+      "omnivoice_t_shift": 0.1,
+      "omnivoice_ref_audio_max_duration_s": 10.0
+    },
+    "tts/mlx_indextts/webui.py:DEFAULT_FISH_S2_SETTINGS": {
+      "fish_mode": "clone",
+      "fish_ref_text": "",
+      "fish_instruct": "",
+      "fish_temperature": 0.7,
+      "fish_top_p": 0.7,
+      "fish_top_k": 30,
+      "fish_max_tokens": 1024,
+      "fish_chunk_length": 300,
+      "fish_ref_audio_max_duration_s": 15.0
+    },
+    "tts/mlx_indextts/webui.py:DEFAULT_COSYVOICE3_SETTINGS": {
+      "cosy_ref_text": "",
+      "cosy_precision": "fp16",
+      "cosy_nfe": 10,
+      "cosy_ref_audio_max_duration_s": 10.0
+    }
+  }
+}

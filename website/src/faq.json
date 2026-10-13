@@ -1,0 +1,77 @@
+[
+  {
+    "question": "怎样从一篇文案生成 MP4？",
+    "answer": "粘贴或导入稿件，检查与清洗正文，选择音色和照片，配置字幕与音乐。配好材料后可一键生成当前 MP4，也可先试听 MP3、确认画面再合成；长篇与短篇共用流程。",
+    "href": "/specification/#spec-section-5"
+  },
+  {
+    "question": "可以用自己的录音克隆音色吗？",
+    "answer": "可以。在克隆语音区展开录音上传入口，清晰录制约10–30秒，停止、试听、填写音色名称并保存；也可上传已有录音。保存后自动选中，之后直接从音色库选择。主区参考文件上限20MB。",
+    "href": "/specification/#spec-section-8"
+  },
+  {
+    "question": "长篇朗读会只有 MP3 吗？",
+    "answer": "不会。书籍朗读和评书同样支持配图、字幕与背景音乐并生成 MP4。可将所选章节分别保存为独立项目，按顺序制作；超出单项字符保护的书籍按章节或卷拆分。",
+    "href": "/specification/#spec-section-5"
+  },
+  {
+    "question": "可以晚上自动顺序制作吗？",
+    "answer": "可以。提前保存稿件、照片和参数，调整项目顺序，再选择立即生成或预约未来的北京时间。后台逐项输出；失败保留原因并继续下一项。电脑与程序需保持运行，不能承诺关机后自动唤醒。",
+    "href": "/specification/#spec-section-16"
+  },
+  {
+    "question": "六种语音后端都已内置完整模型吗？",
+    "answer": "六种名称代表已经接入的后端入口，不代表每台机器已完整安装六组权重。当前包括OmniVoice、VoiceStudio原生、IndexTTS2.5、IndexTTS2.0、Fish Audio S2 Pro和CosyVoice3，各自需要对应权重和依赖。",
+    "href": "/specification/#spec-section-7"
+  },
+  {
+    "question": "怎样快速找到生成的 MP3 和 MP4？",
+    "answer": "顶部成品入口和当前结果均提供播放、下载、完整本机路径与Finder定位。文件名默认取文案前30字，每项任务有自己的目录；专业输出也有登记入口。",
+    "href": "/specification/#spec-section-17"
+  },
+  {
+    "question": "头条分享会自动帮我点发布吗？",
+    "answer": "不会。专用Chrome窗口将选定MP4交给官方视频上传控件，首次需登录，标题默认文案前30字；用户核对标题、填写标签等信息并自行确认最终发布。模拟控件测试已通过，真实账号上传待首次登录后验证。",
+    "href": "/specification/#spec-section-18"
+  },
+  {
+    "question": "字幕是不是逐字精确对齐？",
+    "answer": "微软在线语音有可用词时间信息时优先用实际时间；本机克隆和导入音频采用按完整时长估算的字幕。参考音频ASR不等于最终音轨的逐字强制对齐，实际成片需检查。",
+    "href": "/specification/#spec-section-13"
+  },
+  {
+    "question": "能给长视频加循环背景音乐吗？",
+    "answer": "可以。支持内置轻柔曲目和用户上传音乐，音量0–100%，2／3／5分钟循环，初始15%音量、3分钟循环。音乐写入MP4，MP3保留纯朗读。背景音乐首次默认关闭。",
+    "href": "/specification/#spec-section-14"
+  },
+  {
+    "question": "能直接用已有音频做视频吗？",
+    "answer": "可以。导入已有音频与照片，本机验证和转换后沿用相同MP4流程，不重复调用语音模型。音频上限500MB；没有对应文案时关闭口播字幕，有文案时可用估算字幕。",
+    "href": "/specification/#spec-section-5"
+  },
+  {
+    "question": "参数为什么默认折叠？会不会失效？",
+    "answer": "日常界面只显示当前音色、试听和参数摘要，其余设置按需展开。折叠不会关闭或重置参数，配置会自动保存并在重新打开后恢复，已保存项目保留自己的快照。",
+    "href": "/specification/#spec-section-9"
+  },
+  {
+    "question": "AI 配图调用哪些模型？是否收费？",
+    "answer": "可选择本机照片、公开图片直链、Draw Things本机当前模型，或可选Seedream Pro／Flash。Seedream需要用户自己的方舟Key和费用同意，按服务方实际计费；队列使用预先保存的图片。",
+    "href": "/specification/#spec-section-10"
+  },
+  {
+    "question": "整合版可以直接在 Android 或 Windows 上运行吗？",
+    "answer": "当前整合版验证面向macOS／Apple Silicon本机环境，本文没有宣称已发布整合版Android或Windows客户端。原PC／Android产品仍保留自己的入口，网站45章旧文档标注为历史资料。",
+    "href": "/specification/#spec-section-2"
+  },
+  {
+    "question": "网站能在线替我运行大模型吗？",
+    "answer": "这个网站用于产品展示、规格阅读与合作咨询。实际语音模型、文档处理和视频合成在配置好的本机工作台运行；模型和个人音色不包含在网站或GitHub源码中。",
+    "href": "/specification/#spec-section-21"
+  },
+  {
+    "question": "是否经过长视频与队列验证？",
+    "answer": "已完成五小时测试音轨与循环音乐的1080p编码验证，以及真实预约两章克隆MP3与MP4、MP3复用验证。五小时测试不代表整本书五小时TTS或五小时字幕编码；136项回归通过，验证范围在规格中说明。",
+    "href": "/specification/#spec-section-23"
+  }
+]

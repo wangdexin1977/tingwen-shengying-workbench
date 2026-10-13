@@ -1,0 +1,29 @@
+{
+  "schema_version": "2.0",
+  "name": "听文声影工作台",
+  "alternate_name": "Tingwen Shengying Workbench",
+  "version": {"workbench": "1.2.2"},
+  "updated_at": "2026-10-13",
+  "summary": "面向自媒体人的本机声音与视频制作工作台：从文案、音色克隆、配图和音乐到 MP3 与 1080p MP4，支持短视频、长篇朗读和夜间顺序制作。",
+  "contact": {"wechat": "wzqy2019", "purpose": "本机部署、产品使用、内容工作室与合作咨询", "add_note": "听文合作"},
+  "features": {
+    "input": ["粘贴文案", "TXT / MD / Word / PDF / EPUB / MOBI", "章节全选与取消", "文案清洗与整合"],
+    "voice_backends": ["OmniVoice", "VoiceStudio · OmniVoice 原生", "IndexTTS 2.5", "IndexTTS 2.0", "Fish Audio S2 Pro", "CosyVoice 3"],
+    "auxiliary_asr": "Qwen3-ASR-0.6B-8bit，用于相关后端的参考原文识别",
+    "online_voice": "微软 Edge TTS；新合成需要网络",
+    "predefined_online_voice_count": 26,
+    "voice_library": "录音或上传、试听、命名保存；数量由用户音色库决定，源码不附个人音色",
+    "images": ["本机照片", "公开图片直链", "Draw Things 本机模型", "可选 Seedream Pro / Flash"],
+    "audio_output": "主区 MP3；专业区 WAV / MP3 / FLAC",
+    "video_output": {"container": "MP4", "resolution": "1920×1080", "video_codec": "H.264", "audio_codec": "AAC", "single_image_fps": 1, "subtitles_fps": 10, "multiple_image_min_fps": 5},
+    "subtitles": "在线语音优先词时间；本机克隆与导入音频按时长估算",
+    "music": "可试听、上传、调整音量，2 / 3 / 5 分钟循环；音乐写入 MP4",
+    "queue": "独立项目配置、配图副本、排序、预约、顺序 MP4、MP3 复用、失败保留并继续",
+    "publishing": "专用 Chrome 自动交接选定 MP4 到头条上传控件，用户登录并自行确认最终发布",
+    "defaults": {"title_enabled": false, "music_enabled": false, "music_volume": 15, "music_loop_seconds": 180},
+    "unsupported": ["摄像视频多轨剪辑", "复杂动画时间线", "跨设备云同步", "营销网站云端大模型制作", "无人确认的最终平台发布"]
+  },
+  "compatibility": {"platforms": ["macOS / Apple Silicon 本机整合版"], "main_port": 8092, "expert_port": 7862, "legacy": "原 PC / Android 产品的 45 章文档保留为历史档案，不代表当前整合版 Android / Windows 已发布"},
+  "costs": {"local": "本机模型、照片与编码不产生按次云模型费，仍需要完整环境和设备资源", "optional_ai": "Seedream 使用用户自己的方舟 Key，按服务方实际计费", "license": "产品授权与支持微信咨询，网站不收款，不承诺未经确认的定价或永久免费"},
+  "verification": {"regression": 136, "actual_queue": "实际预约生成两章克隆 MP3 与 MP4，分步 MP3 复用已验证", "five_hour": "已验证五小时测试音轨加音乐的 1080p 编码；未执行整本书五小时 TTS 或五小时字幕编码", "toutiao": "本机模拟上传控件验证通过；真实账号上传待首次登录后验证"}
+}

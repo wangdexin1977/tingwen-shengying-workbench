@@ -1,0 +1,19 @@
+{
+ "name": "tingwen-cloudflare-site",
+ "private": true,
+ "type": "module",
+ "scripts": {
+  "build": "node tools/build-cloudflare.mjs",
+  "test": "node --test tests/site.test.mjs tests/counter.test.mjs",
+  "dev": "wrangler pages dev dist --port 18082",
+  "deploy": "wrangler pages deploy dist --project-name tingwen-creator-studio-102 --branch main"
+ },
+ "devDependencies": {
+  "marked": "18.1.1",
+  "playwright": "1.63.0",
+  "wrangler": "4.92.0"
+ },
+ "engines": {
+  "node": ">=22.13.0"
+ }
+}

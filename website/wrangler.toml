@@ -1,0 +1,9 @@
+name = "tingwen-creator-studio-102"
+compatibility_date = "2026-05-22"
+pages_build_output_dir = "./dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tingwen-creator-studio-102-visits"
+database_id = "126f5904-7ad3-4e50-a6b8-098f069f5df3"
+migrations_dir = "migrations"

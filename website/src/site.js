@@ -1,0 +1,18 @@
+(()=>{'use strict';
+ const dialog=document.querySelector('#contact-dialog');
+ document.querySelectorAll('[data-contact]').forEach(b=>b.addEventListener('click',()=>dialog.showModal()));
+ document.querySelector('#close-contact')?.addEventListener('click',()=>dialog.close());
+ dialog?.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
+ const copy=document.querySelector('#copy-wechat');
+ copy?.addEventListener('click',async()=>{const value='wzqy2019',status=document.querySelector('#copy-status');try{await navigator.clipboard.writeText(value);status.textContent='微信号已复制，请打开微信搜索并添加。';copy.textContent='已复制 ✓';}catch{const field=document.querySelector('#wechat-value');field.focus();field.select();status.textContent='当前浏览器未允许复制，请长按或手动复制已选中的微信号。';}});
+ const menu=document.querySelector('#mobile-menu'),nav=document.querySelector('#main-nav');
+ menu?.addEventListener('click',()=>{const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));});
+ nav?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{nav.classList.remove('open');menu?.setAttribute('aria-expanded','false');}));
+ const search=document.querySelector('#chapter-search'),status=document.querySelector('#chapter-status');
+ search?.addEventListener('input',()=>{const query=search.value.trim().toLowerCase(),terms=query.split(/\s+/).filter(Boolean);let count=0;document.querySelectorAll('.chapter-link').forEach(a=>{a.hidden=!terms.every(t=>(a.dataset.search||a.textContent).toLowerCase().includes(t));if(!a.hidden)count++;});status.textContent=query?`找到 ${count} 个相关章节`:'45 个章节 · 约 2.9 万汉字正文';});
+ const imageDialog=document.querySelector('#image-dialog');
+ document.querySelectorAll('.screen-button').forEach(b=>b.addEventListener('click',()=>{const source=b.querySelector('img'),img=document.querySelector('#zoom-image');img.src=source.src;img.alt=source.alt;imageDialog.showModal();}));
+ document.querySelector('#close-image')?.addEventListener('click',()=>imageDialog.close());imageDialog?.addEventListener('click',e=>{if(e.target===imageDialog)imageDialog.close();});
+ document.querySelector('#print-page')?.addEventListener('click',()=>window.print());
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){nav?.classList.remove('open');menu?.setAttribute('aria-expanded','false');}});
+})();

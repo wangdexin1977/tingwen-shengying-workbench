@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-10",
+  "documents": [
+    {
+      "file": "产品说明书与使用指南.html",
+      "chapters": 20,
+      "chinese_characters": 13281,
+      "source_characters": 19862,
+      "diagram_placements": 6
+    },
+    {
+      "file": "技术架构与实现文档.html",
+      "chapters": 25,
+      "chinese_characters": 15658,
+      "source_characters": 41603,
+      "diagram_placements": 12
+    }
+  ],
+  "unique_diagrams": 13,
+  "registered_formal_routes": 20,
+  "trial_additional_routes": 3,
+  "voices": 26
+}

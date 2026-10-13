@@ -1,0 +1,1664 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="听文视频工作台1.0.2 技术架构与实现文档，完整离线HTML"><title>听文视频工作台 · 技术架构与实现文档</title><style>:root{color-scheme:light;--blue:#0966dc;--ink:#172b43;--muted:#60738b;--line:#dce6f1;--paper:#fff;--rail:270px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;scroll-behavior:smooth;scroll-padding-top:88px}
+*{box-sizing:border-box}body{margin:0;background:#f7f9fc;color:var(--ink);line-height:1.85}a{color:#075fce;text-decoration:none}a:hover{text-decoration:underline}button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #5ba1ff;outline-offset:3px}button{border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);padding:6px 12px}img{max-width:100%}[hidden]{display:none!important}.skip{position:fixed;left:12px;top:-100px;z-index:99;padding:10px;background:white}.skip:focus{top:8px}.reading-progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:40}.reading-progress span{display:block;height:100%;width:0;background:var(--blue)}
+.topbar{position:fixed;top:0;left:0;right:0;z-index:30;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 30px;background:#ffffffed;border-bottom:1px solid var(--line);backdrop-filter:blur(16px)}.brand{display:flex;align-items:center;gap:11px;color:var(--ink);font-weight:700;font-size:15px;line-height:1.35}.brand:hover{text-decoration:none}.brand small{display:block;color:var(--muted);font-size:10px;font-weight:500;letter-spacing:1px;margin-top:3px}.brand-mark{display:grid;place-items:center;width:35px;height:35px;border-radius:11px;background:linear-gradient(135deg,#0c79ff,#0655c2);color:white;font-size:14px;box-shadow:0 4px 13px #0771ed24}.topbar nav{display:flex;align-items:center;gap:18px;font-size:13px}#menu{display:none}
+#sidebar{position:fixed;top:72px;bottom:0;left:0;width:var(--rail);padding:27px 20px 20px;background:#f9fbff;border-right:1px solid var(--line);overflow-y:auto;z-index:25}.rail-title{font-size:14px;font-weight:750;margin-bottom:24px}.search-label{display:block;font-size:11px;color:var(--muted);margin-bottom:7px}#search{width:100%;font-size:12px;padding:9px;border:1px solid #ccdaea;border-radius:8px;background:#fff;color:var(--ink)}#searchStatus{font-size:11px;color:var(--muted);margin:8px 0 16px}.toc{display:flex;flex-direction:column;gap:4px}.toc a{font-size:12px;line-height:1.55;padding:8px 10px;border-radius:7px;color:#415975;border-left:2px solid transparent}.toc a.active{background:#e8f1ff;border-left-color:var(--blue);color:#0053c0}.toc a:hover{background:#edf3fc;text-decoration:none}.rail-note{font-size:10px;line-height:1.8;color:#8391a3;margin-top:30px}
+main{margin:72px 0 0 var(--rail);max-width:calc(1060px + 9vw);padding:52px clamp(24px,4.5vw,72px) 45px}.hero{margin-bottom:35px}.eyebrow{font-size:11px;letter-spacing:2.2px;font-weight:700;color:var(--blue);margin:0 0 20px}h1{font-size:clamp(34px,4vw,52px);font-weight:750;letter-spacing:-1.5px;line-height:1.25;margin:0 0 25px}.hero-lead{font-size:17px;color:#54708e;max-width:760px;line-height:1.8}.audience{font-size:12px;color:#61758e}.hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:23px}.hero-meta span{font-size:11px;padding:3px 9px;color:#3d628c;border:1px solid #cdddf1;border-radius:6px;background:#f2f7ff}.reading-note{display:flex;gap:17px;background:#eef5ff;border:1px solid #d3e4fc;border-radius:12px;padding:18px 22px;font-size:12px;line-height:1.8;margin-bottom:35px}.reading-note strong{white-space:nowrap;color:#155fb5}.reading-note span{color:#506b8b}
+.doc-section{background:var(--paper);border:1px solid var(--line);border-radius:15px;padding:30px 32px;margin-bottom:24px;box-shadow:0 3px 15px #153c6503;overflow-wrap:anywhere}h2{font-size:23px;line-height:1.5;letter-spacing:-.4px;margin:0 0 23px;color:#153f71;scroll-margin-top:90px}h3{font-size:17px;line-height:1.6;margin:28px 0 11px;color:#1d395b}h4{font-size:15px;margin:24px 0 8px}p{margin:12px 0}li{margin:7px 0}ul,ol{padding-left:24px}strong{font-weight:700}blockquote{margin:18px 0;padding:7px 20px;background:#eff6ff;border-left:3px solid #4c91ed;color:#365f87;border-radius:0 8px 8px 0}hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:.82em;color:#27578e;background:#f1f5fa;border:1px solid #e6edf5;border-radius:4px;padding:2px 5px;overflow-wrap:anywhere}pre{background:#16283f;color:#e2ecfa;border-radius:11px;padding:19px 22px;font-size:12px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;overflow-x:auto;margin:18px 0}pre code{color:inherit;background:none;border:0;padding:0;font-size:inherit}.table-scroll{overflow-x:auto;max-width:100%;margin:18px 0;border:1px solid var(--line);border-radius:10px;background:white}.table-scroll table{border-collapse:collapse;width:100%;min-width:570px;font-size:12px;line-height:1.75}th{text-align:left;background:#eef4fc;color:#224f80;font-weight:700}td,th{padding:11px 13px;border-bottom:1px solid #e3eaf3;vertical-align:top}tbody tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#fbfcfe}td code{font-size:10px}.hash{display:block;word-break:break-all;min-width:125px}.method{white-space:nowrap;font-family:monospace;font-size:11px;font-weight:700;color:#146248}
+figure{margin:25px 0}.diagram{background:#f8fbff;border:1px solid #dce7f5;border-radius:12px;padding:12px}.diagram-scroll{overflow-x:auto;max-width:100%}.diagram svg{display:block;width:100%;min-width:730px;height:auto;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.diagram figcaption{font-size:11px;line-height:1.8;color:#507298;padding:10px 7px 2px}.diagram small{display:block;color:#8598ae;font-size:10px;padding:4px 7px}.screen{display:flex;flex-direction:column;align-items:center;padding:25px 20px;background:#f5f8fc;border-radius:12px;border:1px solid var(--line)}.screen-button{padding:0;border:0;background:none;border-radius:16px;box-shadow:0 8px 22px #173a6b12;max-width:330px;overflow:hidden;line-height:0}.screen img{width:100%;display:block}.screen figcaption{font-size:11px;color:#637b94;max-width:650px;text-align:center;margin-top:20px;line-height:1.8}.screen figcaption span{display:block;color:#0c67d0;margin-top:5px}.doc-footer{color:#7b8da1;font-size:11px;line-height:1.8;text-align:center;padding:25px 0}.doc-footer p{margin:6px 0}dialog{border:1px solid #d4e2f3;border-radius:14px;padding:16px;width:min(720px,94vw);max-height:91vh;box-shadow:0 20px 100px #0d284655}dialog::backdrop{background:#122337ae}dialog button{display:block;margin-left:auto;margin-bottom:12px}dialog>div{max-height:75vh;overflow:auto;text-align:center}dialog img{display:inline-block;width:min(100%,520px);height:auto}
+.landing-main{margin:72px auto 0;max-width:1150px;padding-top:65px}.landing-main .hero{max-width:870px}.landing .hero-lead{max-width:770px}.landing-date{color:#7a91ac;font-size:12px}.document-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:42px 0}.document-card{display:block;background:#fff;border:1px solid #cfdfee;border-radius:18px;padding:30px;color:var(--ink);box-shadow:0 8px 30px #153c6505;transition:transform .15s,border-color .15s}.document-card:hover{transform:translateY(-3px);border-color:#66a1ee;text-decoration:none}.card-number{color:#8cb4e8;font-size:12px;letter-spacing:2px}.document-card h2{margin:20px 0 14px;font-size:22px}.document-card p{color:#647a94;font-size:14px}.card-detail{display:block;font-size:11px;color:#7991af;margin:20px 0}.card-open{display:block;font-size:13px;color:#0966dc;font-weight:700}.landing-summary{background:#edf4fe;border-radius:16px;padding:30px}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:25px}.summary-grid h3{font-size:14px;margin-top:0}.summary-grid p,.landing-help{font-size:12px;color:#5d7693}.landing-help{border-top:1px solid #cfe0f5;padding-top:22px;margin-top:23px}
+@media(min-width:1650px){main:not(.landing-main){margin-right:auto}}
+@media(max-width:1000px){:root{--rail:230px}.topbar{padding:0 20px}main{padding:35px 24px}.doc-section{padding:25px 22px}.topbar nav{gap:12px}}
+@media(max-width:760px){:root{font-size:14px;scroll-padding-top:80px}.topbar{height:65px;padding:0 13px}.brand{font-size:12px;gap:8px}.brand small{font-size:9px;letter-spacing:.4px}.brand-mark{height:29px;width:29px;border-radius:9px}.topbar nav{gap:8px;font-size:11px}.topbar button{font-size:11px;padding:5px 8px}#menu{display:block}#print{display:none}#sidebar{top:65px;width:min(310px,88vw);transform:translateX(-102%);transition:transform .18s;border-right:1px solid #b9cfe9;box-shadow:12px 0 40px #23405a18}.toc-open #sidebar{transform:translateX(0)}main{margin:65px 0 0;padding:32px 16px 25px;max-width:none}h1{font-size:34px;letter-spacing:-.8px;margin-bottom:19px}.hero-lead{font-size:14px}.eyebrow{font-size:9px;letter-spacing:1.5px}.hero-meta{gap:6px}.hero-meta span{font-size:9px}.reading-note{display:block;padding:14px 16px}.reading-note strong{display:block;margin-bottom:7px}.reading-note span{font-size:11px}.doc-section{padding:22px 16px;border-radius:12px;margin-bottom:18px}h2{font-size:20px;scroll-margin-top:82px}h3{font-size:16px}.table-scroll table{font-size:11px;min-width:570px}th,td{padding:9px 11px}.diagram{padding:8px}.diagram svg{min-width:720px}.diagram figcaption{font-size:10px}.screen{padding:20px 13px}.screen-button{max-width:290px}pre{padding:15px;font-size:10px}.landing-main{margin-top:65px;padding-top:36px}.landing .hero h1{font-size:31px}.document-cards{grid-template-columns:1fr;gap:16px;margin-top:28px}.document-card{padding:24px}.landing-summary{padding:23px 20px}.summary-grid{grid-template-columns:1fr;gap:9px}.landing-date{font-size:10px}.document-card:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}*{transition:none!important}}
+@media print{@page{size:A4;margin:16mm 14mm}body{background:white;color:#172b43;font-size:10pt;line-height:1.6}.topbar,#sidebar,.reading-progress,.skip,.reading-note,dialog,.screen figcaption span{display:none!important}main,.landing-main{margin:0;padding:0;max-width:none}.hero{margin:0 0 20pt}h1{font-size:30pt}h2{font-size:17pt;break-after:avoid}h3{font-size:12pt;break-after:avoid}.doc-section{border:0;border-top:1px solid #ccd8e6;border-radius:0;box-shadow:none;padding:20pt 0;margin:0;overflow-wrap:anywhere}.diagram{break-inside:avoid;padding:6pt;margin:14pt 0}.diagram svg{width:100%;min-width:0}.diagram-scroll,.table-scroll{overflow:visible}.table-scroll{border:0;border-radius:0}.table-scroll table{min-width:0;font-size:8pt;table-layout:fixed;overflow-wrap:anywhere}th,td{padding:5pt}thead{display:table-header-group}tr{break-inside:avoid}pre{white-space:pre-wrap;break-inside:auto;font-size:8pt;padding:10pt;color:#193856;background:#f0f4f8;border:1px solid #d8e2ef}.screen{break-inside:avoid;padding:12pt}.screen-button{box-shadow:none;max-width:190pt}.hero-meta span{font-size:8pt}.doc-footer{font-size:8pt}.document-cards{gap:14pt}.document-card{box-shadow:none;break-inside:avoid}.summary-grid{gap:14pt}a{color:#194f8d}p{orphans:3;widows:3}}
+</style></head><body data-kind="technical"><a class="skip" href="#document">跳到正文</a><div class="reading-progress" aria-hidden="true"><span id="progress"></span></div><header class="topbar"><a class="brand" href="阅读入口.html"><span class="brand-mark">▶</span><span>听文视频工作台<small>1.0.2 文档中心</small></span></a><nav aria-label="分册导航"><a href="产品说明书与使用指南.html">产品与指南</a><button id="print" type="button">打印 / PDF</button><button id="menu" type="button" aria-controls="sidebar" aria-expanded="false">目录</button></nav></header><aside id="sidebar"><div class="rail-title">技术架构与实现文档</div><label class="search-label" for="search">搜索章节与内容</label><input id="search" type="search" placeholder="例如：换图、试用、FFmpeg" autocomplete="off"><div id="searchStatus" role="status" aria-live="polite">25 个章节</div><nav class="toc" aria-label="章节目录"><a href="#section-01" data-search="01 文档基线、目标与技术边界">01 文档基线、目标与技术边界</a><a href="#section-02" data-search="02 总体架构与部署拓扑">02 总体架构与部署拓扑</a><a href="#section-03" data-search="03 模块、目录与接口责任">03 模块、目录与接口责任</a><a href="#section-04" data-search="04 启动、3秒动态开场与前台服务">04 启动、3秒动态开场与前台服务</a><a href="#section-05" data-search="05 本机HTTP鉴权、会话和WebView边界">05 本机HTTP鉴权、会话和WebView边界</a><a href="#section-06" data-search="06 前端交互、草稿与手机适配">06 前端交互、草稿与手机适配</a><a href="#section-07" data-search="07 任务模型、调度与三阶段状态机">07 任务模型、调度与三阶段状态机</a><a href="#section-08" data-search="08 文案处理、标题校验与文件命名">08 文案处理、标题校验与文件命名</a><a href="#section-09" data-search="09 TTS：分段、流控制、重试与MP3发布">09 TTS：分段、流控制、重试与MP3发布</a><a href="#section-10" data-search="10 图片导入、规范化与公网下载安全">10 图片导入、规范化与公网下载安全</a><a href="#section-11" data-search="11 Seedream云端图片适配与费用保护">11 Seedream云端图片适配与费用保护</a><a href="#section-12" data-search="12 1080p画面、字体与主副标题布局">12 1080p画面、字体与主副标题布局</a><a href="#section-13" data-search="13 时间轴、FFmpeg命令与成片验证">13 时间轴、FFmpeg命令与成片验证</a><a href="#section-14" data-search="14 素材确认、暂停取消和进程恢复时序">14 素材确认、暂停取消和进程恢复时序</a><a href="#section-15" data-search="15 数据目录、schema与持久化一致性">15 数据目录、schema与持久化一致性</a><a href="#section-16" data-search="16 原生桥、系统保存与只读分享">16 原生桥、系统保存与只读分享</a><a href="#section-17" data-search="17 累计试用：算法、持久化和到期联动">17 累计试用：算法、持久化和到期联动</a><a href="#section-18" data-search="18 全量HTTP接口目录与动作契约">18 全量HTTP接口目录与动作契约</a><a href="#section-19" data-search="19 请求、响应、数据示例与错误码">19 请求、响应、数据示例与错误码</a><a href="#section-20" data-search="20 异常分类、可靠性与安全设计评估">20 异常分类、可靠性与安全设计评估</a><a href="#section-21" data-search="21 工具链、依赖、原生兼容与许可证">21 工具链、依赖、原生兼容与许可证</a><a href="#section-22" data-search="22 构建、签名、核验与GitHub发布流程">22 构建、签名、核验与GitHub发布流程</a><a href="#section-23" data-search="23 验证证据、测试方法与验收边界">23 验证证据、测试方法与验收边界</a><a href="#section-24" data-search="24 维护、故障定位、性能和当前限制">24 维护、故障定位、性能和当前限制</a><a href="#section-25" data-search="25 来源索引、术语与追溯资料">25 来源索引、术语与追溯资料</a></nav><p class="rail-note">离线图文 · 无外部资源加载<br>2026-10-10 · 基于发布源码</p></aside><main id="document"><div class="hero"><p class="eyebrow">TINGWEN / DOCUMENTATION</p><h1>技术架构<br>与实现文档</h1><p class="hero-lead">从Android宿主到媒体编码，说明代码职责、数据流、状态机与可审计的构建发布。</p><p class="audience">面向开发者 · 技术维护与评审人员</p><div class="hero-meta"><span>正式版 1.0.2</span><span>试用版 1.0.2-trial</span><span>25 章 · 12 处图示</span></div></div><div class="reading-note"><strong>文档使用</strong><span>目录可搜索并跳转正文；宽表与逻辑图可横向滚动；截图可点击放大。HTML内嵌全部样式、图和截图，断网也可阅读，外部源码/参考链接需联网。</span></div><article><section class="doc-section"><h2 id="section-01" tabindex="-1">01 文档基线、目标与技术边界</h2>
+<p>本文描述听文视频工作台Android正式版1.0.2与独立试用版1.0.2-trial的实际实现，覆盖产品到代码、输入到成片、任务到文件、构建到发布的完整链路。适用对象为开发人员、技术交付人员、维护人员以及需要判断产品实现范围的评审者。本文不是将来功能方案：已实现行为、测试证据和现有局限分开表述。</p>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>基线项</th>
+<th>正式版</th>
+<th>试用版</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>APK versionName</td>
+<td>1.0.2</td>
+<td>1.0.2-trial</td>
+</tr>
+<tr>
+<td>versionCode</td>
+<td>10002</td>
+<td>10002</td>
+</tr>
+<tr>
+<td>applicationId</td>
+<td><code>cn.tingwen.workbench</code></td>
+<td><code>cn.tingwen.workbench.trial</code></td>
+</tr>
+<tr>
+<td>Java namespace</td>
+<td><code>cn.tingwen.workbench</code></td>
+<td><code>cn.tingwen.workbench</code></td>
+</tr>
+<tr>
+<td>导出provider authority</td>
+<td><code>cn.tingwen.workbench.exports</code></td>
+<td><code>cn.tingwen.workbench.trial.exports</code></td>
+</tr>
+<tr>
+<td>保留的PC业务基线</td>
+<td>PC1.5.9</td>
+<td>PC1.5.9，附累计试用控制</td>
+</tr>
+<tr>
+<td>Android SDK</td>
+<td>min24 / target34 / compile36</td>
+<td>相同</td>
+</tr>
+<tr>
+<td>ABI</td>
+<td>arm64-v8a、x86_64</td>
+<td>相同</td>
+</tr>
+</tbody></table></div>
+<p>技术实现使用原生Java宿主与WebView承载交互、Chaquopy内嵌Python、Flask提供回环HTTP业务接口、Pillow加工画面、在线Edge TTS生成MP3、可选Seedream生成图片，以及打包的Android原生FFmpeg/FFprobe执行编码与探测。手机不依赖PC在线、不下载本机绘图模型，不存在远程Web应用托管层。</p>
+<p>需要区分三条边界：<strong>界面在哪里显示</strong>（WebView）、<strong>业务在哪里执行</strong>（应用进程内Python）、<strong>哪些数据离开设备</strong>（联网TTS正文、用户选择的图片服务器访问、用户明确同意的Seedream提示词/认证及主动分享）。视频编码和照片规范化在手机本地，但不是所有输入处理都完全离线。</p>
+<p>源码归档中仍保留PC兼容函数、Draw Things模块、CLI脚本和历史版本记录；这些不代表APK现行用户入口。特别是Android启动会替换视频worker，绕过桌面Python子进程合成分支。本文所有编码参数均取Android实际worker，而非保留CLI的可选字幕或macOS硬件编码分支。</p>
+<p>编制日期：2026-10-10。正式版代码发布目标提交为<code>7fa6bf848d5f6718a38838f56b5754e267cba19f</code>；试用版发布目标为<code>14f47dc5edadcd5d498a71ae039b1d44feaef3f1</code>。后续主分支<code>fb7e0c1</code>补充发布核验记录，未改已签APK。原始源码及证据目录的SHA256索引附于本文最后，便于核对资料基线。</p>
+</section><section class="doc-section"><h2 id="section-02" tabindex="-1">02 总体架构与部署拓扑</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" role="img" aria-labelledby="architecture-title"><title id="architecture-title">Android默认进程＋本机原生媒体子进程</title><defs><marker id="architecture-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="1100" height="780" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">Android默认进程＋本机原生媒体子进程</text><path d="M295,118 L342.5,118 L342.5,118 L390,118" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#architecture-arrow)"/><text x="342.5" y="109" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">载入本机页</text><path d="M295,263 L342.5,263 L342.5,263 L390,263" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#architecture-arrow)"/><text x="342.5" y="254" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">start()</text><path d="M545,161 L545,190.5 L545,190.5 L545,220" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#architecture-arrow)"/><text x="590" y="190" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">同源HTTP</text><path d="M390,118 L335,118 L335,408 L295,408" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#architecture-arrow)"/><text x="332" y="329" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">桥调用</text><path d="M545,306 L545,335.5 L545,335.5 L545,365" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#architecture-arrow)"/><path d="M545,451 L545,480.5 L545,480.5 L545,510" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#architecture-arrow)"/><path d="M545,596 L545,625.5 L545,625.5 L545,655" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#architecture-arrow)"/><path d="M700,408 L744,408 L744,118 L800,118" fill="none" stroke="#56789a" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#architecture-arrow)"/><text x="755" y="151" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">在线语音</text><path d="M700,408 L763,408 L763,263 L800,263" fill="none" stroke="#56789a" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#architecture-arrow)"/><text x="767" y="309" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">可选收费图</text><path d="M700,408 L750,408 L750,408 L800,408" fill="none" stroke="#56789a" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#architecture-arrow)"/><path d="M160,451 L160,630 L770,630 L770,553 L800,553" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#architecture-arrow)"/><text x="175" y="543" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">安全导出</text><rect x="25" y="75" width="270" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="160" y="103" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">MainActivity</text><text x="160" y="125" text-anchor="middle" fill="#506a84" font-size="12.5">启动／页面／系统交互</text><rect x="25" y="220" width="270" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="160" y="248" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">WorkbenchService</text><text x="160" y="270" text-anchor="middle" fill="#506a84" font-size="12.5">Chaquopy启动 · 通知 · WakeLock</text><rect x="25" y="365" width="270" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="160" y="393" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">NativeBridge＋导出层</text><text x="160" y="415" text-anchor="middle" fill="#506a84" font-size="12.5">路径复核 · SAF · 只读URI</text><rect x="390" y="75" width="310" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="545" y="103" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">WebView前端</text><text x="545" y="125" text-anchor="middle" fill="#506a84" font-size="12.5">模板内联JS＋mobile.js／CSS</text><rect x="390" y="220" width="310" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="545" y="248" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Flask回环服务</text><text x="545" y="270" text-anchor="middle" fill="#506a84" font-size="12.5">127.0.0.1:随机端口 · 双层鉴权</text><rect x="390" y="365" width="310" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="545" y="393" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Python任务与素材处理</text><text x="545" y="415" text-anchor="middle" fill="#506a84" font-size="12.5">Control／WORKERS／RLock</text><rect x="390" y="510" width="310" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="545" y="538" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">FFmpeg／FFprobe子进程</text><text x="545" y="560" text-anchor="middle" fill="#506a84" font-size="12.5">Pillow cover · H.264／AAC</text><rect x="390" y="655" width="310" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="545" y="683" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">应用私有文件</text><text x="545" y="705" text-anchor="middle" fill="#506a84" font-size="12.5">任务／草稿／素材／日志／账本</text><rect x="800" y="75" width="275" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="937.5" y="103" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">Edge在线TTS</text><text x="937.5" y="125" text-anchor="middle" fill="#506a84" font-size="12.5">正文＋所选音色</text><rect x="800" y="220" width="275" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="937.5" y="248" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">Seedream（可选）</text><text x="937.5" y="270" text-anchor="middle" fill="#506a84" font-size="12.5">提示词＋用户Key＋付费同意</text><rect x="800" y="365" width="275" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="937.5" y="393" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">公开图片服务器</text><text x="937.5" y="415" text-anchor="middle" fill="#506a84" font-size="12.5">仅安全直链下载</text><rect x="800" y="510" width="275" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="937.5" y="538" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">Android系统文件目标</text><text x="937.5" y="560" text-anchor="middle" fill="#506a84" font-size="12.5">用户另存／主动分享</text></svg></div><figcaption>图2｜系统运行架构。实线表示本机调用或数据流，虚线表示网络访问；远端TTS与可选AI服务不属于手机内置模型。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<h3 id="section-02-sub-1">分层职责</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>层次</th>
+<th>实现组件</th>
+<th>职责</th>
+<th>不承担的职责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Android宿主层</td>
+<td>MainActivity、WorkbenchService、StartupAnimationView、ExportPolicy、ExportProvider</td>
+<td>生命周期、启动画面、WebView、系统选择器、通知、唤醒、另存与分享安全</td>
+<td>不实现TTS模型、不承载远端账号授权</td>
+</tr>
+<tr>
+<td>前端交互层</td>
+<td>Jinja模板中的内联JS、mobile.js、mobile.css</td>
+<td>文案和标题、音色、图片来源、状态展示、确认操作、草稿、四页导航</td>
+<td>不作为唯一的验证或额度权威</td>
+</tr>
+<tr>
+<td>本机服务层</td>
+<td>android_runtime.start、Flask app、guard</td>
+<td>手机私有回环服务、鉴权、JSON接口、资源和媒体返回</td>
+<td>不面向局域网或互联网开放API</td>
+</tr>
+<tr>
+<td>业务调度层</td>
+<td>app.py、Control、WORKERS、ACTIVE、CONTROLS</td>
+<td>创建任务、线程调度、阶段状态、确认闸门、暂停/取消、恢复、素材保留</td>
+<td>无持久化多任务队列、无OS JobScheduler</td>
+</tr>
+<tr>
+<td>素材处理层</td>
+<td>speech.py、photo_import.py、seedream.py、标题脚本</td>
+<td>在线语音、输入图片安全、云端图像适配、画面绘制</td>
+<td>无端侧大模型、无文字AI改写</td>
+</tr>
+<tr>
+<td>媒体执行层</td>
+<td>Android FFmpeg/FFprobe PIE程序</td>
+<td>H.264/AAC编码、格式/时长/流探测、进度输出</td>
+<td>无Android MediaCodec硬件编码分支</td>
+</tr>
+<tr>
+<td>私有数据层</td>
+<td>JSON/JSONL、PNG、MP3、MP4</td>
+<td>草稿、任务快照、语音片段、素材、成品、日志、试用账本</td>
+<td>无SQLite/Room、无同步服务器</td>
+</tr>
+</tbody></table></div>
+<h3 id="section-02-sub-2">进程与线程</h3>
+<p>Activity、Service、WebView宿主和Chaquopy均处于默认应用进程，Manifest没有独立<code>android:process</code>声明。Service有单线程计划执行器，Python本机HTTP服务以daemon线程运行且请求处理支持线程；每个业务步骤由daemon线程执行，音频步骤内部运行asyncio事件循环。FFmpeg和FFprobe通过Python子进程执行，不由JNI媒体接口加载。</p>
+<p><code>libffmpeg.so</code>和<code>libffprobe.so</code>虽使用<code>.so</code>名字，实际是Android ELF64 PIE可执行程序。这个名称方便Android安装时将其提取到<code>nativeLibraryDir</code>；执行路径来自系统应用信息，不依赖PATH中另行安装FFmpeg。</p>
+<p>Chaquopy作为Android Gradle插件将Python运行时、Python业务和对应ABI依赖打入APK；本项目使用Java API在宿主中启动与调用Python模块。<a href="https://chaquo.com/chaquopy/doc/current/android.html">Chaquopy 17 Gradle文档</a>说明这一接入机制；具体版本和模块调用以本项目配置为准。</p>
+<p>依据：<code>app/build.gradle:9–55</code>、<code>AndroidManifest.xml:14–27</code>、<code>WorkbenchService.java:47–57</code>、<code>android_runtime.py:168–187</code>、<code>app.py:325–366</code>。</p>
+</section><section class="doc-section"><h2 id="section-03" tabindex="-1">03 模块、目录与接口责任</h2>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>源码模块</th>
+<th>核心责任</th>
+<th>主要输入／输出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MainActivity.java</code></td>
+<td>主WebView、开场覆盖层、原生桥、文件选择、保存/分享、返回键</td>
+<td>系统Intent／本机URL／导出路径 → 页面、URI、原生提示</td>
+</tr>
+<tr>
+<td><code>WorkbenchService.java</code></td>
+<td>拷贝应用资源、启动Python/Flask、阶段通知、WakeLock</td>
+<td>files根/native目录/随机密钥 → baseUrl与运行摘要</td>
+</tr>
+<tr>
+<td><code>StartupAnimationView.java</code>与<code>StartupTiming.java</code></td>
+<td>Canvas科技蓝动画及首帧计时</td>
+<td>首帧时刻、页面ready → 是否揭示WebView</td>
+</tr>
+<tr>
+<td><code>ExportPolicy.java</code></td>
+<td>同源和文件路径二次校验</td>
+<td>URL/文件 → 安全判定</td>
+</tr>
+<tr>
+<td><code>ExportProvider.java</code></td>
+<td>临时内容URI映射、只读访问</td>
+<td>token/文件名 → MIME、描述、只读文件描述符</td>
+</tr>
+<tr>
+<td><code>android_runtime.py</code></td>
+<td>Android启动、实际视频worker、系统图像解码、导出解析</td>
+<td>Java调用、任务/Control → 本机服务与手机成片</td>
+</tr>
+<tr>
+<td><code>app.py</code></td>
+<td>路由、任务schema、调度、状态、图片确认、历史和恢复</td>
+<td>JSON请求 → 任务JSON/媒体/日志</td>
+</tr>
+<tr>
+<td><code>speech.py</code></td>
+<td>音色表、正文分段、受控流、有限重试、片段复用与拼接</td>
+<td>正文/音色/控制 → part文件/audio.mp3</td>
+</tr>
+<tr>
+<td><code>photo_import.py</code></td>
+<td>Base64/图片验证、批次保护、PNG规范化、公网URL安全</td>
+<td>手机图/直链 → PNG字节与脱敏元数据</td>
+</tr>
+<tr>
+<td><code>seedream.py</code></td>
+<td>方舟图像单次请求、结果未知分类、错误脱敏</td>
+<td>用户Key/模型/prompt → 单张PNG与模型元信息</td>
+</tr>
+<tr>
+<td><code>image_sources.py</code></td>
+<td>来源注册与客户端选择</td>
+<td>环境/provider → 可用来源和客户端</td>
+</tr>
+<tr>
+<td><code>records.py</code></td>
+<td>版本说明、安全事件日志、分页</td>
+<td>白名单字段 → events.jsonl/响应列表</td>
+</tr>
+<tr>
+<td><code>make_homepage_bg.py</code></td>
+<td>标题规范化、计数、字体与海报布局</td>
+<td>原图/主副标题 → 标题画面</td>
+</tr>
+<tr>
+<td><code>compose_video.py</code></td>
+<td>保留PC CLI；Android仅复用时间轴函数</td>
+<td>Android调用build_image_sequence → ffconcat</td>
+</tr>
+<tr>
+<td><code>trial_limits.py</code>（仅试用版）</td>
+<td>累计账本、文字差异、照片凭据、迁移、失效联动</td>
+<td>新正文/新图片 → 持久usage及到期状态</td>
+</tr>
+</tbody></table></div>
+<p>界面主业务脚本并非独立<code>app.js</code>：它位于<code>templates/index.html</code>的内联script，随后加载<code>static/mobile.js</code>改写手机端布局、导航及PC按钮行为。技术维护时必须同时查看模板、移动JS和移动CSS，单看原模板会把“打开文件夹”等PC文案误认为Android实际动作。</p>
+<p>应用随包资源包括字体、26段试听、许可证、模板和静态文件。用户任务、运行日志、草稿、API Key和签名私钥不应进入源码归档或APK资源。文档中的数据结构与示例使用合成内容，不来自实际用户任务。</p>
+</section><section class="doc-section"><h2 id="section-04" tabindex="-1">04 启动、3秒动态开场与前台服务</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 780" role="img" aria-labelledby="startup-title"><title id="startup-title">原生开场与本机服务并行</title><defs><marker id="startup-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="1000" height="780" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">原生开场与本机服务并行</text><path d="M490,156 L490,180.5 L200,180.5 L200,205" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#startup-arrow)"/><path d="M490,156 L490,180.5 L780,180.5 L780,205" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#startup-arrow)"/><path d="M780,291 L780,318 L780,318 L780,345" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#startup-arrow)"/><path d="M200,291 L200,456 L360,538" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#startup-arrow)"/><text x="188" y="445" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">计时条件</text><path d="M780,431 L780,538 L620,538" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#startup-arrow)"/><text x="807" y="466" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">页面条件</text><path d="M490,581 L490,613 L490,613 L490,645" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#startup-arrow)"/><path d="M650,248 L560,263 L560,388 L330,388" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#startup-arrow)"/><text x="486" y="319" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">失败／等待</text><rect x="360" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="490" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Activity创建</text><text x="490" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">隐藏WebView＋开场覆盖层</text><rect x="70" y="205" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="200" y="233" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Canvas首帧</text><text x="200" y="255" text-anchor="middle" fill="#506a84" font-size="12.5">记录uptime · 至少3000ms</text><rect x="650" y="205" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="780" y="233" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Service初始化</text><text x="780" y="255" text-anchor="middle" fill="#506a84" font-size="12.5">资源 · Python · 回环服务</text><rect x="650" y="345" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="780" y="373" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">WebView载入首页</text><text x="780" y="395" text-anchor="middle" fill="#506a84" font-size="12.5">Android密钥／页面ready</text><rect x="360" y="495" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="490" y="523" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">开场揭示闸门</text><text x="490" y="545" text-anchor="middle" fill="#506a84" font-size="12.5">首帧已发生＋已满3秒＋页面ready</text><rect x="360" y="645" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="490" y="673" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">进入四页工作台</text><text x="490" y="695" text-anchor="middle" fill="#506a84" font-size="12.5">延后通知权限申请</text><rect x="70" y="345" width="260" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="200" y="373" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">加载慢或启动失败</text><text x="200" y="395" text-anchor="middle" fill="#506a84" font-size="12.5">留状态／明确重试入口</text></svg></div><figcaption>图3｜开屏揭示条件与服务并行初始化。3秒从首帧起计，加载失败不以空白页面冒充就绪。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<h3 id="section-04-sub-1">启动序列</h3>
+<ol>
+<li>Activity创建隐藏WebView与原生开场覆盖层；同时启动WorkbenchService。动画和业务初始化并行，不用固定sleep阻塞主线程。</li>
+<li>StartupAnimationView使用Canvas/Paint/Path和渐变绘制科技蓝背景、轨道、声波及“文字／声音／视频”阶段。设计坐标按屏幕映射，首个实际绘制帧记录<code>SystemClock.uptimeMillis()</code>。</li>
+<li>StartupTiming的时长常量为3000ms。显示页面需同时满足首帧发生、已满3000ms和<code>pageReady=true</code>；页面慢时保持加载状态，失败时显示错误与“重试启动”。</li>
+<li>Service立即建立低重要性通知渠道并进入前台。API34及以上使用<code>FOREGROUND_SERVICE_TYPE_SPECIAL_USE</code>；Manifest附带用户发起本机语音和视频任务的用途描述。</li>
+<li>后台执行器将<code>assets/workbench</code>拷到<code>getFilesDir()/workbench</code>；模板和静态文件按前缀更新，其他已有文件通常保留。</li>
+<li>启动Chaquopy Python；Java用SecureRandom生成32字节密钥（256bit），并转为64个十六进制字符的字符串保存在运行内存。</li>
+<li>调用<code>android_runtime.start(root,nativeDirectory,secret)</code>：设置环境、导入业务、替换视频worker、恢复任务状态、建立随机端口回环服务。</li>
+<li>Activity用<code>X-Android-Key</code>头载入首页。返回首页设置HttpOnly Cookie，让同源子资源继续通过Android密钥验证。</li>
+<li>页面ready后等待开场满足计时条件，隐藏覆盖层。Android13及以上的通知权限请求延后至开场完成、页面ready且Activity恢复状态，避免遮住动画。</li>
+</ol>
+<h3 id="section-04-sub-2">关键常量与生命周期</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>实际值／机制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>开场最低时长</td>
+<td>3000ms，从首个绘制帧起计</td>
+</tr>
+<tr>
+<td>服务Host/Port</td>
+<td><code>127.0.0.1</code>，端口0由系统动态分配；不是固定8091</td>
+</tr>
+<tr>
+<td>通知渠道／ID</td>
+<td><code>workbench_tasks</code>／1001</td>
+</tr>
+<tr>
+<td>服务状态轮询</td>
+<td>每2秒调用Python status_json</td>
+</tr>
+<tr>
+<td>处理期唤醒</td>
+<td>PARTIAL_WAKE_LOCK，单次最长10分钟；仍忙时后续轮询可重新获取，空闲释放</td>
+</tr>
+<tr>
+<td>服务重建提示</td>
+<td>START_STICKY；不能据此保证进程永远存活</td>
+</tr>
+<tr>
+<td>Activity销毁</td>
+<td>销毁页面与预览资源，不主动停止前台服务</td>
+</tr>
+</tbody></table></div>
+<p><code>copyAssets</code>代码还检查<code>previews/</code>前缀，但真实试听位于<code>assets/previews/</code>，不能将其泛化为“升级一定覆盖所有已有试听”。本版本试听内容未调整；未来资源升级应按实际相对路径核验。</p>
+<p>通知展示ACTIVE步骤汇总，例如“合成MP3／准备照片／合成MP4”；精确分段与编码进度属于任务页。唤醒锁仅影响部分CPU休眠，不能阻止所有厂商省电清理、强行停止或存储故障。</p>
+<p>依据：<code>StartupTiming.java:4–12</code>、<code>StartupAnimationView.java:35–94</code>、<code>MainActivity.java:72–145</code>、<code>WorkbenchService.java:28–103</code>、<code>android_runtime.py:168–197</code>。</p>
+</section><section class="doc-section"><h2 id="section-05" tabindex="-1">05 本机HTTP鉴权、会话和WebView边界</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 850" role="img" aria-labelledby="security-title"><title id="security-title">从本机页面到受限业务接口</title><defs><marker id="security-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="960" height="850" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">从本机页面到受限业务接口</text><path d="M480,151 L480,173 L480,173 L480,195" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#security-arrow)"/><path d="M480,281 L480,303 L480,303 L480,325" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#security-arrow)"/><path d="M480,411 L480,433 L480,433 L480,455" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#security-arrow)"/><path d="M480,541 L480,563 L480,563 L480,585" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#security-arrow)"/><path d="M480,671 L480,693 L480,693 L480,715" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#security-arrow)"/><path d="M350,498 L320,498 L320,498 L290,498" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#security-arrow)"/><text x="317" y="490" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">不通过</text><rect x="350" y="65" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="480" y="93" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">可信主WebView</text><text x="480" y="115" text-anchor="middle" fill="#506a84" font-size="12.5">当前127.0.0.1:动态端口</text><rect x="350" y="195" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="480" y="223" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Android运行密钥</text><text x="480" y="245" text-anchor="middle" fill="#506a84" font-size="12.5">请求头／HttpOnly同源Cookie</text><rect x="350" y="325" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="480" y="353" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Host与Origin检查</text><text x="480" y="375" text-anchor="middle" fill="#506a84" font-size="12.5">回环Host · 同源 · 拒绝cross-site</text><rect x="350" y="455" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="480" y="483" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">POST令牌与JSON／大小</text><text x="480" y="505" text-anchor="middle" fill="#506a84" font-size="12.5">X-Local-Token · 64MiB保护</text><rect x="350" y="585" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="480" y="613" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">业务／素材／额度验证</text><text x="480" y="635" text-anchor="middle" fill="#506a84" font-size="12.5">参数 · 状态 · 版本 · TrialUsage</text><rect x="350" y="715" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="480" y="743" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">允许的任务与文件能力</text><text x="480" y="765" text-anchor="middle" fill="#506a84" font-size="12.5">受控worker／安全媒体读取</text><rect x="30" y="455" width="260" height="86" rx="12" fill="#fff0f2" stroke="#e9a8b3" stroke-width="1.6"/><text x="160" y="483" text-anchor="middle" fill="#993c4a" font-size="16" font-weight="650">保护性拒绝</text><text x="160" y="505" text-anchor="middle" fill="#506a84" font-size="12.5">403／415／413／400／409</text></svg></div><figcaption>图13｜本机请求验证链。先通过应用密钥、来源、POST会话与JSON保护，才进入业务和试用校验；服务仅监听回环地址。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<h3 id="section-05-sub-1">请求验证顺序</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>层次</th>
+<th>检查项</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Android应用访问密钥</td>
+<td><code>X-Android-Key</code>或<code>tingwen_app</code> Cookie与运行态secret恒时比较</td>
+<td>不匹配403，拒绝进入业务</td>
+</tr>
+<tr>
+<td>Host</td>
+<td>仅127.0.0.1或localhost</td>
+<td>其他Host拒绝</td>
+</tr>
+<tr>
+<td>来源</td>
+<td>POST和<code>/api/session</code>在提供Origin时检查其等于当前scheme/host/port；Sec-Fetch-Site不得为cross-site</td>
+<td>不同源拒绝；缺Origin本身不拒绝，无放开CORS</td>
+</tr>
+<tr>
+<td>本机会话</td>
+<td>所有POST要求<code>X-Local-Token</code>等于本进程TOKEN</td>
+<td>缺失/过期403，带明确code</td>
+</tr>
+<tr>
+<td>内容类型</td>
+<td>POST必须JSON</td>
+<td>非JSON为415</td>
+</tr>
+<tr>
+<td>请求体</td>
+<td>最大64×1024×1024字节</td>
+<td>超出413</td>
+</tr>
+<tr>
+<td>业务校验</td>
+<td>标题、音色、图片、状态、版本、额度等</td>
+<td>不通过时400/409等</td>
+</tr>
+</tbody></table></div>
+<p>TOKEN通过<code>secrets.token_urlsafe(32)</code>生成，仅在运行内存；Android secret同样不写任务或草稿。首页Cookie设置HttpOnly与SameSite=Strict；回环HTTP没有设置Secure。首页和会话响应为no-store。HttpOnly能限制页面JS读取Cookie，不能替代主WebView导航控制和设备安全边界。</p>
+<p>前端仅对服务器明确给出的<code>local_session_expired</code>拒绝进行一次会话恢复与重放：获取同源<code>/api/session</code>、校验产品名与token后重新发原请求。该拒绝发生在任务/模型处理之前，因此可以安全恢复。普通网络断连、Seedream超时或“响应未知”不属于可自动重发场景，防止产生第二次付费请求。</p>
+<h3 id="section-05-sub-2">主WebView设置与导航</h3>
+<ul>
+<li>开启JavaScript和DOM storage，关闭file access；content access供系统选择器交互使用。</li>
+<li>拒绝第三方Cookie、禁止mixed content、媒体播放要求用户手势；WebView摄像头/麦克风权限请求直接deny。</li>
+<li>主页面仅允许当前<code>http://127.0.0.1:&lt;port&gt;</code>同源导航。主机需字面127.0.0.1、无userInfo、合法且相同端口。</li>
+<li>当前源资源、当前源拥有的blob、data和about:blank按代码规则放行；其他资源请求返回403。外部http/https/mailto/tel交给系统应用。</li>
+<li>图片放大使用无AndroidNative桥的独立预览WebView，需用户手势；关闭预览会销毁其资源，避免把原生文件能力带给任意外部页面。</li>
+</ul>
+<p>网络安全XML默认拒绝cleartext，仅回环域名放行。Python照片下载自行允许并验证公共HTTP/HTTPS，不能把XML设置误解为Python的网上图片只支持HTTPS。APK并未实现证书钉扎、设备加密数据仓库或跨设备身份服务。</p>
+<p>依据：<code>app.py:369–419</code>、<code>MainActivity.java:146–239</code>、<code>ExportPolicy.java:9–27</code>、<code>res/xml/network_security_config.xml</code>。</p>
+</section><section class="doc-section"><h2 id="section-06" tabindex="-1">06 前端交互、草稿与手机适配</h2>
+<p>前端通过四个pane组织创作、任务、作品和关于，mobile.js将PC定位文件行为适配为AndroidNative导出或作品页。首页大介绍区已去除，应用名下两行10px说明保留；360/390px检查避免标题区挤占文案输入空间。主标题placeholder“6G 通信”不等于默认写入标题。</p>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>交互机制</th>
+<th>实现要点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>正文统计</td>
+<td><code>Array.from(text).length</code>，Unicode码点口径；长文输入框内部滚动</td>
+</tr>
+<tr>
+<td>标题统计</td>
+<td>规范化主副标题，去换行后合计；客户端提前拒绝30字符以上，服务端重复校验</td>
+</tr>
+<tr>
+<td>音色</td>
+<td>模板由VOICES渲染，所选按钮和摘要更新；样音来自本机preview接口，恢复不自动播放</td>
+</tr>
+<tr>
+<td>本机照片预选</td>
+<td>FileReader读取、大小和数量预检、ObjectURL缩略图；重新选择替换批次，删除回收ObjectURL</td>
+</tr>
+<tr>
+<td>图片动作锁</td>
+<td>防重复点击、换图期间禁用相冲突动作；服务端仍执行状态校验</td>
+</tr>
+<tr>
+<td>任务轮询</td>
+<td>选中任务约每2.5秒刷新，显示三个独立阶段状态</td>
+</tr>
+<tr>
+<td>草稿</td>
+<td>input/change后300ms延迟，隐藏/返回时主动保存；只保存白名单字段</td>
+</tr>
+<tr>
+<td>视频列表</td>
+<td>请求实际磁盘成片列表，内嵌标准video控件；保存/分享交给原生</td>
+</tr>
+<tr>
+<td>错误反馈</td>
+<td>alert/toast与步骤消息；结构化服务错误显示原因，模板文本以textContent插入数据</td>
+</tr>
+</tbody></table></div>
+<p>“清空”调用工作区清理逻辑，不向后端发送cancel，也不删除任务。它清输入、文件预选、Key、费用勾选、当前任务显示和本地清洗撤销缓存；正式版及未到期试用版保存空草稿。到期试用的flushDraft不再保存新草稿，清空正文还可能被计数锁回退为acceptedText，重启仍可恢复原已存正文。历史文件和活动工作仍由后端维护。用户想停止处理需要明确点击取消。</p>
+<p>草稿恢复字段包括<code>title,titleSecondary,text,prompt,voice,imageMode,provider,selectedId</code>；不包含model、api_key、payment_consent、photo_url或File对象。模型不持久保存回草稿，已有任务的模型快照保存在job中。来源在Android草稿中固定为seedream。</p>
+<p>正式版返回键保存行为与试用版不同：试用版额外等待串行计数/保存Promise后才触发原生finish，相关一致性细节见第17章。不得把试用专属修复扩写成正式版也具有同一队列实现。</p>
+<p>依据：<code>templates/index.html:154–282</code>、<code>static/mobile.js:4–101</code>、<code>static/mobile.css:3–19</code>、<code>app.py:427–465</code>。</p>
+</section><section class="doc-section"><h2 id="section-07" tabindex="-1">07 任务模型、调度与三阶段状态机</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 710" role="img" aria-labelledby="state-machine-title"><title id="state-machine-title">阶段状态与显式恢复</title><defs><marker id="state-machine-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="1020" height="710" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">阶段状态与显式恢复</text><path d="M310,113 L340,113 L340,113 L370,113" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><path d="M630,113 L660,113 L660,113 L690,113" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><path d="M820,156 L820,195.5 L820,195.5 L820,235" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><path d="M950,113 L978,113 L978,448 L950,448" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><path d="M820,156 L820,364 L659,364 L659,448 L630,448" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><path d="M370,113 L345,113 L345,365 L180,365 L180,405" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><text x="273" y="356" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">重启</text><path d="M820,491 L820,618 L630,618" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><path d="M500,491 L500,533 L500,533 L500,575" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><path d="M180,491 L180,618 L370,618" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><path d="M370,618 L337,618 L337,183 L500,183 L500,156" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><text x="335" y="541" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">通过校验</text><path d="M690,113 L660,113 L660,278 L630,278" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#state-machine-arrow)"/><text x="669" y="225" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">pause／resume</text><rect x="50" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="180" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">idle／未开始</text><text x="180" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">视频等待素材确认</text><rect x="370" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="500" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">queued／等待</text><text x="500" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">launch接受步骤</text><rect x="690" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="820" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">working／处理中</text><text x="820" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">执行worker／更新进度</text><rect x="690" y="235" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="820" y="263" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">ready／done</text><text x="820" y="285" text-anchor="middle" fill="#506a84" font-size="12.5">音频图ready · 视频done</text><rect x="690" y="405" width="260" height="86" rx="12" fill="#fff0f2" stroke="#e9a8b3" stroke-width="1.6"/><text x="820" y="433" text-anchor="middle" fill="#993c4a" font-size="16" font-weight="650">failed／失败</text><text x="820" y="455" text-anchor="middle" fill="#506a84" font-size="12.5">素材保留 · 显示错误</text><rect x="370" y="405" width="260" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="500" y="433" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">cancelled／已取消</text><text x="500" y="455" text-anchor="middle" fill="#506a84" font-size="12.5">Control取消后worker退出</text><rect x="50" y="405" width="260" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="180" y="433" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">interrupted／待恢复</text><text x="180" y="455" text-anchor="middle" fill="#506a84" font-size="12.5">进程重启时busy转入</text><rect x="370" y="575" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="500" y="603" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">显式重试或再次确认</text><text x="500" y="625" text-anchor="middle" fill="#506a84" font-size="12.5">检查状态/版本/费用/试用额度</text><rect x="370" y="235" width="260" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="500" y="263" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">paused独立标记</text><text x="500" y="285" text-anchor="middle" fill="#506a84" font-size="12.5">检查点等待／编码SIGSTOP</text></svg></div><figcaption>图8｜单个步骤状态机。音频/图片成功为ready，视频成功为done；paused/cancelled是跨阶段标志，resume并不自动启动中断步骤。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<p>系统不是一个单独全局状态枚举。每个job有独立的<code>audio_state</code>、<code>image_state</code>、<code>video_state</code>，以及<code>paused</code>、<code>cancelled</code>、<code>submitting</code>等跨阶段标记。音频、图片成功状态为ready；视频成功为done。queued/working用于活动判定，failed/cancelled/interrupted表示不同终止或恢复情形。</p>
+<h3 id="section-07-sub-1">创建与工作器</h3>
+<p>新任务先规范化标题、验证正文/音色/配图方式、解码或校验照片与来源配置。在RLock内检查ACTIVE，若有活动任务则409拒绝创建；生成规范UUID、写job快照、创建Control，启动audio。手机上传图已在请求中处理并保存，所以无需另启动image线程；URL和Seedream会启动image，与音频工作器可并行。</p>
+<p><code>ACTIVE</code>是<code>(job_id,part)</code>集合，<code>CONTROLS</code>映射每任务共享控制对象。<code>launch()</code>避免同一步重复启动，用daemon线程执行WORKERS映射中的函数。Android启动覆盖<code>WORKERS[&#39;video&#39;]</code>，其他业务继承PC规则。全局RLock协调任务读写、活动集和动作，不形成跨进程数据库事务。</p>
+<h3 id="section-07-sub-2">状态与动作关系</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>动作</th>
+<th>状态改变／处理</th>
+<th>活動限制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>create</td>
+<td>audio queued，image queued或ready，video idle</td>
+<td>ACTIVE非空拒绝新任务</td>
+</tr>
+<tr>
+<td>pause</td>
+<td>设置paused事件及持久标志</td>
+<td>对在途云图片不能撤回服务端处理</td>
+</tr>
+<tr>
+<td>resume</td>
+<td>清paused/cancelled，必要时新Control</td>
+<td>取消尚未完成则拒绝；不自动launch中断步骤</td>
+</tr>
+<tr>
+<td>cancel</td>
+<td>cancelled事件，清前端暂停显示；未运行busy步骤设cancelled</td>
+<td>正在运行worker在检查点停止</td>
+</tr>
+<tr>
+<td>retry-audio</td>
+<td>重置audio queued，清素材确认，video idle</td>
+<td>同步/视频/导图或其他任务忙时拒绝</td>
+</tr>
+<tr>
+<td>retry-image</td>
+<td>重置image queued，沿用任务来源/模型</td>
+<td>manual图不使用这一AI重试入口</td>
+</tr>
+<tr>
+<td>regenerate</td>
+<td>更新prompt，重生成当前来源/模型图</td>
+<td>新要求非空；Seedream重新认证/同意</td>
+</tr>
+<tr>
+<td>change-source</td>
+<td>使用新来源/模型配置并更新prompt</td>
+<td>Android只有Seedream可选AI来源</td>
+</tr>
+<tr>
+<td>use-image</td>
+<td>保存手机图或下载直链，更新image_version</td>
+<td>允许同任务音频仍在处理，拒其他冲突步骤</td>
+</tr>
+<tr>
+<td>select-images</td>
+<td>原图库保留非空子集，新image_version</td>
+<td>有图/视频冲突步骤时拒绝，至少一张</td>
+</tr>
+<tr>
+<td>confirm</td>
+<td>保存当前confirmed_version/digest，video queued并launch</td>
+<td>audio/image都ready，无暂停/取消/ACTIVE</td>
+</tr>
+</tbody></table></div>
+<p>worker生命周期会记录开始、完成、失败或取消事件，finally清ACTIVE。异常消息替换当前Key，取消且所有相关步骤结束后清Control Key。没有<code>retry-video</code>独立action；视频失败或中断由confirm重新核对素材后启动。</p>
+<p>图片存储、换图和删图都会清确认标识，使video回idle。旧MP4不立即删除，job_view单独查磁盘上保留成片并返回入口；再次成功合成以同名路径replace，属于一任务一个当前输出路径，并非永久多版本归档。</p>
+<p>依据：<code>app.py:35–58,163–195,325–366,590–643,667–839</code>、<code>android_runtime.py:181</code>。</p>
+</section><section class="doc-section"><h2 id="section-08" tabindex="-1">08 文案处理、标题校验与文件命名</h2>
+<h3 id="section-08-sub-1">正文与清洗</h3>
+<p>正式版不设产品级正文字符上限，仍受64MiB单请求、设备空间和外部TTS可用性约束。<code>create</code>以<code>str(...).strip()</code>得到实际朗读正文，拒绝空文本。试用版在strip前执行累计账本，故输入首尾空白可扣额但不朗读；这是两个不同处理目的。</p>
+<p>前端显式清洗基于正则替换，统一换行、移除零宽/BOM、HTML注释和标签、Markdown链接地址/图片、裸网址、列表/引用/水平线、括号外壳及格式符，整理空白；保留数字、通常标点、括号内文本，数字间星号转换为“乘以”。不解码<code>&amp;amp;</code>等HTML实体，不调用语言模型、不识别文章事实，也不是通用Markdown语义解析器。最近一次有效清洗前原文用于撤销，手动编辑后撤销失效。</p>
+<p>MD导入是另一套简化处理：删除完整三反引号代码块、标题前缀、图片、链接地址和部分格式符。显式清洗只去代码围栏而保留代码正文；需要文案一致性时不能把两个入口当成相同转换。</p>
+<h3 id="section-08-sub-2">标题规则</h3>
+<p><code>normalize_title</code>统一换行，逐行去首尾、连续空白合并、丢弃空行并保留有效手动换行。<code>title_character_count</code>合计主副标题的非换行Python字符，超过30即400拒绝，在启动语音/图像请求之前执行。标题颜色和布局见第12章。新任务保存title_style=poster，旧style仍有兼容路径。</p>
+<h3 id="section-08-sub-3">文件命名与路径安全</h3>
+<p>新MP4文件stem取实际正文前30个Python字符，将<code>/\:*?&quot;&lt;&gt;|</code>及控制字符替换下划线，再整理首尾空格/点；空stem回退听文视频。主标题不影响新MP4名。已有任务没有video_filename时继续用video.mp4，不为历史文件自动更名。</p>
+<p>任务目录使用规范UUID，必须<code>str(uuid.UUID(id)) == id</code>。照片文件必须basename、以image-开头并以.png结尾；视频文件同样只能basename且.mp4，无反斜杠。路径保护与导出白名单相结合，避免用户输入变为目录穿越参数。</p>
+<p>依据：<code>templates/index.html:215–248</code>、<code>app.py:63–105,593–605</code>、<code>make_homepage_bg.py:36–50</code>。</p>
+</section><section class="doc-section"><h2 id="section-09" tabindex="-1">09 TTS：分段、流控制、重试与MP3发布</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 910" role="img" aria-labelledby="tts-title"><title id="tts-title">正文分段 → 受控流 → 验证 → 合并</title><defs><marker id="tts-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="960" height="910" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">正文分段 → 受控流 → 验证 → 合并</text><path d="M470,151 L470,175.5 L470,175.5 L470,200" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#tts-arrow)"/><path d="M470,286 L470,315.5 L190,315.5 L190,345" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#tts-arrow)"/><text x="232" y="316" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">否</text><path d="M470,286 L470,315.5 L750,315.5 L750,345" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#tts-arrow)"/><text x="702" y="316" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">是</text><path d="M190,431 L190,460.5 L190,460.5 L190,490" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#tts-arrow)"/><path d="M320,388 L490,388 L490,453 L750,453 L750,490" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#tts-arrow)"/><text x="469" y="442" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">失败</text><path d="M620,533 L471,533 L471,455 L190,455 L190,431" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#tts-arrow)"/><path d="M750,431 L891,431 L891,678 L600,678" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#tts-arrow)"/><path d="M190,576 L190,605.5 L470,605.5 L470,635" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#tts-arrow)"/><path d="M470,721 L470,750.5 L470,750.5 L470,780" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#tts-arrow)"/><rect x="340" y="65" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="470" y="93" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">split_text最多2000字符</text><text x="470" y="115" text-anchor="middle" fill="#506a84" font-size="12.5">按空行合并／长段硬切</text><rect x="340" y="200" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="470" y="228" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">当前part已存在？</text><text x="470" y="250" text-anchor="middle" fill="#506a84" font-size="12.5">同任务固定文案与音色</text><rect x="60" y="345" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="373" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">联网流写partial</text><text x="190" y="395" text-anchor="middle" fill="#506a84" font-size="12.5">30s idle／120s本次总等待</text><rect x="620" y="345" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="750" y="373" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">复用完成part</text><text x="750" y="395" text-anchor="middle" fill="#506a84" font-size="12.5">不重新请求同段</text><rect x="60" y="490" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="518" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">非空＋FFprobe通过</text><text x="190" y="540" text-anchor="middle" fill="#506a84" font-size="12.5">rename最终part，累计段进度</text><rect x="620" y="490" width="260" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="750" y="518" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">异常则有限重试</text><text x="750" y="540" text-anchor="middle" fill="#506a84" font-size="12.5">最多2次 · 1.5s／3s</text><rect x="340" y="635" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="470" y="663" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">按序字节拼接MP3</text><text x="470" y="685" text-anchor="middle" fill="#506a84" font-size="12.5">检查暂停取消 · pending输出</text><rect x="340" y="780" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="470" y="808" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">探测后发布audio.mp3</text><text x="470" y="830" text-anchor="middle" fill="#506a84" font-size="12.5">ready＋实际duration</text></svg></div><figcaption>图9｜受控语音流与片段复用。语音片段串行，网络流失败最多重试两次；完成片段发布后可供任务重试复用。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<h3 id="section-09-sub-1">语音请求链路</h3>
+<p><code>speech.synthesize</code>接收任务正文、固定voice、任务目录、Control及progress/validate回调。默认factory为<code>edge_tts.Communicate</code>，每段调用<code>Communicate(segment,voice).stream()</code>。应用处理流中type=audio的字节，不保存WordBoundary/SentenceBoundary作为字幕。</p>
+<p>应用分段以2000个Python字符为上限，按空行拆段并去段落首尾；短段合并时计入两个换行，超长段落直接每2000字符硬切，未做语义句末对齐。每个片段按顺序处理，<strong>语音内部没有并发池</strong>；图片准备与整个音频步骤并行是另一层调度。</p>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>参数／机制</th>
+<th>实际实现</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>应用分段上限</td>
+<td>2000字符</td>
+<td>与UI累计试用10000字符不是同一个概念</td>
+</tr>
+<tr>
+<td>单段尝试次数</td>
+<td>range(3)</td>
+<td>首次请求＋最多2次自动重试</td>
+</tr>
+<tr>
+<td>重试退避</td>
+<td>1.5秒、3秒</td>
+<td>在等待期间仍尊重暂停/取消</td>
+</tr>
+<tr>
+<td>无流事件时限</td>
+<td>30秒</td>
+<td>每次流事件重置idle，含元数据事件</td>
+</tr>
+<tr>
+<td>单次总流等待</td>
+<td>120秒</td>
+<td>暂停时间不累计；不是整个任务120秒</td>
+</tr>
+<tr>
+<td>控制检查</td>
+<td>约0.1秒的asyncio等待循环</td>
+<td>网络等待期间也可观察取消</td>
+</tr>
+<tr>
+<td>最终片段</td>
+<td>part-0000.mp3等</td>
+<td>非空并probe成功后才rename</td>
+</tr>
+<tr>
+<td>临时片段</td>
+<td>part-0000.partial等</td>
+<td>失败残片不成为成功分段</td>
+</tr>
+<tr>
+<td>合并</td>
+<td>按顺序直接连接MP3字节</td>
+<td>没有重新编码、交叉淡化或自动补静音</td>
+</tr>
+</tbody></table></div>
+<p>已有part最终文件会跳过重请求，保证同一固定任务重试可复用完成段。合并逐块读取1MiB，检查Control，先写audio.pending.mp3，最终probe后replace成audio.mp3。最终ready状态保存audio_duration，后续图片时间轴使用这个实际媒体时长。</p>
+<h3 id="section-09-sub-2">应用层与edge-tts库层</h3>
+<p>发布构建使用edge-tts7.2.3。库内部按字节限制切分SSML请求，并自动转义XML/生成voice与prosody；应用层2000字符段不保证只对应一条网络SSML。应用只传text与voice，不开放任意SSML、语速、音量或音调编辑。</p>
+<p>构建库请求的音频格式为<code>audio-24khz-48kbitrate-mono-mp3</code>，上游WSS位于<code>api.msedgeservices.com/tts/cognitiveservices</code>。后续AAC192k/44.1k/stereo是容器制作参数，不能把源48kbit单声道语音升格为拥有更多原始信息的录音。多语言音色和语音质量最终取决于外部服务，源码无法证明其底层模型权重或全部语言行为。</p>
+<p>本应用当前没有音频生成收费入口，不要求个人TTS API Key；<code>edge-tts</code>项目自身定位为使用Edge在线语音服务的Python接入。<a href="https://github.com/rany2/edge-tts">上游项目</a>说明其联网方式；本文不据此承诺永久服务规则或访问权利。</p>
+<h3 id="section-09-sub-3">媒体探测与进度</h3>
+<p><code>probe</code>通过包内FFprobe，请求format duration及stream codec_type/width/height，30秒子进程时限；返回非零或duration≤0拒绝。它是有效媒体探测，不是每个采样/每帧完整解码扫描。音频百分比按completed/total段数计算，合并与验证没有确定百分比，网络消息包含等待秒数/接收KB。进度不承诺等比例剩余时间。</p>
+<p>依据：<code>speech.py:8–166</code>、<code>app.py:136–160</code>及发布构建edge_tts源码快照。</p>
+</section><section class="doc-section"><h2 id="section-10" tabindex="-1">10 图片导入、规范化与公网下载安全</h2>
+<h3 id="section-10-sub-1">手机照片契约与技术保护</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>保护项</th>
+<th>值</th>
+<th>检查阶段</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>每批数量</td>
+<td>50张</td>
+<td>前端及local_photos；试用额外10张累计</td>
+</tr>
+<tr>
+<td>单图原始字节</td>
+<td>20MiB</td>
+<td>File读取预检/Base64解码与下载保护</td>
+</tr>
+<tr>
+<td>批次原始字节</td>
+<td>40MiB</td>
+<td>整批解码前累计验证</td>
+</tr>
+<tr>
+<td>总像素</td>
+<td>50,000,000</td>
+<td>图片头/实际解码检查</td>
+</tr>
+<tr>
+<td>单边</td>
+<td>16384像素</td>
+<td>图片尺寸验证</td>
+</tr>
+<tr>
+<td>请求体</td>
+<td>64MiB</td>
+<td>Flask MAX_CONTENT_LENGTH</td>
+</tr>
+</tbody></table></div>
+<p>上传以JSON Base64字符串传入：前端先从FileReader的Data URL结果剥除<code>data:image/...;base64,</code>前缀，后端只接受严格Base64，不会自动替API调用者剥除此前缀。不能只因扩展名就把任意数据当成图片。图片解码先校正EXIF方向、取第一帧、透明图铺白底、转换RGB并重编码PNG，删除原始元数据。整批先验证，某张失败提示对应位置，不部分保存并替换已有任务。</p>
+<p>常见JPEG/PNG/WebP/GIF/BMP/TIFF由Pillow读取。遇到ISO BMFF的ftyp类数据且Pillow失败时，Android路径尝试系统ImageDecoder，再把Bitmap压成PNG重新规范化，检查像素并recycle。ImageDecoder是API28能力，minSdk24设备未必具有该类或相应格式解码，异常会给出读取失败；APK没有强制打包pillow-heif解码器。</p>
+<p>输入大小限制是压缩原始字节，不限制转换后所有PNG总大小或精确解码峰值。规范化源图保留像素，直到cover阶段才缩成1080p；高像素PNG、许多照片和长任务仍可能增加内存/空间压力。</p>
+<h3 id="section-10-sub-2">公网URL校验与连接</h3>
+<p>URL必须http/https、host非空、无user/password、无空白控制字符，长度最多8192，端口仅80或443，拒绝host中的zone编码。DNS结果中的每个IP都需公网global且非multicast/reserved，拒绝私网、回环、IPv4映射绕过、6to4、Teredo和NAT64特殊前缀；全部安全后优先IPv4。</p>
+<p>下载将连接绑定到已验证IP；HTTPS仍以原域名做SNI和证书校验，减少DNS重绑定风险。每次跳转重新验证，最多4次请求即最多3个有效跳转，拒绝HTTPS降级HTTP。socket等待20秒不等于整个下载总时长保证20秒；代码没有另一个全过程总计时器。</p>
+<p>响应要求200、非明显HTML，大小最多20MiB。请求不携带用户Cookie、云Key或账号，Accept-Encoding=identity；兼容gzip/deflate时还限制解压大小，拒绝异常或未支持编码。下载结束仅保存规范化图片与最终来源域名元数据，不持久保存完整URL。</p>
+<p>网址任务的URL只在Control内存中，处理finally清空；重启后的失败网址任务无法从job恢复原直链，需要用户重新提供。图片直链能力不含文章解析、登录绕过、网页多图提取或后台爬取。</p>
+<p>依据：<code>photo_import.py:17–192</code>、<code>android_runtime.py:272–289</code>、<code>app.py:198–209</code>。</p>
+</section><section class="doc-section"><h2 id="section-11" tabindex="-1">11 Seedream云端图片适配与费用保护</h2>
+<p>Android环境在SOURCES中移除Draw Things，AI来源仅Seedream；manual代表用户照片/网址，不是另一AI供应商。没有在某个来源失败后自动切换收费云端的逻辑。</p>
+<h3 id="section-11-sub-1">固定配置</h3>
+<pre><code class="language-json">{
+  &quot;endpoint&quot;: &quot;https://ark.cn-beijing.volces.com/api/v3/images/generations&quot;,
+  &quot;models&quot;: [
+    &quot;doubao-seedream-5-0-pro-260628&quot;,
+    &quot;doubao-seedream-5-0-flash-260915&quot;
+  ],
+  &quot;request&quot;: {
+    &quot;model&quot;: &quot;doubao-seedream-5-0-pro-260628&quot;,
+    &quot;prompt&quot;: &quot;用户填写的图片要求&quot;,
+    &quot;size&quot;: &quot;2K&quot;,
+    &quot;response_format&quot;: &quot;b64_json&quot;,
+    &quot;output_format&quot;: &quot;png&quot;,
+    &quot;watermark&quot;: true
+  }
+}
+</code></pre>
+<p>这些模型ID和参数是APK固定配置，不表示本次文档编制执行过真实付费调用或确认所有账户都已开通。当前界面不提供size、水印、输出格式或数量的可调开关。</p>
+<p>请求必须具备有效Key和<code>payment_consent is True</code>。Key可由JSON输入或运行环境ARK_API_KEY提供，代码拒绝空、换行或超过2048字符；APK不内置预设Key。HTTP请求使用Authorization Bearer，单次timeout180秒，读取响应最多48MiB。解析要求恰好一张图片、Base64文本≤44MiB、宽高至少64且像素≤1600万，重编码为RGB PNG，不依赖不可信临时下载URL。</p>
+<h3 id="section-11-sub-2">已知失败与结果未知</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>分类</th>
+<th>示例</th>
+<th>应用处理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>明确参数/权限/额度失败</td>
+<td>400、401、403、404、部分429及官方code</td>
+<td>转换中文原因，隐藏Key/Bearer/远程URL；不自动改账户限额</td>
+</tr>
+<tr>
+<td>余额/模型状态</td>
+<td>InsufficientBalance、Arrearage、SetLimitExceeded、NotOpen等</td>
+<td>按官方code区分，要求用户处理控制台</td>
+</tr>
+<tr>
+<td>SubmissionUnknown</td>
+<td>HTTP5xx、连接/超时、JSON异常、响应过大或不可用单图</td>
+<td>保留可能已计费的未知状态，禁止自动重发</td>
+</tr>
+</tbody></table></div>
+<p>提交前保存<code>submitting=true</code>，返回正常图片后保存素材。用户在云请求途中取消时，已经提交的请求不能由手机撤回；若图片返回，仍尽量落盘，不继续视频制作。手动重试已知结果未知的Seedream任务要求<code>confirm_resubmit</code>，同时重新验证Key及费用同意。切换为手机照片不能证明之前云请求没有计费，风险标识继续保留。</p>
+<p>Key仅在Control与运行内存中，不写job、草稿或日志；错误消息替换当前Key，取消且步骤结束清Key。代码没有安全零化所有内存副本的机制，故“只在内存”应理解为未持久写入，而不是绝对没有任何内存观察风险。</p>
+<p>依据：<code>seedream.py:11–94</code>、<code>app.py:501–528,216–225,777–804</code>、<code>image_sources.py:6–19</code>。</p>
+</section><section class="doc-section"><h2 id="section-12" tabindex="-1">12 1080p画面、字体与主副标题布局</h2>
+<h3 id="section-12-sub-1">画面算法</h3>
+<p>Pillow在应用Python进程内打开规范化图片，EXIF转正并RGB化。背景直接resize至1920×1080，GaussianBlur(60)形成铺满画面；前景按<code>min(1920/source_width,1080/source_height)</code>等比缩放并ceil像素，居中贴到背景。前景保持整张图可见，背景可因拉伸而改变比例，但只承担模糊填充。</p>
+<p>每张照片生成一个cover文件：首张cover.png携带任务title/title_secondary，后续cover-1.png等不加标题。任务图像预览为原素材，不在预览接口提前写入海报标题；最终标题需在生成的视频中查看。</p>
+<h3 id="section-12-sub-2">海报标题参数</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>当前poster路径</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>字体优先级</td>
+<td>随包NotoSansCJKsc-Bold.otf，随后系统/兼容回退</td>
+</tr>
+<tr>
+<td>深色底板</td>
+<td>#031127，画面x32%～68%，满高，宽度36%</td>
+</tr>
+<tr>
+<td>文本安全区</td>
+<td>x33.5%～66.5%，y13%～79%</td>
+</tr>
+<tr>
+<td>主标题自动分行</td>
+<td>每行最多6字符，保留有效手动分行</td>
+</tr>
+<tr>
+<td>副标题自动分行</td>
+<td>每行最多7字符，副标题全行统一字号</td>
+</tr>
+<tr>
+<td>主标题颜色</td>
+<td>所有非换行字符前ceil(n/2)红#E1261C，余下黄#F7DE00；跨行连续统计</td>
+</tr>
+<tr>
+<td>副标题颜色</td>
+<td>全黄#F7DE00</td>
+</tr>
+<tr>
+<td>主字号上界</td>
+<td>画高×21%，实际按字形边界拟合</td>
+</tr>
+<tr>
+<td>副字号上界</td>
+<td>min(画高×11.5%，最小主字号×0.9)</td>
+</tr>
+<tr>
+<td>总高度调整</td>
+<td>超限时按0.96比例缩放直到符合区域</td>
+</tr>
+<tr>
+<td>字形效果</td>
+<td>水平压缩0.88，同色实心加粗，无黑色描边</td>
+</tr>
+</tbody></table></div>
+<p>标题完全留空时不加底板/文字。新任务固定poster；历史非poster任务可走legacy中央三色路径，用于兼容旧数据，不是当前提供的样式切换。某些PC历史文档提及macOS W6字体，不应作为手机默认字体说明。</p>
+<p>源码提供基于字形像素边界的布局验证；当前实现没有提供用户手动拖拽标题、改色、改字号、调整底板位置的控件。维护时需保证前端规范化与后端30字符计数保持相同含义。</p>
+<p>依据：<code>android_runtime.py:37–55,113–125</code>、<code>make_homepage_bg.py:19–158</code>、<code>app.py:595–598,627</code>。</p>
+</section><section class="doc-section"><h2 id="section-13" tabindex="-1">13 时间轴、FFmpeg命令与成片验证</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 990 325" role="img" aria-labelledby="timeline-title"><title id="timeline-title">90秒三图时间轴示例</title><defs><marker id="timeline-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="990" height="325" rx="18" fill="#f8fbff"/><text x="30" y="36" fill="#275078" font-size="16" font-weight="650">均分示例：D=90秒、N=3张；每张30秒</text><rect x="45" y="92" width="294" height="92" rx="10" fill="#dceeff" stroke="#9cbfeb"/><text x="192" y="130" text-anchor="middle" font-size="16" fill="#175696">首张：主副标题＋图片</text><text x="192" y="157" text-anchor="middle" font-size="13" fill="#52708a">0～30 秒</text><rect x="345" y="92" width="294" height="92" rx="10" fill="#edf5fc" stroke="#9cbfeb"/><text x="492" y="130" text-anchor="middle" font-size="16" fill="#175696">第二张：图片</text><text x="492" y="157" text-anchor="middle" font-size="13" fill="#52708a">30～60 秒</text><rect x="645" y="92" width="294" height="92" rx="10" fill="#edf5fc" stroke="#9cbfeb"/><text x="792" y="130" text-anchor="middle" font-size="16" fill="#175696">第三张：图片</text><text x="792" y="157" text-anchor="middle" font-size="13" fill="#52708a">60～90 秒</text><rect x="45" y="220" width="894" height="42" rx="8" fill="#e6f4ec" stroke="#98ccb0"/><text x="492" y="247" text-anchor="middle" fill="#286848" font-size="15">完整MP3音轨持续播放；图片硬切，无字幕和背景音乐</text><text x="45" y="295" fill="#58718d" font-size="12">实际时间轴由FFconcat及输出帧率量化；这不是生成速度或逐采样对齐承诺。</text></svg></div><figcaption>图11｜图片时间轴示例。使用完整音频时长除以保留照片数量，与正文段落或图像语义无绑定。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<h3 id="section-13-sub-1">图片时间轴</h3>
+<p>设实际audio_duration为D，当前保留照片数为N。每张分配<code>D/N</code>，以原图库顺序写ffconcat，duration写九位小数；最后重复最后一个文件条目，让其duration生效。它不多加一个独立照片段。多图切换按5fps帧时间量化，不能描述成逐音频采样精确对齐；也不根据文案语义或图像内容智能配时。</p>
+<pre><code class="language-text">ffconcat version 1.0
+file &#39;/私有任务目录/cover.png&#39;
+duration 30.000000000
+file &#39;/私有任务目录/cover-1.png&#39;
+duration 30.000000000
+file &#39;/私有任务目录/cover-2.png&#39;
+duration 30.000000000
+file &#39;/私有任务目录/cover-2.png&#39;
+</code></pre>
+<p>以上是90秒、3张图的机制示例，不是实际用户文件。路径由任务内部生成，不直接接受用户自由拼接。</p>
+<h3 id="section-13-sub-2">Android实际编码参数</h3>
+<pre><code class="language-text">&lt;nativeLibraryDir&gt;/libffmpeg.so
+  -y -progress &lt;job&gt;/encode-progress.txt -nostats
+  -f concat -safe 0 -i &lt;job&gt;/image_sequence.ffconcat
+  -i &lt;job&gt;/audio.mp3
+  -filter_complex &lt;按单图或多图生成的滤镜&gt;
+  -map [v] -map 1:a
+  -c:v libx264 -preset veryfast -crf 21 -threads 2
+  -c:a aac -b:a 192k -ar 44100 -ac 2
+  -r &lt;单图1／多图5&gt;
+  -shortest -t &lt;D&gt; -movflags +faststart
+  &lt;job&gt;/video.pending.mp4
+</code></pre>
+<pre><code class="language-text">单图：
+[0:v]loop=loop=-1:size=1:start=0,trim=duration=D,
+setpts=N/(1*TB)[base];[base]format=yuv420p[v]
+
+多图：
+[0:v]fps=5,tpad=stop_mode=clone:stop_duration=2,
+trim=duration=D[base];[base]format=yuv420p[v]
+</code></pre>
+<p>单图loop重复首帧减少反复解码，多图tpad延续末帧避免-shortest提前截尾；-t限制到音频时长。libx264为软件编码，veryfast和两线程是当前资源取舍，不存在“调用Android硬件加速”的分支。faststart调整MP4索引布局以便播放；格式机制参考<a href="https://ffmpeg.org/ffmpeg-formats.html">FFmpeg格式文档</a>，本项目参数以代码为准。</p>
+<h3 id="section-13-sub-3">编码控制和实际进度</h3>
+<p><code>subprocess.Popen(...,start_new_session=True)</code>启动独立进程组，循环约0.15秒检查Control并调用进度更新。暂停发SIGSTOP，继续发SIGCONT。异常/取消收尾先恢复停止态，再SIGTERM，等待3秒仍未退出则SIGKILL，防止只停止父进程而遗留编码子进程。</p>
+<p>FFmpeg向encode-progress.txt输出out_time_us；读取文件尾8192字节，求<code>out_time_seconds/D×100</code>，编码阶段cap99。stdout/stderr追加到video-log.txt，非零退出时取日志尾用于中文异常说明。当前未实现整个视频编码的独立总超时或无进度watchdog，不能把TTS的120秒套到长视频。</p>
+<h3 id="section-13-sub-4">最终验证与原子发布</h3>
+<p>编码成功后再check_cancel，FFprobe核对存在audio stream、视频尺寸恰为1920×1080、format duration有效且与D差不超过1.5秒。通过后replace临时视频到任务video_filename，设video_state=done、percent=100、保存video_duration和各图duration数组。这个规格检查不能替代完整逐帧解码或人工审核内容；回归用例中的完整主机解码是另外的测试证据。</p>
+<p>依据：<code>android_runtime.py:58–165</code>、<code>app.py:228–238</code>、<code>compose_video.py:104–123</code>。</p>
+</section><section class="doc-section"><h2 id="section-14" tabindex="-1">14 素材确认、暂停取消和进程恢复时序</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 920" role="img" aria-labelledby="confirmation-title"><title id="confirmation-title">版本＋内容摘要保护</title><defs><marker id="confirmation-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="900" height="920" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">版本＋内容摘要保护</text><path d="M190,156 L190,185.5 L190,185.5 L190,215" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#confirmation-arrow)"/><path d="M190,301 L190,330.5 L190,330.5 L190,360" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#confirmation-arrow)"/><path d="M190,446 L190,475.5 L190,475.5 L190,505" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#confirmation-arrow)"/><path d="M190,591 L190,620.5 L190,620.5 L190,650" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#confirmation-arrow)"/><path d="M190,736 L190,765.5 L190,765.5 L190,795" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#confirmation-arrow)"/><path d="M690,301 L690,403 L690,403 L690,505" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#confirmation-arrow)"/><path d="M320,403 L465,403 L465,465 L690,465 L690,505" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#confirmation-arrow)"/><text x="483" y="454" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">状态／版本失败</text><path d="M320,693 L465,693 L465,612 L690,612 L690,591" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#confirmation-arrow)"/><text x="484" y="649" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">摘要不一致</text><rect x="60" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">用户检查当前素材</text><text x="190" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">MP3 ready＋图片 ready</text><rect x="60" y="215" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="243" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">POST confirm</text><text x="190" y="265" text-anchor="middle" fill="#506a84" font-size="12.5">发送当前image_version</text><rect x="60" y="360" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="388" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">后端状态与版本校验</text><text x="190" y="410" text-anchor="middle" fill="#506a84" font-size="12.5">无暂停／取消／活动冲突</text><rect x="60" y="505" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="533" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">记录确认版本与SHA256</text><text x="190" y="555" text-anchor="middle" fill="#506a84" font-size="12.5">当前有序图片字节摘要</text><rect x="60" y="650" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="678" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">视频worker再次核对</text><text x="190" y="700" text-anchor="middle" fill="#506a84" font-size="12.5">版本一致＋内容摘要一致</text><rect x="60" y="795" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="190" y="823" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">开始本机编码</text><text x="190" y="845" text-anchor="middle" fill="#506a84" font-size="12.5">通过后发布MP4</text><rect x="560" y="215" width="260" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="690" y="243" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">换图／删图／重生成</text><text x="690" y="265" text-anchor="middle" fill="#506a84" font-size="12.5">新image_version · 清确认</text><rect x="560" y="505" width="260" height="86" rx="12" fill="#fff0f2" stroke="#e9a8b3" stroke-width="1.6"/><text x="690" y="533" text-anchor="middle" fill="#993c4a" font-size="16" font-weight="650">拒绝旧确认或变更素材</text><text x="690" y="555" text-anchor="middle" fill="#506a84" font-size="12.5">重新查看图片并再次确认</text></svg></div><figcaption>图4｜素材确认双闸门。客户端版本、服务端版本和worker内容摘要必须一致；变化后回到重新预览。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<p>确认既检查状态，又固定当前素材版本：音频和图片ready、未暂停/取消、客户端image_version等于当前、无ACTIVE，计算当前图片按顺序连接字节的SHA256，保存confirmed_version与confirmed_digest。video若已queued/working/done，重复confirm直接返回状态，不启动第二编码。</p>
+<p>worker开始再次核对version与digest。换图、删图、重生成均使旧确认失效。这个闸门避免客户端旧预览确认新文件，也避免确认后磁盘素材变化；它不是对图片内容是否合适的自动审核。</p>
+<h3 id="section-14-sub-1">控制语义</h3>
+<ul>
+<li>Control共享paused与cancelled线程事件，音频异步流与合并步骤在检查点等待/退出；本机画面循环和编码循环也检查取消。</li>
+<li>pause不撤销已经提交Seedream请求。返回已付费素材时尽量保存，后续成片仍停止。</li>
+<li>cancel令正在处理步骤响应取消，并将未运行但busy的步骤改cancelled；真正终止以worker退出和ACTIVE清除为准。</li>
+<li>resume只清暂停/取消标志；不会自动launch cancelled/interrupted步骤。用户分别选择重试音频、重新选图、图片重试或confirm恢复视频。</li>
+</ul>
+<h3 id="section-14-sub-2">recover与重启</h3>
+<p>Python服务启动调用recover扫描job.json，原queued/working改interrupted并提示手动重试，paused清false；ready/done及实际文件保留，submitting等未知收费信息保留。不自动TTS、不自动重新编码、更不会因重启自动重发收费图。</p>
+<p>已成功part可在音频重试复用。failed/manual URL需要用户重新提供URL，因为Control.photo_url只在内存；历史图片则可直接读取。进程死亡时ACTIVE与Control不持久保存，只能根据任务JSON把活动状态改为待恢复。</p>
+<p>源码中的recover/jobs扫描未对每个损坏job.json分别捕获错误，坏JSON可能使恢复或历史列表失败；文档不能承诺所有磁盘损坏自动修复。前台服务START_STICKY也不等于自动恢复每个任务步骤。</p>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 710" role="img" aria-labelledby="sequence-title"><title id="sequence-title">正常制作时序</title><defs><marker id="sequence-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="980" height="710" rx="18" fill="#f8fbff"/><rect x="15" y="55" width="130" height="52" rx="10" fill="#e5f0fc" stroke="#9cbfeb"/><text x="80" y="87" text-anchor="middle" font-size="14" fill="#1c5795">用户／WebView</text><path d="M80,110 V675" stroke="#b8cbe0" stroke-dasharray="5 5"/><rect x="210" y="55" width="130" height="52" rx="10" fill="#e5f0fc" stroke="#9cbfeb"/><text x="275" y="87" text-anchor="middle" font-size="14" fill="#1c5795">Flask＋调度</text><path d="M275,110 V675" stroke="#b8cbe0" stroke-dasharray="5 5"/><rect x="410" y="55" width="130" height="52" rx="10" fill="#e5f0fc" stroke="#9cbfeb"/><text x="475" y="87" text-anchor="middle" font-size="14" fill="#1c5795">语音／图片</text><path d="M475,110 V675" stroke="#b8cbe0" stroke-dasharray="5 5"/><rect x="615" y="55" width="130" height="52" rx="10" fill="#e5f0fc" stroke="#9cbfeb"/><text x="680" y="87" text-anchor="middle" font-size="14" fill="#1c5795">视频worker</text><path d="M680,110 V675" stroke="#b8cbe0" stroke-dasharray="5 5"/><rect x="815" y="55" width="130" height="52" rx="10" fill="#e5f0fc" stroke="#9cbfeb"/><text x="880" y="87" text-anchor="middle" font-size="14" fill="#1c5795">私有文件</text><path d="M880,110 V675" stroke="#b8cbe0" stroke-dasharray="5 5"/><path d="M80,143 H275" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="177.5" y="134" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">1 创建任务，验证并冻结快照</text><path d="M275,194 H880" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="577.5" y="185" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">2 写job.json并准备本机图片</text><path d="M275,245 H475" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="375" y="236" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">3 启动语音／网络配图步骤</text><path d="M475,296 H880" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="677.5" y="287" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">4 片段和图片验证后发布</text><path d="M275,347 H80" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="177.5" y="338" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">5 轮询返回ready，用户预览</text><path d="M80,398 H275" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="177.5" y="389" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">6 confirm当前图片版本</text><path d="M275,449 H680" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="477.5" y="440" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">7 保存确认摘要，launch视频</text><path d="M680,500 H880" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="780" y="491" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">8 cover／ffconcat／MP4临时编码</text><path d="M680,551 H880" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="780" y="542" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">9 probe通过，replace成片</text><path d="M275,602 H80" stroke="#527ca5" stroke-width="2" marker-end="url(#sequence-arrow)"/><text x="177.5" y="593" text-anchor="middle" font-size="12.5" fill="#385d82" paint-order="stroke" stroke="#f8fbff" stroke-width="4">10 done与作品入口；主动导出</text></svg></div><figcaption>图12｜一次正常制作的调用时序示意。网络配图可与TTS并行；这里展示阶段依赖，不表达精确耗时。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<p>依据：<code>app.py:48–58,747–819,871–880</code>、<code>android_runtime.py:58–110</code>、<code>speech.py:46–89,118–166</code>。</p>
+</section><section class="doc-section"><h2 id="section-15" tabindex="-1">15 数据目录、schema与持久化一致性</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 670" role="img" aria-labelledby="data-life-title"><title id="data-life-title">用户输入与文件保留关系</title><defs><marker id="data-life-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="820" height="670" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">用户输入与文件保留关系</text><path d="M190,156 L190,188 L190,188 L190,220" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#data-life-arrow)"/><path d="M190,306 L190,338 L190,338 L190,370" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#data-life-arrow)"/><path d="M320,263 L385,263 L385,263 L450,263" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#data-life-arrow)"/><path d="M320,413 L404,413 L404,338 L580,338 L580,306" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#data-life-arrow)"/><path d="M580,156 L580,188 L580,188 L580,220" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#data-life-arrow)"/><text x="645" y="184" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">历史保留</text><path d="M580,306 L580,338 L580,338 L580,370" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#data-life-arrow)"/><path d="M320,413 L393,413 L393,568 L450,568" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#data-life-arrow)"/><text x="387" y="489" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">主动导出</text><path d="M450,263 L363,263 L363,568 L320,568" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#data-life-arrow)"/><text x="331" y="312" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">私有数据清除</text><rect x="60" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">编辑草稿</text><text x="190" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">白名单字段 · 不保存Key</text><rect x="60" y="220" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="248" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">建立任务快照</text><text x="190" y="270" text-anchor="middle" fill="#506a84" font-size="12.5">正文／标题／音色／图片配置</text><rect x="60" y="370" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="398" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">完成素材和成片</text><text x="190" y="420" text-anchor="middle" fill="#506a84" font-size="12.5">part／MP3／PNG／cover／MP4</text><rect x="450" y="220" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="580" y="248" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">应用私有workbench</text><text x="580" y="270" text-anchor="middle" fill="#506a84" font-size="12.5">JSON／媒体／日志／试用账本</text><rect x="450" y="70" width="260" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="580" y="98" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">清空工作区</text><text x="580" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">改空草稿 · 不取消不删任务</text><rect x="450" y="370" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="580" y="398" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">普通重开／覆盖升级</text><text x="580" y="420" text-anchor="middle" fill="#506a84" font-size="12.5">保留素材 · busy变待恢复</text><rect x="450" y="525" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="580" y="553" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">用户另存到系统文档</text><text x="580" y="575" text-anchor="middle" fill="#506a84" font-size="12.5">副本由目标提供方保存</text><rect x="60" y="525" width="260" height="86" rx="12" fill="#fff0f2" stroke="#e9a8b3" stroke-width="1.6"/><text x="190" y="553" text-anchor="middle" fill="#993c4a" font-size="16" font-weight="650">卸载／清除应用数据</text><text x="190" y="575" text-anchor="middle" fill="#506a84" font-size="12.5">删除私有任务和本机账本</text></svg></div><figcaption>图7｜数据生命周期。清空只改草稿/当前显示；覆盖升级保留私有数据；卸载/清数据删除私有数据和本机试用计数。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<p>根目录由Android<code>getFilesDir()/workbench</code>获得。常见路径可示意为<code>/data/user/0/&lt;applicationId&gt;/files/workbench</code>，实际应以系统API返回为准，不能在APK写死某个用户或设备路径。</p>
+<pre><code class="language-text">workbench/
+├── templates/index.html
+├── static/mobile.js、mobile.css
+├── assets/fonts/NotoSansCJKsc-Bold.otf
+├── assets/previews/&lt;voice&gt;.mp3       # 26段
+├── licenses/
+├── draft.json                       # 写入中draft.pending
+├── trial-usage.json                 # 仅试用版；写入中trial-usage.pending
+├── jobs/&lt;规范UUID&gt;/
+│   ├── job.json                     # 写入中job.pending
+│   ├── part-0000.mp3 ...             # 写入中part-0000.partial
+│   ├── audio.mp3                    # 写入中audio.pending.mp3
+│   ├── image-&lt;version&gt;.png
+│   ├── image-&lt;version&gt;-&lt;index&gt;.png   # 多图
+│   ├── cover.png、cover-1.png ...
+│   ├── image_sequence.ffconcat
+│   ├── encode-progress.txt、video-log.txt
+│   ├── &lt;正文前30字符清理后&gt;.mp4
+│   └── video.pending.mp4
+└── records/
+    ├── events.jsonl
+    └── tingwen-records.json          # 导出时生成
+</code></pre>
+<h3 id="section-15-sub-1">job核心字段字典</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>字段组</th>
+<th>字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>标识/时间</td>
+<td>id、created、updated</td>
+<td>规范UUID、创建/更新时间戳</td>
+</tr>
+<tr>
+<td>原始创作快照</td>
+<td>title、title_secondary、title_style、text、voice</td>
+<td>创建任务后固定，编辑草稿不回写</td>
+</tr>
+<tr>
+<td>当前配图要求</td>
+<td>prompt</td>
+<td>创建时保存；regenerate/change-source可更新任务配图要求，单纯编辑草稿不回写</td>
+</tr>
+<tr>
+<td>来源配置</td>
+<td>provider、model、image_mode</td>
+<td>manual为手机图/网址；AI当前Seedream；历史可保留兼容配置</td>
+</tr>
+<tr>
+<td>输出名</td>
+<td>video_filename</td>
+<td>正文命名，历史可回退video.mp4</td>
+</tr>
+<tr>
+<td>图片版本</td>
+<td>image_version、confirmed_version、confirmed_digest</td>
+<td>当前图与确认闸门</td>
+</tr>
+<tr>
+<td>图库</td>
+<td>image_gallery、image_metadata</td>
+<td>多图entry含filename/metadata/source_id；单图gallery可为空</td>
+</tr>
+<tr>
+<td>状态</td>
+<td>audio_state、image_state、video_state</td>
+<td>分别维护</td>
+</tr>
+<tr>
+<td>消息/进度</td>
+<td>各阶段_message、各阶段_progress</td>
+<td>进度含stage、percent或completed/total</td>
+</tr>
+<tr>
+<td>控制/收费状态</td>
+<td>paused、cancelled、submitting、remote_id</td>
+<td>remote_id为兼容字段，不实现SeedreamID恢复轮询</td>
+</tr>
+<tr>
+<td>媒体时长</td>
+<td>audio_duration、video_duration、image_durations</td>
+<td>成功后写，时间轴依据audio_duration</td>
+</tr>
+</tbody></table></div>
+<p><code>job_view</code>响应额外附gallery(index、metadata、preview_url)、output_folder、audio_path、video_path、video_url；这些是视图便利字段，不必一概理解为job落盘schema。video_path来自独立实际文件检查，所以状态重置后仍可访问上次成片。</p>
+<h3 id="section-15-sub-2">原子写入与局限</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>文件</th>
+<th>写入机制</th>
+<th>一致性边界</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>job.json</td>
+<td>RLock内写job.pending，replace正式文件</td>
+<td>原子替换，未见job写入fsync；不构成数据库事务</td>
+</tr>
+<tr>
+<td>draft.json</td>
+<td>pending、flush、fsync文件、replace</td>
+<td>字段白名单；与试用账本不是跨文件事务</td>
+</tr>
+<tr>
+<td>试用ledger</td>
+<td>pending、flush、fsync、replace、fsync目录</td>
+<td>进程内RLock串行；非跨进程文件锁</td>
+</tr>
+<tr>
+<td>图像/最终音频/视频</td>
+<td>先临时后replace</td>
+<td>只有达到对应验证条件才发布为完成</td>
+</tr>
+<tr>
+<td>events.jsonl</td>
+<td>锁内追加安全字段</td>
+<td>日志坏行可跳过，写失败标warning而不阻断媒体任务</td>
+</tr>
+</tbody></table></div>
+<p>原子rename和fsync改善持久化，不代表所有断电、介质损坏或空间耗尽都绝不会丢数据。任务文件未加密，必要正文与提示词保存在应用私有JSON；allowBackup=false关闭自动Android备份。没有用户级项目打包恢复、容量轮转或自动清理机制。</p>
+<h3 id="section-15-sub-3">日志schema</h3>
+<p>白名单为event/job_id/import_id/call_id/part/status/provider/model/duration_ms/count，再加time/version。model字段进行安全格式检查；不接受任意error文本，避免把密钥、网址或完整内容当日志写入。读取逐行忽略坏行、时间倒序、默认分页100条。一次调用started/completed是生命周期两条记录，不代表两次云端收费，应用日志也不替代云端账单。</p>
+<p>依据：<code>app.py:63–129,427–498,626–659</code>、<code>records.py:75–113</code>、试用<code>trial_limits.py:61–197</code>。</p>
+</section><section class="doc-section"><h2 id="section-16" tabindex="-1">16 原生桥、系统保存与只读分享</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 770" role="img" aria-labelledby="export-title"><title id="export-title">读取已有成品 → 多层校验 → 用户选择目标</title><defs><marker id="export-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="1000" height="770" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">读取已有成品 → 多层校验 → 用户选择目标</text><path d="M480,151 L480,178 L480,178 L480,205" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#export-arrow)"/><path d="M480,291 L480,318 L480,318 L480,345" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#export-arrow)"/><path d="M480,431 L480,458 L480,458 L480,485" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#export-arrow)"/><path d="M480,571 L480,603 L190,603 L190,635" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#export-arrow)"/><text x="237" y="588" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">保存</text><path d="M480,571 L480,603 L770,603 L770,635" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#export-arrow)"/><text x="719" y="588" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">分享</text><rect x="350" y="65" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="480" y="93" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">用户点保存／分享</text><text x="480" y="115" text-anchor="middle" fill="#506a84" font-size="12.5">任务或作品页</text><rect x="350" y="205" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="480" y="233" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">原生桥解析URL或路径</text><text x="480" y="255" text-anchor="middle" fill="#506a84" font-size="12.5">当前本机源 · 固定媒体路由</text><rect x="350" y="345" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="480" y="373" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Python文件白名单</text><text x="480" y="395" text-anchor="middle" fill="#506a84" font-size="12.5">任务媒体／导出记录 · 非空非pending</text><rect x="350" y="485" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="480" y="513" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Java再次canonical校验</text><text x="480" y="535" text-anchor="middle" fill="#506a84" font-size="12.5">允许目录／类型／文件</text><rect x="60" y="635" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="190" y="663" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">ACTION_CREATE_DOCUMENT</text><text x="190" y="685" text-anchor="middle" fill="#506a84" font-size="12.5">64KiB复制到用户所选URI</text><rect x="640" y="635" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="770" y="663" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">ACTION_SEND＋content URI</text><text x="770" y="685" text-anchor="middle" fill="#506a84" font-size="12.5">随机映射 · 只读grant · Provider复核</text></svg></div><figcaption>图6｜安全导出链。保存是复制到用户URI；分享是通过只读内容URI授予目标应用访问，不开放任意私有文件。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<h3 id="section-16-sub-1">NativeBridge接口</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>方法</th>
+<th>正式版用途</th>
+<th>试用附加情况</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>saveDraft(json)</td>
+<td>Python persist_draft，boolean返回</td>
+<td>仍受累计计数，不能绕过额度</td>
+</tr>
+<tr>
+<td>exportUrl(url,share)</td>
+<td>将允许媒体URL解析成安全文件，保存或分享</td>
+<td>到期也可导出已有成品</td>
+</tr>
+<tr>
+<td>exportPath(path)</td>
+<td>路径导出，先Python再Java检查</td>
+<td>相同</td>
+</tr>
+<tr>
+<td>openLibrary()</td>
+<td>打开作品列表</td>
+<td>相同</td>
+</tr>
+<tr>
+<td>appInfo()</td>
+<td>返回platform/sdk/真实APK version</td>
+<td>返回1.0.2-trial</td>
+</tr>
+<tr>
+<td>trialUpgradeShown()</td>
+<td>不提供</td>
+<td>读取首次成片购买提示标记</td>
+</tr>
+<tr>
+<td>showTrialUpgrade(completed)</td>
+<td>不提供</td>
+<td>true首次成片提示，false实际到期</td>
+</tr>
+<tr>
+<td>copyWechat()</td>
+<td>不提供</td>
+<td>复制wzqy2019</td>
+</tr>
+<tr>
+<td>finishAfterDraft()</td>
+<td>不提供这一试用专属配合方法</td>
+<td>保存队列成功完成后才后退/finish</td>
+</tr>
+</tbody></table></div>
+<p>桥没有任意shell执行入口，其安全依赖主WebView只加载可信本机内容，并在导出时再次限制来源和路径。不能仅凭桥方法的<code>@JavascriptInterface</code>就认为任何远端页面都可获得相同能力。</p>
+<h3 id="section-16-sub-2">多层导出校验</h3>
+<ol>
+<li>URL必须当前本机源，只识别日志导出、任务媒体、图库图和已归档MP4的固定路由结构。</li>
+<li>Python checked_export解析文件路径，只允许root/jobs或root/records内现有非空文件，拒绝链接、未完成文件和其他扩展。</li>
+<li>resolve_export_path再检查任务三级路径：audio.mp3必须ready，MP4经archive_video_path，图必须当前image_paths或允许cover；records只能tingwen-records.json。不能通过桥导出job.json、任意私有文件或partial语音片段。</li>
+<li>Java ExportPolicy再次canonical路径验证，确认目录范围、类型和非空。</li>
+<li>保存发ACTION_CREATE_DOCUMENT，按64KiB块向用户URI复制；取消选择不删除原文件，保存中保留pendingExport状态。</li>
+<li>分享生成随机token，私有SharedPreferences保存安全路径映射，发content URI并授予只读权限/ClipData；Provider每次访问复核路径，只允许r模式，无增删改。</li>
+</ol>
+<p>分享token映射代码中没有固定时间过期或回收器，故不能承诺“数分钟后自动失效”；系统URI读取授权与文件仍存在/合法共同决定能否读取。</p>
+<p>Android系统文件选择和文档创建属于SAF机制；<a href="https://developer.android.com/guide/topics/providers/document-provider">Android SAF文档</a>解释通过系统选择器访问用户选定文件。项目实际导入还会按API版本优先系统照片选择器，且无需Manifest中的全盘存储权限。</p>
+<p>归档视频接口和任务media/video条件不同：任务media/video只在done可用，<code>/api/videos/&lt;id&gt;/media?filename=...</code>按实际成片文件校验，可以在换图后访问保留旧MP4。兼容reveal接口在Android返回android_export_path或android_library，再由移动JS转换为保存/作品页，而不是启动Finder。</p>
+<p>依据：<code>MainActivity.java:277–360</code>、<code>ExportPolicy.java:29–47</code>、<code>ExportProvider.java:15–59</code>、<code>android_runtime.py:23–34,207–269</code>、<code>app.py:530–581,820–861</code>。</p>
+</section><section class="doc-section"><h2 id="section-17" tabindex="-1">17 累计试用：算法、持久化和到期联动</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 820" role="img" aria-labelledby="trial-title"><title id="trial-title">全试用期累计：文字 OR 照片</title><defs><marker id="trial-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="920" height="820" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">全试用期累计：文字 OR 照片</text><path d="M190,156 L190,188 L450,188 L450,220" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#trial-arrow)"/><path d="M710,156 L710,188 L450,188 L450,220" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#trial-arrow)"/><path d="M450,306 L450,338 L450,338 L450,370" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#trial-arrow)"/><path d="M450,456 L450,498 L190,498 L190,540" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#trial-arrow)"/><text x="234" y="490" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">否</text><path d="M450,456 L450,498 L710,498 L710,540" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#trial-arrow)"/><text x="701" y="490" text-anchor="middle" fill="#496482" font-size="12" paint-order="stroke" stroke="#f8fbff" stroke-width="5" stroke-linejoin="round">是／坏账保护</text><path d="M710,626 L710,660.5 L710,660.5 L710,695" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#trial-arrow)"/><rect x="60" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">新增／替换正文</text><text x="190" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">Unicode差异计数</text><rect x="580" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="710" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">新选择／URL／AI配图</text><text x="710" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">手机图有效批次＋选择凭据</text><rect x="320" y="220" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="450" y="248" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">私有TrialUsage账本</text><text x="450" y="270" text-anchor="middle" fill="#506a84" font-size="12.5">RLock · pending · fsync · replace</text><rect x="320" y="370" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="450" y="398" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">达到任一上限？</text><text x="450" y="420" text-anchor="middle" fill="#506a84" font-size="12.5">text_used ≥ 10000 OR photos_used ≥ 10</text><rect x="60" y="540" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="190" y="568" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">尚有两项余额</text><text x="190" y="590" text-anchor="middle" fill="#506a84" font-size="12.5">允许制作 · 重复提交不重扣</text><rect x="580" y="540" width="260" height="86" rx="12" fill="#fff0f2" stroke="#e9a8b3" stroke-width="1.6"/><text x="710" y="568" text-anchor="middle" fill="#993c4a" font-size="16" font-weight="650">expired持久锁定</text><text x="710" y="590" text-anchor="middle" fill="#506a84" font-size="12.5">取消在途本机处理 · 停止新制作</text><rect x="580" y="695" width="260" height="86" rx="12" fill="#fff5e8" stroke="#f0c780" stroke-width="1.6"/><text x="710" y="723" text-anchor="middle" fill="#8b5914" font-size="16" font-weight="650">保留成品导出与联系</text><text x="710" y="745" text-anchor="middle" fill="#506a84" font-size="12.5">微信wzqy2019 · 不自动付款</text></svg></div><figcaption>图5｜累计试用的“任一耗尽”判定。恰好10000字或第10张的记账可返回成功，但随即失效；删除不返额。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<h3 id="section-17-sub-1">额度定义与饱和边界</h3>
+<p>全安装共用TrialUsage实例，text上限10000个Unicode码点、photos上限10。expired为持久停止标志，<strong>text_used≥10000或photos_used≥10任一即可触发</strong>。恰好到边界的计数/选图请求可HTTP200返回expired=true，随后制作入口全部关闭；超过余额的请求HTTP400并将计数饱和至上限。没有“第10张还可再生成一次”的宽限。</p>
+<p>到期回调设置所有Control.cancelled并清paused，每个worker入口/关键check_cancel和launch也检查试用。编码循环约0.15秒观察并终止进程组；不能撤回已提交远端收费请求。已有成品/素材仍可读取、保存、分享，pause/cancel/reveal等保留动作不是重新制作。</p>
+<h3 id="section-17-sub-2">新增文字算法</h3>
+<pre><code class="language-text">added_characters(previous, current):
+  相同字符串或current为空 → 0
+  current是previous子序列（纯删除） → 0
+  previous是current子序列（纯插入） → len(current)-len(previous)
+  否则去公共前后缀
+  SequenceMatcher(autojunk=False)
+  对insert/replace累计当前一侧字符数量
+
+累计已用 = min(10000, 之前已用 + 新增数量)
+删除/清空不减少已用，snapshot更新至已接受的当前正文
+</code></pre>
+<p>这是一套内容差异口径，不识别人的移动/替换编辑意图。相同草稿、相同提交不重复扣；删后恢复为新增，清洗只删除时不加不退，撤销恢复可能加额。只有朗读text计数，title/prompt不计本项。Unicode码点不是UTF-16长度或视觉字形；组合emoji可包含多个码点。</p>
+<p>正常短MD先做导入格式处理再对处理正文计数；原始文件文本超过10000码点会先发超限计数令到期。input队列逐次计数而非防抖丢掉编辑动作；生成先等textQueue。IME composition期间跳过预编辑计数，compositionend计最终提交内容。恢复草稿先锁控件并初始化accepted snapshot，不重复扣旧草稿。</p>
+<h3 id="section-17-sub-3">照片选择凭据</h3>
+<p>有效手机照片批次经读取/完整图像校验后消费新选张数，返回32位随机hex的photo_receipt。ledger将receipt映射到每项<strong>原Base64字符串SHA256</strong>列表，不含文件名，不是感知图像哈希。创建/换图带receipt时先检查仍active，然后按有序子序列匹配内容；原批或删减后原顺序子集重复提交不加额，乱序、伪造、增加原批没有内容或超重数重复被拒绝。</p>
+<p>不带receipt的兼容直接上传重新消费；未知receipt不能偷偷退化为新扣一次。重新从系统选同图是新选择，删除预选/取消不退款。常规≤10张批次先完整校验再扣，失败不部分替换；单批&gt;10是例外，在解码前按试用超额令到期。</p>
+<p>URL/AI新图及AI图重试/重生成/切来源计1，在实际下载/配置/模型调用前完成；因此通过基本校验的新尝试即使远端失败或配置失败也可能已经消耗。图片重试/重生成/切来源及换图的前置在途冲突拒绝，以及空重生成要求、缺少未知收费重发明确同意等前置拒绝，不新扣。<strong>新建/api/jobs不同：文字/照片计数发生在ACTIVE检查之前，最终返回409仍可能已扣额</strong>，不能泛称所有失败或冲突都不消费。文字不增加照片额度，音频重试、现有图库筛选、confirm不新扣图。</p>
+<h3 id="section-17-sub-4">账本结构与写入</h3>
+<pre><code class="language-json">{
+  &quot;version&quot;: 1,
+  &quot;text_used&quot;: 1500,
+  &quot;photos_used&quot;: 2,
+  &quot;text_snapshot&quot;: &quot;此处为上次已接受正文；示例并非真实用户数据&quot;,
+  &quot;receipts&quot;: {
+    &quot;&lt;32位随机hex凭据&gt;&quot;: [&quot;&lt;每张Base64文本的64位SHA256&gt;&quot;]
+  },
+  &quot;expired&quot;: false
+}
+</code></pre>
+<p>可加migration_note说明保守迁移/异常原因。账本使用模块级RLock进行进程内读—改—写与凭据验证，pending写入、flush、fsync文件、replace、fsync父目录。计数写在草稿之前，两文件不组成原子事务；若账已写而草稿后续失败，可能已扣额而草稿未保存，代码没有退款机制。</p>
+<p>损坏JSON、版本/schema错误、计数类型/范围错误、snapshot/expired/receipts不合法或凭据异常，采取满额+expired安全状态，保留坏文件，不当成新装空账。它不是加密防篡改账本、跨进程锁或远端授权；可阻止正常UI/接口并发漏账，不能宣称无法破解或卸载重置。</p>
+<h3 id="section-17-sub-5">旧1.0.1迁移</h3>
+<p>无新账时，读取现存任务正文合计、最近任务正文与草稿新增差异；按每任务的现存图片数、图库/单图、创建/更换照片事件及图片模型调用次数进行保守照片估计，取必要最大值，裁到额度。缺任务而仍有创建事件等不确定情况fail closed。旧版没有记录每次历史编辑/删除，完全删除且不留证据的输入无法恢复，不能保证精确追溯。</p>
+<h3 id="section-17-sub-6">前端锁与退出一致性</h3>
+<p>恢复中、额度未知、到期和退出pending均锁creationControls。updateUsage对迟到响应采用expired OR、used max、remaining min，使旧活跃响应不能重新解锁。换图的读取、选图计数和提交共用动作锁，避免任务切换和重复计数。</p>
+<p>flushDraft先排队正文计数，再保存完整白名单草稿，返回本次saving Promise；尾部catch仅保持队列可用，不掩盖本次保存失败。真正返回退出时exitPending锁输入/清空，等待保存链成功结束后调用finishAfterDraft；失败则留在页面显示错误并恢复控制。<strong>到期时flushDraft返回已有保存链，不再执行新计数/草稿写入；等待链结束不等于到期后写入了一份新空草稿</strong>。IME未提交候选不作为草稿新内容。</p>
+<h3 id="section-17-sub-7">完成联系提示与实际到期</h3>
+<p>trial-status的completed表示存在符合归档规则的已保存非空MP4，并非重新probe每个文件；completed与expired独立。首次成片联系提示经原生SharedPreferences记录“已实际显示”，跨随机服务端口保持一次性；真正到期优先显示并停止制作。关闭弹窗不解锁。联系微信wzqy2019；无支付、激活、续期或重置接口。</p>
+<p>本机卸载/清数据删除账本与提示偏好；另一设备安装没有账号总额共享。正式试用独立包无自动任务迁移。原1.0.1正式版71文件隔离基线现在从Git标签android-v1.0.1核验，因为用户另行授权正式1.0.2更新，不代表当前正式源永远未变。</p>
+<p>依据：试用<code>trial_limits.py:10–271</code>、<code>app.py:49–96,469–507,603–647,680–929</code>、<code>static/mobile.js:36–135</code>、试用MainActivity相应桥与退出代码。</p>
+</section><section class="doc-section"><h2 id="section-18" tabindex="-1">18 全量HTTP接口目录与动作契约</h2>
+<p>以下目录由当前两版<code>app.py</code> AST提取装饰器生成，列出显式注册路由；Flask自动静态路由、HEAD/OPTIONS不作为业务入口另行展开。接口属于APK内部协议，不是对外公开云API；示例不包含真实密钥或运行token。</p>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table><thead><tr><th scope="col">版本</th><th scope="col">方法</th><th scope="col">路径</th><th scope="col">作用／主要字段</th><th scope="col">源码定位</th></tr></thead><tbody><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/</code></td><td>应用首页与同源Cookie</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L405" target="_blank" rel="noopener">app/src/main/python/app.py:405</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/session</code></td><td>恢复本机会话；不进入模型业务</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L414" target="_blank" rel="noopener">app/src/main/python/app.py:414</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/health</code></td><td>产品版本与可用来源</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L422" target="_blank" rel="noopener">app/src/main/python/app.py:422</a></td></tr><tr><td>两版</td><td><span class="method">GET / POST</span></td><td><code>/api/mobile/draft</code></td><td>读取／保存白名单草稿</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L451" target="_blank" rel="noopener">app/src/main/python/app.py:451</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/records</code></td><td>版本及分页日志；kind、offset</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L467" target="_blank" rel="noopener">app/src/main/python/app.py:467</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/records/export</code></td><td>JSON导出全部记录</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L481" target="_blank" rel="noopener">app/src/main/python/app.py:481</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/jobs</code></td><td>历史任务摘要，创建时间倒序</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L492" target="_blank" rel="noopener">app/src/main/python/app.py:492</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/videos</code></td><td>实际非空非pending成片列表</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L542" target="_blank" rel="noopener">app/src/main/python/app.py:542</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/videos/&lt;job_id&gt;/media</code></td><td>按filename读取保留MP4；download=1另存</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L560" target="_blank" rel="noopener">app/src/main/python/app.py:560</a></td></tr><tr><td>两版</td><td><span class="method">POST</span></td><td><code>/api/videos/&lt;job_id&gt;/reveal</code></td><td>兼容定位，在Android返回导出路径</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L567" target="_blank" rel="noopener">app/src/main/python/app.py:567</a></td></tr><tr><td>两版</td><td><span class="method">POST</span></td><td><code>/api/videos/reveal-root</code></td><td>Android作品库入口</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L576" target="_blank" rel="noopener">app/src/main/python/app.py:576</a></td></tr><tr><td>两版</td><td><span class="method">POST</span></td><td><code>/api/drawthings/check</code></td><td>兼容路由；Android已移除该来源，拒绝配置</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L584" target="_blank" rel="noopener">app/src/main/python/app.py:584</a></td></tr><tr><td>两版</td><td><span class="method">POST</span></td><td><code>/api/jobs</code></td><td>创建任务；正文／标题／音色／图片方式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L590" target="_blank" rel="noopener">app/src/main/python/app.py:590</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/jobs/&lt;job_id&gt;</code></td><td>完整job_view与三个阶段状态</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L662" target="_blank" rel="noopener">app/src/main/python/app.py:662</a></td></tr><tr><td>两版</td><td><span class="method">POST</span></td><td><code>/api/jobs/&lt;job_id&gt;/use-image</code></td><td>换手机／URL照片，保留MP3并清确认</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L667" target="_blank" rel="noopener">app/src/main/python/app.py:667</a></td></tr><tr><td>两版</td><td><span class="method">POST</span></td><td><code>/api/jobs/&lt;job_id&gt;/select-images</code></td><td>保留非空照片子集；版本检查</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L709" target="_blank" rel="noopener">app/src/main/python/app.py:709</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/jobs/&lt;job_id&gt;/images/&lt;int:index&gt;</code></td><td>当前图库指定索引图片</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L732" target="_blank" rel="noopener">app/src/main/python/app.py:732</a></td></tr><tr><td>两版</td><td><span class="method">POST</span></td><td><code>/api/jobs/&lt;job_id&gt;/&lt;action&gt;</code></td><td>动态动作：pause/resume/cancel/重试/确认等</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L741" target="_blank" rel="noopener">app/src/main/python/app.py:741</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/jobs/&lt;job_id&gt;/media/&lt;kind&gt;</code></td><td>当前ready音频／图片或done视频</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L847" target="_blank" rel="noopener">app/src/main/python/app.py:847</a></td></tr><tr><td>两版</td><td><span class="method">GET</span></td><td><code>/api/preview/&lt;voice&gt;</code></td><td>读取26种内置离线样音</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L864" target="_blank" rel="noopener">app/src/main/python/app.py:864</a></td></tr><tr><td>仅试用</td><td><span class="method">GET</span></td><td><code>/api/mobile/trial-status</code></td><td>累计额度＋是否有已保存成片</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/src/main/python/app.py#L603" target="_blank" rel="noopener">app/src/main/python/app.py:603</a></td></tr><tr><td>仅试用</td><td><span class="method">POST</span></td><td><code>/api/mobile/trial/text</code></td><td>正文差异计数并保存草稿正文</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/src/main/python/app.py#L616" target="_blank" rel="noopener">app/src/main/python/app.py:616</a></td></tr><tr><td>仅试用</td><td><span class="method">POST</span></td><td><code>/api/mobile/trial/photos</code></td><td>手机照片预选计数，返回内容绑定凭据</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/src/main/python/app.py#L633" target="_blank" rel="noopener">app/src/main/python/app.py:633</a></td></tr></tbody></table></div>
+
+<h3 id="section-18-sub-1">动态action完整枚举</h3>
+<p><code>POST /api/jobs/&lt;job_id&gt;/&lt;action&gt;</code>在服务端只接受下表动作；其他action为404，不能随意推断任意命令执行。请求必须JSON，暂无额外字段时也使用<code>{}</code>。</p>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>action</th>
+<th>请求关键字段</th>
+<th>成功行为／注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>pause</td>
+<td>无</td>
+<td>暂停标记，不撤云端提交</td>
+</tr>
+<tr>
+<td>resume</td>
+<td>无</td>
+<td>清暂停/取消，不自动重启中断步骤</td>
+</tr>
+<tr>
+<td>cancel</td>
+<td>无</td>
+<td>请求停止，素材保留</td>
+</tr>
+<tr>
+<td>retry-audio</td>
+<td>无</td>
+<td>用任务快照复用已完成语音分段</td>
+</tr>
+<tr>
+<td>retry-image</td>
+<td>api_key、payment_consent、必要时confirm_resubmit</td>
+<td>沿用任务AI模型，manual不提供AI重试</td>
+</tr>
+<tr>
+<td>regenerate</td>
+<td>prompt及费用认证</td>
+<td>更新要求，沿用任务模型重新生成</td>
+</tr>
+<tr>
+<td>change-source</td>
+<td>provider、model、prompt、费用认证</td>
+<td>从创作页配置更换可用AI来源/模型</td>
+</tr>
+<tr>
+<td>confirm</td>
+<td>image_version</td>
+<td>ready、版本一致、无ACTIVE后启动视频</td>
+</tr>
+<tr>
+<td>reveal</td>
+<td>可选kind=audio/video</td>
+<td>Android返回导出路径；无kind打开作品库</td>
+</tr>
+</tbody></table></div>
+<p>共用GET媒体需应用密钥/Cookie，不需POST local token。POST统一令牌和来源保护，即使非收费动作也适用。无法直接在桌面浏览器随意使用APK随机端口接口，不存在无鉴权远程访问方式。</p>
+<h3 id="section-18-sub-2">兼容路由的含义</h3>
+<p><code>/api/drawthings/check</code>残留于共享业务代码，但Android SOURCES已移除drawthings，配置先拒绝来源，不可作为手机本机模型功能宣传。reveal类路由保留桌面分支，Android返回库/导出结构。<code>remote_id</code>字段兼容历史任务，Seedream当前直接b64返回单张，没有远端ID轮询恢复接口。</p>
+</section><section class="doc-section"><h2 id="section-19" tabindex="-1">19 请求、响应、数据示例与错误码</h2>
+<h3 id="section-19-sub-1">创建本机照片任务</h3>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;6G 通信&quot;,
+  &quot;title_secondary&quot;: &quot;产业协同与应用路径&quot;,
+  &quot;text&quot;: &quot;这是用于解释接口契约的合成朗读示例。&quot;,
+  &quot;voice&quot;: &quot;zh-CN-YunjianNeural&quot;,
+  &quot;image_mode&quot;: &quot;upload&quot;,
+  &quot;photos&quot;: [
+    {&quot;photo_name&quot;: &quot;example.png&quot;, &quot;photo_data&quot;: &quot;&lt;有效PNG字节的Base64，非data URI&gt;&quot;}
+  ]
+}
+</code></pre>
+<p>成功201返回job_view。试用版应先调用trial/photos取得photo_receipt并附加；已到期即使凭据有效也不能创建。<code>photos</code>数组为新多图契约，也兼容单图顶层photo_data/photo_name。所有图片在活动任务创建前校验，不因半批成功就启动任务。</p>
+<h3 id="section-19-sub-2">URL／AI任务差异字段</h3>
+<pre><code class="language-json">{
+  &quot;text&quot;: &quot;用于演示URL任务的正文&quot;,
+  &quot;image_mode&quot;: &quot;url&quot;,
+  &quot;photo_url&quot;: &quot;https://example.org/example.png&quot;
+}
+</code></pre>
+<p>上面example.org是说明占位，不执行下载。URL模式不需prompt/Key。AI模式使用以下差异字段，Key必须真实由用户提供，不应写在文档、日志或源码中：</p>
+<pre><code class="language-json">{
+  &quot;text&quot;: &quot;用于演示AI任务的正文&quot;,
+  &quot;image_mode&quot;: &quot;generate&quot;,
+  &quot;provider&quot;: &quot;seedream&quot;,
+  &quot;model&quot;: &quot;doubao-seedream-5-0-pro-260628&quot;,
+  &quot;prompt&quot;: &quot;横向构图的科技城市，蓝色光线，主体明确&quot;,
+  &quot;api_key&quot;: &quot;&lt;由用户在运行时填写，不作为文档凭据&gt;&quot;,
+  &quot;payment_consent&quot;: true
+}
+</code></pre>
+<h3 id="section-19-sub-3">素材筛选与确认</h3>
+<pre><code class="language-jsonc">// POST /api/jobs/&lt;id&gt;/select-images
+{&quot;image_version&quot;: &quot;&lt;当前版本&gt;&quot;, &quot;selected_indices&quot;: [0, 2]}
+
+// POST /api/jobs/&lt;id&gt;/confirm
+{&quot;image_version&quot;: &quot;&lt;筛选后的当前版本&gt;&quot;}
+</code></pre>
+<p>索引必须真实int、合法、非重复、非空；筛选仍按原图库顺序保存，不能当任意排序API。全选不改变版本；有变化会更新版本并清确认。confirm使用最新版本，不提交客户端自造摘要，SHA256由后端计算。</p>
+<h3 id="section-19-sub-4">通用草稿字段</h3>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;示例&quot;,
+  &quot;titleSecondary&quot;: &quot;副标题&quot;,
+  &quot;text&quot;: &quot;朗读正文&quot;,
+  &quot;prompt&quot;: &quot;图片要求&quot;,
+  &quot;voice&quot;: &quot;zh-CN-YunxiNeural&quot;,
+  &quot;imageMode&quot;: &quot;upload&quot;,
+  &quot;provider&quot;: &quot;seedream&quot;,
+  &quot;selectedId&quot;: &quot;&quot;
+}
+</code></pre>
+<p>注意草稿字段titleSecondary/imageMode为前端驼峰，任务title_secondary/image_mode为后端下划线。GET缺失/不可读草稿返回<code>{}</code>，POST成功为<code>{&quot;ok&quot;:true}</code>；非法音色回默认、非法imageMode回upload、provider固定seedream、selectedId非法UUID回空。试用草稿保存会再次经过统一计数，不能绕过账本。</p>
+<h3 id="section-19-sub-5">试用usage实际合成样例</h3>
+<p>下面样例来自独立临时目录中的Flask test_client调用，不包含个人内容，没有发起在线合成或收费请求。输入字符串“中😀，空格换行”用转义JSON表达实际5个码点，同文再次发送不增加。</p>
+<pre><code class="language-jsonc">// POST /api/mobile/trial/text
+{&quot;text&quot;: &quot;中😀， \n&quot;}
+
+// HTTP 200
+{
+  &quot;expired&quot;: false,
+  &quot;max_photos&quot;: 10,
+  &quot;max_text_characters&quot;: 10000,
+  &quot;photos_remaining&quot;: 10,
+  &quot;photos_used&quot;: 0,
+  &quot;text_remaining&quot;: 9995,
+  &quot;text_used&quot;: 5,
+  &quot;wechat&quot;: &quot;wzqy2019&quot;
+}
+</code></pre>
+<p>trial-status额外有completed；trial/photos额外有photo_receipt；migration_note是可选说明。恰好10000字或10张HTTP200但expired=true，后续制作HTTP400。text非string如<code>{&quot;text&quot;:1}</code>返回400“文案格式无效”；trial/photos仅upload模式，url不接受。</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: &quot;试用已到期：累计输入最多 10000 字（含标点、空格和换行）或累计选择 10 张照片；获取正式版请联系微信：wzqy2019&quot;
+}
+</code></pre>
+<h3 id="section-19-sub-6">HTTP结果分类</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>状态码</th>
+<th>主要含义</th>
+<th>处理建议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>200</td>
+<td>状态/读取/动作接受</td>
+<td>仍需检查job状态或expired，不把200当制作一定成功</td>
+</tr>
+<tr>
+<td>201</td>
+<td>新任务已建立</td>
+<td>继续轮询素材步骤</td>
+</tr>
+<tr>
+<td>400</td>
+<td>格式、参数、标题、图片或试用到期</td>
+<td>显示error，按原因处理</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Android密钥、Host、Origin或本机会话不合法</td>
+<td>仅明确过期拒绝可恢复一次会话</td>
+</tr>
+<tr>
+<td>404</td>
+<td>未知任务、动作、媒体或文件</td>
+<td>不试图扩大路径范围</td>
+</tr>
+<tr>
+<td>409</td>
+<td>活动冲突、未就绪、素材版本变化、未知付费重发未确认</td>
+<td>等处理结束或重新预览/明确决定</td>
+</tr>
+<tr>
+<td>413</td>
+<td>超64MiB请求体</td>
+<td>压缩或减少照片</td>
+</tr>
+<tr>
+<td>415</td>
+<td>非JSON POST</td>
+<td>使用正确内容类型；可能为Flask默认HTML错误，不保证统一JSON</td>
+</tr>
+<tr>
+<td>500/其他异常</td>
+<td>未被业务捕获的服务错误或环境故障</td>
+<td>保留输入/素材，检查诊断，不自动重发收费动作</td>
+</tr>
+</tbody></table></div>
+<p>注册的400/403/404/409/413通常返回<code>{&quot;error&quot;:...}</code>；会话拒绝另有code。不是所有HTTP异常均有统一结构，文档/客户端应保留非JSON失败分支。</p>
+</section><section class="doc-section"><h2 id="section-20" tabindex="-1">20 异常分类、可靠性与安全设计评估</h2>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>已实现保护</th>
+<th>剩余边界</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>前端绕过限制</td>
+<td>后端验证标题/音色/图片/状态；worker重核素材/额度</td>
+<td>仍依赖可信安装和本机进程，非远程防破解授权</td>
+</tr>
+<tr>
+<td>双击／同时操作</td>
+<td>前端动作锁、ACTIVE、RLock、确认幂等</td>
+<td>没有跨进程事务队列</td>
+</tr>
+<tr>
+<td>Seedream结果未知</td>
+<td>提交标志、单次请求、明确人工重发同意</td>
+<td>云端实际费用需用户查账户，不能本机撤回</td>
+</tr>
+<tr>
+<td>残缺音频</td>
+<td>partial与最终part分开、非空probe、有限重试</td>
+<td>已有part复用不逐个做完整采样验证</td>
+</tr>
+<tr>
+<td>确认后换图</td>
+<td>版本与内容digest双闸门</td>
+<td>不审核图片含义、版权或适宜性</td>
+</tr>
+<tr>
+<td>非法网络目标</td>
+<td>全部DNS结果公网检查、IP绑定、跳转重校验</td>
+<td>服务可用性/网站授权由外部决定</td>
+</tr>
+<tr>
+<td>非法私有文件导出</td>
+<td>同源、Python/Java目录类型复核、只读Provider</td>
+<td>无数据库加密或固定时间share token清理</td>
+</tr>
+<tr>
+<td>进程中断</td>
+<td>已完成素材保存、busy→interrupted、不重发收费</td>
+<td>用户需手动恢复，损坏job JSON可能阻断恢复</td>
+</tr>
+<tr>
+<td>磁盘写失败</td>
+<td>临时替换、部分文件fsync、日志warning</td>
+<td>账本/草稿非跨文件事务；无自动数据修复</td>
+</tr>
+<tr>
+<td>长任务／后台</td>
+<td>FGS、WakeLock、低帧率/两线程编码</td>
+<td>OS清理、温度、资源、无编码总watchdog</td>
+</tr>
+</tbody></table></div>
+<p>应用自动日志不收正文/prompt/Key，任务JSON确实保存作品必要内容。业务控制令牌与密钥恒时比较、回环监听、主WebView同源、导出白名单共同形成边界；不应把某一个层次单独当成完整保护。</p>
+<p>主机测试的恶意URL、目录穿越、令牌过期与费用路径检查说明相应业务分支被测试，但不等同全面渗透评估或所有Android机型上的系统安全验收。本章记录实现及明确限制，不引入未实现的“零风险”承诺。</p>
+</section><section class="doc-section"><h2 id="section-21" tabindex="-1">21 工具链、依赖、原生兼容与许可证</h2>
+<h3 id="section-21-sub-1">实际打包依赖</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>固定配置／版本</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Android Gradle Plugin</td>
+<td>8.9.3</td>
+<td>APK编译打包</td>
+</tr>
+<tr>
+<td>Gradle</td>
+<td>8.13</td>
+<td>构建执行</td>
+</tr>
+<tr>
+<td>Java</td>
+<td>编译/目标17；保留Zulu17.0.14工具链</td>
+<td>原生宿主编译</td>
+</tr>
+<tr>
+<td>Chaquopy</td>
+<td>17.0.0</td>
+<td>CPython和Python依赖打包</td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.11系列</td>
+<td>业务运行时</td>
+</tr>
+<tr>
+<td>Flask</td>
+<td>3.1.2</td>
+<td>本机服务与模板</td>
+</tr>
+<tr>
+<td>Pillow</td>
+<td>11.0.0</td>
+<td>图像解码、加工、字体</td>
+</tr>
+<tr>
+<td>edge-tts</td>
+<td>7.2.3</td>
+<td>在线TTS协议接入</td>
+</tr>
+<tr>
+<td>aiohttp</td>
+<td>3.10.10</td>
+<td>异步网络依赖</td>
+</tr>
+<tr>
+<td>FFmpeg</td>
+<td>7.1.2</td>
+<td>编码/探测</td>
+</tr>
+<tr>
+<td>x264</td>
+<td>保留stable精确快照，API165</td>
+<td>软件H.264编码</td>
+</tr>
+<tr>
+<td>NDK</td>
+<td>28.2.13676358</td>
+<td>两种Android原生ABI构建</td>
+</tr>
+<tr>
+<td>CMake</td>
+<td>3.22.1（Pillow兼容库构建）</td>
+<td>FreeType/JPEG构建</td>
+</tr>
+<tr>
+<td>字体</td>
+<td>NotoSansCJKsc-Bold.otf</td>
+<td>中文大标题</td>
+</tr>
+</tbody></table></div>
+<p>一级pip依赖用精确版本pin，但未发现传递依赖的完整hash lock，不能声称整个Python依赖图在任意新环境字节完全可重现。旧<code>docs/PC回归测试.md</code>写aiohttp3.9.5已陈旧；当前app/build.gradle和实际release staging均为3.10.10。主机测试虚拟环境的依赖版本可能更高，不应拿来填APK依赖表。</p>
+<h3 id="section-21-sub-2">原生媒体构建</h3>
+<p>保留FFmpeg7.1.2与x264精确上游源归档及SHA256SUMS，不依赖会移动的stable分支重新取源码。NDK交叉编译默认API24、arm64-v8a/x86_64；ARM64使用NEON汇编，x86_64禁汇编以避NASM依赖。FFmpeg静态链接x264，Android libc/libm/libz等系统库动态链接。</p>
+<p>构建启用GPL/libx264并用disable-everything配白名单：文件/pipe协议、concat/image2及必要音频/MP4解复用、PNG/JPEG/MP3/PCM/AAC/H.264解码、libx264/AAC编码、MP4/MOV封装、loop/tpad/fps/trim等滤镜。没有网络媒体解码protocol，也未启用Android硬件编码器；图片网络行为在Python执行。</p>
+<h3 id="section-21-sub-3">16KB兼容：两个不同层次</h3>
+<ol>
+<li><strong>ELF层</strong>：各原生对象的LOAD段以0x4000对齐。FFmpeg/FFprobe可执行程序另核对PIE及Android64位动态链接器interpreter；Pillow依赖共享库核对SONAME、ABI、导入/导出符号与版本节点，不能要求共享库也具备可执行入口。</li>
+<li><strong>APK ZIP层</strong>：用zipalign的<code>-P 16</code>核对打包对齐；解包或zip对齐通过不能替代原生ELF和Python扩展的加载兼容。</li>
+</ol>
+<p>FFmpeg/x264链接器传max-page-size/common-page-size=16384。Pillow原wheel部分FreeType/JPEG库较旧，项目保留对应API/SONAME的FreeType2.9.1与libjpeg-turbo1.5.3源码，NDK重建16KB兼容库，核对导出符号及Pillow所需符号。JPEG portable C关闭SIMD是兼容取舍，不能承诺性能等于原平台库。</p>
+<p>Gradle跟踪native-compat输入，在installPythonRequirements任务完成后按ABI覆盖生成staging中的库；不手改pip生成目录后假装可重建。静态verify-binaries报告<code>runtime_verified=false</code>，说明不是设备加载测试。Android官方说明了含原生库应用的16KB适配背景：<a href="https://developer.android.com/guide/practices/page-sizes">16KB页大小支持</a>。</p>
+<h3 id="section-21-sub-4">许可证和对应源</h3>
+<p>本FFmpeg构建因启用libx264/GPL按GPLv2或更高版本分发，x264也有相应GPL许可；项目保存许可证、精确源归档、构建脚本与来源SHA。Pillow依赖保留FreeType FTL及GPL替代说明、JPEG相关notice；Noto字体附OFL文本。APK资源同步包含需要的许可说明。</p>
+<p>本节陈述打包组件的许可与保留资料，不能将其误解为完整法律审定。分发原生组件时，应保留对应源、通知和构建说明给接收方；不应只交一个无对应资料的媒体可执行程序。</p>
+<p>依据：<code>build.gradle</code>、<code>app/build.gradle</code>、<code>gradle-wrapper.properties</code>、<code>native-sources/README.md</code>、<code>licenses/README.md</code>、<code>native-compat/README.md</code>、<code>scripts/build-media.sh</code>、<code>scripts/build-pillow-libs.sh</code>。</p>
+</section><section class="doc-section"><h2 id="section-22" tabindex="-1">22 构建、签名、核验与GitHub发布流程</h2>
+<figure class="diagram"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 835" role="img" aria-labelledby="build-title"><title id="build-title">源码与工具链到签名发布</title><defs><marker id="build-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z" fill="#56789a"/></marker></defs><rect width="960" height="835" rx="18" fill="#f8fbff"/><text x="28" y="34" fill="#275078" font-size="15" font-weight="650">源码与工具链到签名发布</text><path d="M190,156 L190,195.5 L190,195.5 L190,235" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#build-arrow)"/><path d="M750,156 L750,195.5 L750,195.5 L750,235" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#build-arrow)"/><path d="M190,321 L190,355.5 L470,355.5 L470,390" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#build-arrow)"/><path d="M750,321 L750,355.5 L470,355.5 L470,390" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#build-arrow)"/><path d="M470,476 L470,508 L470,508 L470,540" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#build-arrow)"/><path d="M470,626 L470,663 L190,663 L190,700" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#build-arrow)"/><path d="M470,626 L470,663 L750,663 L750,700" fill="none" stroke="#56789a" stroke-width="2"  marker-end="url(#build-arrow)"/><rect x="60" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">版本化业务源码</text><text x="190" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">Java／Python／HTML／测试</text><rect x="620" y="70" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="750" y="98" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">精确原生源归档</text><text x="750" y="120" text-anchor="middle" fill="#506a84" font-size="12.5">FFmpeg／x264／Pillow兼容库</text><rect x="60" y="235" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="190" y="263" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">Gradle＋Chaquopy构建</text><text x="190" y="285" text-anchor="middle" fill="#506a84" font-size="12.5">SDK36 · Java17 · CPython3.11</text><rect x="620" y="235" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="750" y="263" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">NDK构建与ELF核验</text><text x="750" y="285" text-anchor="middle" fill="#506a84" font-size="12.5">ABI／16KB LOAD／符号</text><rect x="340" y="390" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="470" y="418" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">原签名release APK</text><text x="470" y="440" text-anchor="middle" fill="#506a84" font-size="12.5">包名与code · 禁止私钥入库</text><rect x="340" y="540" width="260" height="86" rx="12" fill="#ffffff" stroke="#9cbfeb" stroke-width="1.6"/><text x="470" y="568" text-anchor="middle" fill="#12519a" font-size="16" font-weight="650">内容／签名／ZIP16KB</text><text x="470" y="590" text-anchor="middle" fill="#506a84" font-size="12.5">45资源＋4媒体程序＋Python归档</text><rect x="60" y="700" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="190" y="728" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">桌面交付APK</text><text x="190" y="750" text-anchor="middle" fill="#506a84" font-size="12.5">SHA256与构建一致</text><rect x="620" y="700" width="260" height="86" rx="12" fill="#edf9f4" stroke="#91d4ba" stroke-width="1.6"/><text x="750" y="728" text-anchor="middle" fill="#176048" font-size="16" font-weight="650">GitHub源码与Release</text><text x="750" y="750" text-anchor="middle" fill="#506a84" font-size="12.5">源提交／附件digest一致</text></svg></div><figcaption>图10｜可审计的构建发布链。原生ELF、APK ZIP、签名和资源一致性分别核验；只有核验后的APK发布并与桌面/远端摘要比对。<span class="diagram-help">小屏可横向滚动查看图示</span></figcaption></figure>
+
+<h3 id="section-22-sub-1">环境与输入</h3>
+<p>需要JDK17、Android SDK compile36、对应NDK、Python3.11、Gradle8.13。重建原生媒体还需Bash/make/tar/Perl，Pillow兼容库需要相应CMake。已有原生输出时可以只构建APK；全新环境的AGP/Gradle/Python依赖需缓存或仓库访问，只有保留原生源归档部分明确支持无网络重建，不能声称整APK在任意空环境离线构建。</p>
+<p>APK release构建需要原签名文件和安全提供的TINGWEN_SIGNING_PASSWORD。脚本若缺原签名或密码会直接失败，不随意创建新密钥替换；该密钥未上传GitHub。调试构建使用调试签名，不可覆盖原正式发布。</p>
+<h3 id="section-22-sub-2">可复核的构建步骤</h3>
+<pre><code class="language-bash"># 从相应Android工程根目录执行，路径按实际环境提供
+export ANDROID_SDK_ROOT=/path/to/android/sdk
+export ANDROID_NDK_HOME=/path/to/android/ndk/28.2.13676358
+export TINGWEN_NDK_ROOT=&quot;$ANDROID_NDK_HOME&quot;
+export TINGWEN_CMAKE_BIN=&quot;$ANDROID_SDK_ROOT/cmake/3.22.1/bin/cmake&quot;
+bash scripts/build-media.sh
+bash scripts/build-pillow-libs.sh
+python3 native-compat/verify_libraries.py
+
+# 原签名及密码由维护人员安全恢复，本文不展示密钥值
+bash scripts/build-apk.sh release
+</code></pre>
+<p>以上重建脚本按当前工程保留的macOS工具链路径编写；Linux/Windows不能仅改环境变量便假定原生重建可用，需要适配对应NDK host路径。build-pillow-libs读取TINGWEN_NDK_ROOT及ANDROID_SDK_ROOT/ANDROID_HOME，CMake可由TINGWEN_CMAKE_BIN指定。build-apk选择环境TINGWEN_JAVA_HOME或保留Zulu工具链，设置项目Gradle缓存；存在保留Gradle则使用，否则wrapper。release执行assembleRelease，debug执行assembleDebug及assembleDebugAndroidTest。产物默认在<code>app/build/outputs/apk/release/app-release.apk</code>；脚本本身不自动复制到dist、桌面或GitHub。</p>
+<h3 id="section-22-sub-3">APK核验顺序</h3>
+<ol>
+<li>aapt读取applicationId、versionName/code、应用标签与Manifest provider。</li>
+<li>apksigner验证实际签名，核对原证书公开指纹。</li>
+<li>zipalign <code>-c -P 16 4</code>核对ZIP对齐；另执行原生ELF/符号检查。</li>
+<li>解包比较45项资源与最终源文件、4个ABI媒体程序及Python归档业务；正式版检查无trial_limits，试用版检查额度常量与专属路由。</li>
+<li>保存SHA256和实际字节数，再复制桌面、比对桌面与构建完全一致。</li>
+<li>完成源/文档归档，排除jks、密码、Key、用户任务、草稿、ledger、日志及缓存；不重写原Git历史。</li>
+<li>推main，Release指定已验证源码提交，上传ASCII文件名APK、SHA256SUMS与验证JSON。</li>
+<li>用GitHubAPI核对Release非draft、目标提交、附件uploaded和服务端SHA256与桌面一致；正式版作为latest，试用版独立发布。</li>
+</ol>
+<h3 id="section-22-sub-4">本次实际产物</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table><thead><tr><th scope="col">版本</th><th scope="col">文件／Release下载</th><th scope="col">字节数</th><th scope="col">SHA256</th></tr></thead><tbody><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/releases/tag/android-v1.0.2" target="_blank" rel="noopener">tingwen-android-v1.0.2.apk</a></td><td>44,472,826</td><td><code class="hash">aaa415bd54c1d48c3fd67099d12e37ca240ba4814fb60b7e2e2273182bd53b9a</code></td></tr><tr><td>试用</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/releases/tag/android-trial-v1.0.2" target="_blank" rel="noopener">tingwen-android-trial-v1.0.2.apk</a></td><td>44,492,954</td><td><code class="hash">0357aa2c91858797e2f87ef426a324b33fb00795c602d2295d7b9e1b5b3dbab1</code></td></tr></tbody></table></div>
+
+<p>公开证书SHA256为<code>88184f3d44642ff29c1dba48018fa123ba8d2dcded94d83b6ad26e67a1a865f7</code>，RSA3072，APK v2核验通过。该指纹不是私钥；它可帮助判断是否沿用原发布身份。同一应用覆盖升级须保持包名/密钥并提高versionCode。</p>
+<p>项目GitHub为私有仓库；版本源码和附件链接需对应权限。本轮源归档不含用户作品或敏感运行资料，APK仅包含产品资源和代码。正式/试用独立包可并存；两者同code10002不相互覆盖。</p>
+</section><section class="doc-section"><h2 id="section-23" tabindex="-1">23 验证证据、测试方法与验收边界</h2>
+<h3 id="section-23-sub-1">已交付1.0.2证据</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>正式版1.0.2</th>
+<th>试用版1.0.2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>离线PC/Android业务回归</td>
+<td>78项（70原PC快照＋8安卓契约）</td>
+<td>76项（68原PC快照＋8安卓契约）</td>
+</tr>
+<tr>
+<td>Python专项主机检查</td>
+<td>2项正式版API专项</td>
+<td>45项接口/运行时/累计账本</td>
+</tr>
+<tr>
+<td>Chrome界面</td>
+<td>3项，关于及360/390px紧凑布局</td>
+<td>21项，含IME、恢复锁、迟到响应、换图锁、退出保存</td>
+</tr>
+<tr>
+<td>合计</td>
+<td>83项通过</td>
+<td>142项通过</td>
+</tr>
+<tr>
+<td>Release内容/签名</td>
+<td>原签名、45资源、4媒体程序、包/provider/ABI、ZIP16KB</td>
+<td>相应独立包、额度模块/路由、同类检查</td>
+</tr>
+<tr>
+<td>新设备完整流程</td>
+<td>本轮未追加</td>
+<td>本轮未追加</td>
+</tr>
+</tbody></table></div>
+<p>试用回归因累计规则改变排除两个原PC精确界面/批次模拟断言，并用真实累计接口及Chrome检查覆盖新行为；原PC测试快照SHA未改，不以关闭后端额度来“让测试通过”。正式版专项验证反复保存12000字符以上草稿，12000字新任务配11和50张照片返回201，无trial ledger/路由、无云端配图调用。</p>
+<p>主机媒体回归用Androidworker逻辑，但以桌面FFmpeg/FFprobe替代设备程序，验证单图/多图/标题/时长/音轨和完整解码；网络/付费路径使用mock，不产生真实Seedream费用。原生程序曾在Android14 ARM64模拟器执行版本命令，这与安装APK、WebView、系统选择器、真实TTS、分享和整条设备MP4验收不同。</p>
+<h3 id="section-23-sub-2">后续设备验收建议（未执行项）</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>验收场景</th>
+<th>判断标准</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>冷启动与失败恢复</td>
+<td>首帧计时、pageReady条件、重试可用、通知不遮开场</td>
+</tr>
+<tr>
+<td>实际联网语音</td>
+<td>选定音色生成、全文结尾、超时/取消、重试复用</td>
+</tr>
+<tr>
+<td>系统照片选择器</td>
+<td>单选/多选、取消、系统上限、HEIC/AVIF按机型能力</td>
+</tr>
+<tr>
+<td>完整本机视频</td>
+<td>单图/多图1080p、标题、切图顺序、音轨、末尾播放</td>
+</tr>
+<tr>
+<td>长任务与后台</td>
+<td>锁屏、通知返回、系统清理、强停后待恢复，无收费自动重发</td>
+</tr>
+<tr>
+<td>SAF与分享</td>
+<td>另存实际文件完整、取消保存保留源、接收应用只读读取</td>
+</tr>
+<tr>
+<td>16KB设备</td>
+<td>Python扩展与两类原生程序实际加载，不仅ZIP检查</td>
+</tr>
+<tr>
+<td>试用边界</td>
+<td>9999→10000、9→10、任一耗尽在途编码停止、成品仍能导出</td>
+</tr>
+</tbody></table></div>
+<p>这些是维护验收方案，不是本次文档编制新跑过的检查。本文没有启动用户APK进行真机全流程，没有发起真实收费请求，也没有读取签名私钥。</p>
+<h3 id="section-23-sub-3">测试执行入口</h3>
+<pre><code class="language-bash"># 使用带所需依赖的主机Python虚拟环境，避免写入真实任务目录
+python -B scripts/test-parity.py
+python -B tests/test_formal_edition.py
+
+# 浏览器检查需Playwright及可用Chromium/Chrome
+node --test tests/test_about_ui.js
+
+# 试用工程另有累计接口/UI及APK核验脚本
+python -B scripts/verify-trial-apk.py
+</code></pre>
+<p>脚本依赖测试配置、主机FFmpeg、隔离临时根以及浏览器工具环境。不能只执行一个API单测便宣布设备编码、WebView和云服务全部通过。</p>
+</section><section class="doc-section"><h2 id="section-24" tabindex="-1">24 维护、故障定位、性能和当前限制</h2>
+<h3 id="section-24-sub-1">定位顺序</h3>
+<ol>
+<li><strong>启动层</strong>：查看Activity/Service的starting/ready/error、资源拷贝、Python初始化与baseUrl；不能先把3秒动画慢解释为TTS问题。</li>
+<li><strong>会话层</strong>：确认当前源、Android密钥Cookie和local token；仅明确过期拒绝可恢复一次。</li>
+<li><strong>任务层</strong>：核对保存快照、三阶段state、paused/cancelled、ACTIVE冲突及image_version。</li>
+<li><strong>语音层</strong>：看part完成数量、partial、等待消息和最后错误；分段重试遵守有限请求，不改旧任务正文。</li>
+<li><strong>图片层</strong>：区别decode/尺寸、URL公网与内容校验、云配置/未知结果；Seedream错误看官方code而不是只看429。</li>
+<li><strong>编码层</strong>：看cover、ffconcat、progress与video-log尾；确认尺寸/音轨/时长检查，pending不当成品。</li>
+<li><strong>导出层</strong>：确认文件已完成、路径白名单、系统URI选择和目标可写；分享目标支持MIME。</li>
+<li><strong>试用层</strong>：核对usage/migration_note、差异snapshot、receipt、是否已expired；不要自动删坏账重新发额度。</li>
+</ol>
+<h3 id="section-24-sub-2">性能事实与容量</h3>
+<p>低静态帧率、veryfast和threads2减少编码负担是当前取舍，没有跨机型基准测试给出统一耗时。规范化高像素图片仍可能大，PNG背景/字体绘制在CPU上，软件编码耗时受时长、CPU与温度影响。语音依赖网络速度和服务响应，累计分段进度不代表剩余时间。</p>
+<p>目前没有作业队列、自动媒体清理、容量水位控制、数据库压缩或日志轮转；每个任务保存原文/图片/分段/画面/成片，长时间使用会增加磁盘占用。设备磁盘满既可能影响任务保存，也可能影响试用账本/草稿，必须保留用户可读错误和现有素材。</p>
+<h3 id="section-24-sub-3">未提供的功能与已知实现边界</h3>
+<ul>
+<li>没有离线TTS模型、IndexTTS/OmniVoice或Android系统TTS分支；没有克隆声音、任意SSML、语速音调UI。</li>
+<li>没有字幕、ASR、按段落智能配图/配时、视频素材剪辑、背景音乐或转场编辑；保留CLI字幕选项不是APK功能。</li>
+<li>没有PC本机Draw Things接入；保留检查路由在Android来源校验被拒绝。</li>
+<li>没有账号登录、跨设备云同步、支付、激活/续期、设备永久试用绑定。</li>
+<li>没有每次成片永久多版本快照；同任务最终路径可能被成功新成片替换。</li>
+<li>无所有格式在API24均可读保证，无后台永不退出保证，无全编码总时限/无进度watchdog。</li>
+<li>无整条数据的加密数据库，ledger是私有JSON；卸载/清数据会重置本机试用。</li>
+<li>任务损坏JSON没有普遍逐文件恢复，依赖传递图未全hash锁定，share token映射无固定TTL清理。</li>
+</ul>
+<p>Android前台服务类型和系统约束随版本变化，项目实际声明specialUse，不能因为存在前台通知而宣称通过所有应用商店政策审核或可无限后台运行。<a href="https://developer.android.com/develop/background-work/services/fgs/service-types">Android前台服务类型文档</a>提供平台背景，实际交付仍需目标系统验收。</p>
+</section><section class="doc-section"><h2 id="section-25" tabindex="-1">25 来源索引、术语与追溯资料</h2>
+<h3 id="section-25-sub-1">源码定位索引</h3>
+<p>下表由本次实际文件计算SHA256，并列代码行数。行号引用对应这一版本基线；后续源代码变化会使行号移动。用户任务、密钥、签名私钥和缓存没有进入索引。</p>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table><thead><tr><th scope="col">版本</th><th scope="col">文件／代码位置</th><th scope="col">行数</th><th scope="col">SHA256</th></tr></thead><tbody><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/build.gradle#L1" target="_blank" rel="noopener">app/build.gradle:1</a></td><td>80</td><td><code class="hash">9947b673daa3af8f383577f1b6de6399994dd2ae33c01a6a8b8450621666e354</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/build.gradle#L1" target="_blank" rel="noopener">build.gradle:1</a></td><td>4</td><td><code class="hash">09a91ee8bb9da6698ebcfc5a6550ba6b20821d20a62a0f7be83f6a70cc2bf2b4</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/AndroidManifest.xml#L1" target="_blank" rel="noopener">app/src/main/AndroidManifest.xml:1</a></td><td>28</td><td><code class="hash">f3845ce72f2830e2af677b346c018d8c69e42a5affd3eafdc4f2d61778315154</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/image_sources.py#L1" target="_blank" rel="noopener">app/src/main/python/image_sources.py:1</a></td><td>19</td><td><code class="hash">52760db3913d01607ecc13a09323a29ec8a827544e0057fff57ef9af37172127</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/records.py#L1" target="_blank" rel="noopener">app/src/main/python/records.py:1</a></td><td>113</td><td><code class="hash">32c51c994243d4e75a3fada5f04c2c6a28df514a4fa7e4e11b43fbfb09004a4e</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/android_runtime.py#L1" target="_blank" rel="noopener">app/src/main/python/android_runtime.py:1</a></td><td>289</td><td><code class="hash">5c71c5cee50ac78bf52d38c2256ffc47b9c47daa0ce608832cf84b14a22d2707</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/seedream.py#L1" target="_blank" rel="noopener">app/src/main/python/seedream.py:1</a></td><td>94</td><td><code class="hash">a8f240662d6aa0206c0c428bc94ab1a6a9aa0d558e2610466c713de0f26ec78b</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/app.py#L1" target="_blank" rel="noopener">app/src/main/python/app.py:1</a></td><td>889</td><td><code class="hash">90b8acf478c99375ef0a02945b456517074f874bf97f030bb6a7c39f7ff1485b</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/speech.py#L1" target="_blank" rel="noopener">app/src/main/python/speech.py:1</a></td><td>166</td><td><code class="hash">f5ba01373d1944e7a94d9550c96f26c0011c4962b7abcf8369f1f9fb0a5b0491</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/photo_import.py#L1" target="_blank" rel="noopener">app/src/main/python/photo_import.py:1</a></td><td>192</td><td><code class="hash">3f462ad8036d8e9e7c526c544555def922fe729d804eb46ee41cabf0f7c32913</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/drawthings.py#L1" target="_blank" rel="noopener">app/src/main/python/drawthings.py:1</a></td><td>87</td><td><code class="hash">cfff78c103391a6896cd0afd4c105ed7753f0fad6e2f5613f0a96dfec408b0ce</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/scripts/compose_video.py#L1" target="_blank" rel="noopener">app/src/main/python/scripts/compose_video.py:1</a></td><td>351</td><td><code class="hash">cb1286191e725a881c39bf7dec575d16bb02f0e38d66fd94408831da80156785</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/python/scripts/make_homepage_bg.py#L1" target="_blank" rel="noopener">app/src/main/python/scripts/make_homepage_bg.py:1</a></td><td>365</td><td><code class="hash">8913b24dddc3441c2eb9f54ba959a083ab081530da4d798a9162149b7f19d75c</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/java/cn/tingwen/workbench/ExportProvider.java#L1" target="_blank" rel="noopener">app/src/main/java/cn/tingwen/workbench/ExportProvider.java:1</a></td><td>60</td><td><code class="hash">f93953234a1a139a7452b3eb01114215d6a748b6310d2ec8b1076c646d81bfe5</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/java/cn/tingwen/workbench/StartupTiming.java#L1" target="_blank" rel="noopener">app/src/main/java/cn/tingwen/workbench/StartupTiming.java:1</a></td><td>14</td><td><code class="hash">cdf5905c9736b04eba66e182ec6f06e83ab90b856adbf3dcc703395184be6097</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/java/cn/tingwen/workbench/MainActivity.java#L1" target="_blank" rel="noopener">app/src/main/java/cn/tingwen/workbench/MainActivity.java:1</a></td><td>389</td><td><code class="hash">4a5a4285552ff0bb87f0fecdb314e77825e571d9e6104e20a80228c921050304</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/java/cn/tingwen/workbench/ExportPolicy.java#L1" target="_blank" rel="noopener">app/src/main/java/cn/tingwen/workbench/ExportPolicy.java:1</a></td><td>50</td><td><code class="hash">217beee04c9a44ae11c1f1b7f452b1c2c7d9b4476b3e5aa7d7342278bf404e15</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/java/cn/tingwen/workbench/WorkbenchService.java#L1" target="_blank" rel="noopener">app/src/main/java/cn/tingwen/workbench/WorkbenchService.java:1</a></td><td>105</td><td><code class="hash">7480ffe1e2d413f7b3beee91e50aff31f7e10fc78e786518ac9b8ab5318dd86e</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/java/cn/tingwen/workbench/StartupAnimationView.java#L1" target="_blank" rel="noopener">app/src/main/java/cn/tingwen/workbench/StartupAnimationView.java:1</a></td><td>102</td><td><code class="hash">d45a15aa0648ba946a2c4c5b5d7fc4d3ec404f9e7abbb5f68f89d5d85542ab84</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/assets/workbench/templates/index.html#L1" target="_blank" rel="noopener">app/src/main/assets/workbench/templates/index.html:1</a></td><td>284</td><td><code class="hash">4581eb0e945b530bf917b328b90c093c2252697213ea9bff275fc2d5f7ae3eeb</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/assets/workbench/static/mobile.js#L1" target="_blank" rel="noopener">app/src/main/assets/workbench/static/mobile.js:1</a></td><td>102</td><td><code class="hash">7a8f6fb62a6c96c4b1e18a85fd24c9394f5f81436672643012692efbbb229547</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/app/src/main/assets/workbench/static/mobile.css#L1" target="_blank" rel="noopener">app/src/main/assets/workbench/static/mobile.css:1</a></td><td>19</td><td><code class="hash">e1129160377f265f815c0699babfbc359c625192f9379147ddf9844ceb27a678</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/scripts/build-apk.sh#L1" target="_blank" rel="noopener">scripts/build-apk.sh:1</a></td><td>27</td><td><code class="hash">88626ca5ef65c76cf097f767d6703e3f6969a7257b324dc2933a0b5af7170ecc</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/scripts/build-media.sh#L1" target="_blank" rel="noopener">scripts/build-media.sh:1</a></td><td>86</td><td><code class="hash">d2548b0ff2aa4add35bee41dc30a0ecbc94f5cf9020b3d22aefc4359613874f6</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/scripts/build-pillow-libs.sh#L1" target="_blank" rel="noopener">scripts/build-pillow-libs.sh:1</a></td><td>82</td><td><code class="hash">73b9c4605066cd4fd656aa13c1b7b4b682ca317169b36db82599c61b9e410ecd</code></td></tr><tr><td>正式</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android/scripts/test-parity.py#L1" target="_blank" rel="noopener">scripts/test-parity.py:1</a></td><td>198</td><td><code class="hash">28bb7e8ff1be4e8cbfec14b9e954f6d37606f8d273ca295ab02721f14048c3c7</code></td></tr><tr><td>试用</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/build.gradle#L1" target="_blank" rel="noopener">app/build.gradle:1</a></td><td>80</td><td><code class="hash">43bdb0dd1e3690cd7fef42b92724346c33d055dba4aa249576779e5b36858985</code></td></tr><tr><td>试用</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/build.gradle#L1" target="_blank" rel="noopener">build.gradle:1</a></td><td>4</td><td><code class="hash">09a91ee8bb9da6698ebcfc5a6550ba6b20821d20a62a0f7be83f6a70cc2bf2b4</code></td></tr><tr><td>试用</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/src/main/AndroidManifest.xml#L1" target="_blank" rel="noopener">app/src/main/AndroidManifest.xml:1</a></td><td>28</td><td><code class="hash">d389a4a2652adca5ac0bf8bea08237cacdd9404da323e6a53a2c2ce261c82a0f</code></td></tr><tr><td>试用</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/src/main/python/trial_limits.py#L1" target="_blank" rel="noopener">app/src/main/python/trial_limits.py:1</a></td><td>271</td><td><code class="hash">3f87b1e6508a104143287384f00e05a5627f5dd2eaf749e72bbb8d6b912f41c4</code></td></tr><tr><td>试用</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/src/main/python/app.py#L1" target="_blank" rel="noopener">app/src/main/python/app.py:1</a></td><td>1023</td><td><code class="hash">acf97199f41937f1d61fad890495eb3278dee26e0f89aea567d1d41ddcdbd220</code></td></tr><tr><td>试用</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/src/main/assets/workbench/templates/index.html#L1" target="_blank" rel="noopener">app/src/main/assets/workbench/templates/index.html:1</a></td><td>307</td><td><code class="hash">85c806e86019ea624ade9ab86190c328c9a26c04c376008495b00428f87607a8</code></td></tr><tr><td>试用</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/src/main/assets/workbench/static/mobile.js#L1" target="_blank" rel="noopener">app/src/main/assets/workbench/static/mobile.js:1</a></td><td>136</td><td><code class="hash">1d7bd99597ab28db2a6c18f8863f00ea3e3e57151526a4f71e7e0153c8fb7d5d</code></td></tr><tr><td>试用</td><td><a href="https://github.com/wangdexin1977/tingwen-video-workbench/blob/android-trial-v1.0.2/%E5%90%AC%E6%96%87%E8%A7%86%E9%A2%91%E5%B7%A5%E4%BD%9C%E5%8F%B0-Android-%E8%AF%95%E7%94%A8%E7%89%88/app/src/main/java/cn/tingwen/workbench/MainActivity.java#L1" target="_blank" rel="noopener">app/src/main/java/cn/tingwen/workbench/MainActivity.java:1</a></td><td>443</td><td><code class="hash">5d6a8be6f49e3eb279b2a4ac1604fc9c825c3cb476f5f0706bb66d1dbc35d6d9</code></td></tr></tbody></table></div>
+
+<h3 id="section-25-sub-2">原始交付证据</h3>
+<ul>
+<li>正式<code>docs/1.0.2交付验证.json</code>、<code>docs/1.0.2-PC回归结果.json</code>、<code>docs/1.0.2更新说明.md</code>和截图。</li>
+<li>试用<code>docs/1.0.2交付记录.json</code>、<code>docs/累计试用版回归结果.json</code>、<code>docs/试用版APK验证.json</code>及其研究合成接口样例。</li>
+<li>两版<code>docs/GitHub1.0.2发布核验.json</code>：远端附件状态、字节数、服务端SHA256与桌面一致的核验。</li>
+<li>原生<code>native-sources</code>、<code>native-compat</code>、<code>licenses</code>、<code>tooling/media/provenance</code>：精确源归档、编译配置及静态检查。</li>
+<li>HTML随附研究依据稿、源Markdown、生成脚本和HTML阅读核验记录；这些用于解释资料来源，不取代源码。</li>
+</ul>
+<h3 id="section-25-sub-3">外部一手参考</h3>
+<p>以下用于核对平台/组件机制，不用来证明本APK已通过设备全流程。本文主体实现事实来自本项目源码和交付报告。</p>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>参考</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://chaquo.com/chaquopy/doc/current/android.html">Chaquopy17 Gradle</a></td>
+<td>Python运行时/Java接入和打包机制</td>
+</tr>
+<tr>
+<td><a href="https://developer.android.com/guide/topics/providers/document-provider">Android SAF</a></td>
+<td>文档选择、用户URI与创建文件机制</td>
+</tr>
+<tr>
+<td><a href="https://developer.android.com/guide/practices/page-sizes">Android16KB支持</a></td>
+<td>原生库和页大小适配背景</td>
+</tr>
+<tr>
+<td><a href="https://developer.android.com/develop/background-work/services/fgs/service-types">Android前台服务类型</a></td>
+<td>specialUse等平台机制</td>
+</tr>
+<tr>
+<td><a href="https://ffmpeg.org/ffmpeg-formats.html">FFmpeg格式文档</a></td>
+<td>concat和MP4索引机制</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rany2/edge-tts">edge-tts上游</a></td>
+<td>在线语音接入组件及其使用边界</td>
+</tr>
+</tbody></table></div>
+<p>参考访问日期2026-10-10。外部文档未来可能变化，APK固定依赖和本次代码基线以本页版本表与源哈希为准。</p>
+<h3 id="section-25-sub-4">技术术语</h3>
+<div class="table-scroll" role="region" aria-label="数据表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>术语</th>
+<th>本项目定义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Loopback</td>
+<td>手机本机127.0.0.1；不经过PC，也不对局域网监听</td>
+</tr>
+<tr>
+<td>NativeBridge</td>
+<td>主Activity内部受限JavaScript接口，与Python业务通过Chaquopy调用</td>
+</tr>
+<tr>
+<td>ACTIVE／Control</td>
+<td>运行中步骤集合／任务共享暂停取消和内存凭据对象</td>
+</tr>
+<tr>
+<td>image_version／digest</td>
+<td>图片集标识／当前有序图片字节摘要，用于确认一致性</td>
+</tr>
+<tr>
+<td>pending／partial</td>
+<td>尚未完成的写入文件，不能作为可导出成品</td>
+</tr>
+<tr>
+<td>SubmissionUnknown</td>
+<td>云端结果可能完成/计费但本机不确定，禁止自动重发</td>
+</tr>
+<tr>
+<td>receipt</td>
+<td>试用照片预选内容绑定凭据，避免同批提交重复扣额</td>
+</tr>
+<tr>
+<td>code point</td>
+<td>Unicode码点，与视觉字形/UTF-16码元不同</td>
+</tr>
+<tr>
+<td>ABI／PIE／ELF</td>
+<td>Android架构接口／位置无关可执行程序／原生程序文件格式</td>
+</tr>
+<tr>
+<td>SAF／content URI</td>
+<td>系统文档访问框架／受授权内容文件地址</td>
+</tr>
+<tr>
+<td>fsync／replace</td>
+<td>尽力持久同步／临时文件到正式文件的原子替换；非全局数据库事务</td>
+</tr>
+<tr>
+<td>FGS／WakeLock</td>
+<td>前台服务／部分CPU唤醒机制；不是后台永不终止承诺</td>
+</tr>
+</tbody></table></div>
+<p>维护或分发时，应同时保留版本基线、对应源码、许可证、构建步骤和实际验证范围；升级不能把旧文档的测试结论自动继承为新APK设备全流程已通过。</p>
+</section></article><footer class="doc-footer"><p>听文视频工作台 · 技术架构与实现文档 · 2026-10-10</p><p>实现依据为1.0.2源码和交付记录；主机/浏览器/安装包检查与设备完整验收分别说明。</p><a href="阅读入口.html">返回文档中心</a> · <a href="#document">返回顶部</a></footer></main><dialog id="imageDialog"><button id="closeImage" type="button">关闭预览</button><div><img id="largeImage" alt=""></div></dialog><script>(()=>{
+  'use strict';
+  const search=document.querySelector('#search');
+  const status=document.querySelector('#searchStatus');
+  const links=[...document.querySelectorAll('.toc a')];
+  const sections=[...document.querySelectorAll('.doc-section')];
+  const corpus=sections.map(s=>s.textContent.toLocaleLowerCase());
+  search?.addEventListener('input',()=>{
+    const terms=search.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    let count=0;
+    links.forEach((a,i)=>{a.hidden=!terms.every(t=>corpus[i].includes(t));if(!a.hidden)count++;});
+    status.textContent=terms.length?`找到 ${count} 个相关章节（正文保持完整）`:`${links.length} 个章节`;
+  });
+  const menu=document.querySelector('#menu');
+  const closeMenu=()=>{document.body.classList.remove('toc-open');menu?.setAttribute('aria-expanded','false');};
+  menu?.addEventListener('click',()=>{const open=document.body.classList.toggle('toc-open');menu.setAttribute('aria-expanded',String(open));});
+  links.forEach(a=>a.addEventListener('click',closeMenu));
+  document.querySelector('main')?.addEventListener('click',closeMenu);
+  document.querySelector('#print')?.addEventListener('click',()=>window.print());
+  const dialog=document.querySelector('#imageDialog');
+  const large=document.querySelector('#largeImage');
+  document.querySelectorAll('.screen-button').forEach(button=>button.addEventListener('click',()=>{const img=button.querySelector('img');large.src=img.src;large.alt=img.alt;dialog.showModal();}));
+  document.querySelector('#closeImage')?.addEventListener('click',()=>dialog.close());
+  dialog?.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu();});
+  let scheduled=false;
+  const update=()=>{
+    scheduled=false;
+    const max=document.documentElement.scrollHeight-window.innerHeight;
+    document.querySelector('#progress').style.width=`${max>0?Math.min(100,window.scrollY/max*100):0}%`;
+    let active=0;
+    sections.forEach((s,i)=>{if(s.getBoundingClientRect().top<130)active=i;});
+    links.forEach((a,i)=>{a.classList.toggle('active',i===active);if(i===active)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});
+  };
+  window.addEventListener('scroll',()=>{if(!scheduled){scheduled=true;requestAnimationFrame(update);}},{passive:true});
+  window.addEventListener('resize',update);update();
+})();
+</script></body></html>
