@@ -1,0 +1,4 @@
+Flask>=3.1,<4
+Pillow>=11,<13
+edge-tts>=7.2.8,<8
+pillow-heif>=1.0,<2

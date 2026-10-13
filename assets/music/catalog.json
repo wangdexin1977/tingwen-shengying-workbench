@@ -1,0 +1,50 @@
+[
+  {
+    "id": "vaporware",
+    "name": "舒缓钢琴 · Vaporware",
+    "filename": "vaporware.mp3",
+    "author": "The Cynic Project / cynicmusic",
+    "source_url": "https://opengameart.org/content/calm-piano-1-vaporware",
+    "download_url": "https://opengameart.org/sites/default/files/003_Vaporware_2.mp3",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "builtin": true,
+    "duration": 164.954558,
+    "downloaded_on": "2026-10-12",
+    "original_sha256": "1697fa1b7ed6f3fe1eca4daa4f9d1a2eb3db8fe40a0f3c283529ab47e57b5b38",
+    "sha256": "0411551c04987100f704ac267eacccc845428c423d849db045f863af7d93fb67",
+    "modifications": "转换为 160 kb/s MP3、统一响度至 -18 LUFS，去除原始元数据。"
+  },
+  {
+    "id": "first-light",
+    "name": "晨光氛围 · First Light Particles",
+    "filename": "first-light.mp3",
+    "author": "Yoiyami",
+    "source_url": "https://opengameart.org/content/first-light-particles-%E2%80%93-cc0-atmospheric-pianoambient-track",
+    "download_url": "https://opengameart.org/sites/default/files/first_light_particles_0.wav",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "builtin": true,
+    "duration": 131.719977,
+    "downloaded_on": "2026-10-12",
+    "original_sha256": "f0538a1a67450cc1d5e305fad5bc0d5d422ad809f720d695ab356e55fbe40fc5",
+    "sha256": "ba958fcee7bdf1df7416879c21d6ea832a7f69a9dab7939820c538736793197c",
+    "modifications": "转换为 160 kb/s MP3、统一响度至 -18 LUFS，去除原始元数据。"
+  },
+  {
+    "id": "emotional-piano",
+    "name": "慢板独奏 · Emotional Piano Solo",
+    "filename": "emotional-piano.mp3",
+    "author": "Centurion_of_war",
+    "source_url": "https://opengameart.org/content/emotional-piano-0",
+    "download_url": "https://opengameart.org/sites/default/files/emotional_piano_solo_0.ogg",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "builtin": true,
+    "duration": 76.8,
+    "downloaded_on": "2026-10-12",
+    "original_sha256": "78fd14ad3cb28e9f9f608f15efa1eeaceefde2f045db189b8d18d971d3f22c58",
+    "sha256": "bb44f7c7f70134c6f43ba42d1a359129ee1c0c037faa4d5061271307df7c2070",
+    "modifications": "转换为 160 kb/s MP3、统一响度至 -18 LUFS，去除原始元数据。"
+  }
+]

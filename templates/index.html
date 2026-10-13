@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>听文声影工作台 · 文案、声音与画面</title>
+  <style>
+    :root{color-scheme:light;--ink:#182235;--muted:#53637b;--accent:#1d4ed8;--border:#d5deeb;--paper:#fff}
+    *{box-sizing:border-box}body{margin:0;background:#eef3f8;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}a{color:var(--accent)}
+    header{max-width:1296px;width:calc(100% - 64px);margin:16px auto;padding:13px 26px;display:flex;justify-content:space-between;align-items:center;gap:20px;background:linear-gradient(115deg,#0757d9 0%,#0788ee 58%,#00aeea 100%);color:#fff;border:1px solid #6aabef;border-radius:16px;box-shadow:0 8px 22px #1d4ed81c}header .muted{color:#e4efff}header h1{font-size:24px;line-height:28px}header p{font-size:12px;line-height:18px;margin:2px 0}header button{background:#ffffff18;color:#fff;border-color:#ffffff66;font-size:12px;padding:5px 10px}
+    h1{font-size:30px;letter-spacing:-1px;margin:0}h2{font-size:19px;margin:0 0 14px}p{margin:7px 0}small,.muted{color:var(--muted)}
+    .tag{background:#0757a985;border:1px solid #ffffff55;color:#fff;border-radius:99px;padding:6px 13px;font-size:12px;white-space:nowrap}main{max-width:1360px;padding:0 32px 40px;margin:auto;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px}
+    section{background:var(--paper);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:22px;box-shadow:0 5px 20px #1e3a5f05}
+    .step{display:inline-flex;width:27px;height:27px;border-radius:50%;align-items:center;justify-content:center;background:#eaf1ff;color:var(--accent);margin-right:9px;font-size:13px}
+    label{display:block;font-weight:600;margin:16px 0 7px}input,textarea,select{font:inherit;color:inherit;width:100%;padding:11px 13px;border:1px solid #cbd5e1;border-radius:10px;background:#fff}textarea{resize:vertical;min-height:125px}#text{min-height:145px;max-height:420px;height:145px;overflow-y:auto;resize:vertical}.voice-summary{justify-content:space-between;padding:10px 12px;background:#f5f8ff;border:1px solid var(--border);border-radius:10px}.voice-summary small{display:block}.archive-path{font-size:12px;overflow-wrap:anywhere}.archive-list{max-height:480px;overflow:auto}
+    label[for="text"]{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}#count{color:#b91c1c;font-size:18px;font-weight:800;white-space:nowrap}
+    .title-input{min-height:82px;height:82px;max-height:160px}.title-label{color:#8a6200}
+    input:focus,textarea:focus,select:focus{outline:2px solid #75a9f3;outline-offset:1px}button,a.button{font:inherit;border:1px solid var(--border);border-radius:10px;padding:9px 13px;cursor:pointer;background:#f8faff;color:var(--ink);text-decoration:none;display:inline-block}button:hover,a.button:hover{background:#eaf1ff;border-color:#abc5ed}button:disabled{opacity:.45;cursor:not-allowed}button:focus-visible,a:focus-visible{outline:2px solid #2563eb;outline-offset:3px}
+    .primary{background:linear-gradient(105deg,#1d4ed8,#2563eb)!important;color:#fff!important;border-color:var(--accent)!important;font-weight:600}.wide{width:100%;padding:13px;margin-top:18px}.voices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;max-height:225px;overflow:auto;padding:3px}
+    #compositionActions{margin-bottom:18px}#confirm{margin-top:0}#subtitleChangeHint{display:block;margin-top:6px}
+    .voice{text-align:left;font-size:13px;padding:9px;min-height:70px}.voice span{display:block;color:var(--muted);font-size:11px}.voice.selected{border-color:var(--accent);background:#eaf1ff;color:var(--accent)}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+    .notice{background:#f9f0d9;border-radius:10px;padding:12px;font-size:13px;margin:14px 0}.check{display:flex;gap:9px;align-items:flex-start;font-size:13px;font-weight:400}.check input{width:auto;margin-top:6px}.status{padding:12px 0;border-bottom:1px solid var(--border)}.status strong{display:flex;justify-content:space-between}.status p{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+    #image{width:100%;border-radius:12px;margin-top:15px;background:#eef3f8}audio,video{width:100%;margin-top:12px}#empty{padding:65px 20px;text-align:center;border:1px dashed #b4c5de;border-radius:12px;background:#f8faff;color:var(--muted)}#error{background:#fff0f0;color:#a52c34;padding:12px;border-radius:10px;white-space:pre-wrap;margin:15px 0}#pauseNotice{background:#fff6dd;padding:10px;border-radius:10px;font-size:13px}#pause,#resume{background:#fff8e5;border-color:#e6d59c;color:#735315}#cancel{background:#fff0f0;border-color:#eac1c5;color:#a52c34}details{margin-top:15px}summary{cursor:pointer;color:var(--muted)}.links{margin:10px 0}.history{margin:0;font-size:14px}
+    .subtitle-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.subtitle-controls label{margin-top:10px}.subtitle-controls input[type=color]{height:46px;padding:5px}.subtitle-preview{position:relative;aspect-ratio:16/9;background:#23334c center/contain no-repeat;border-radius:10px;overflow:hidden;margin:12px 0}.subtitle-preview img{display:block;width:100%;height:100%;object-fit:contain}.subtitle-position{display:flex;gap:7px}.subtitle-position button{flex:1;font-size:13px}.subtitle-position button[aria-pressed=true]{background:#eaf1ff;border-color:#1d4ed8;color:#1d4ed8}
+    .live-preview{background:#fff;padding:12px 0 8px}.live-preview h3{margin:0}.live-preview small{display:block;font-size:12px}.live-preview .subtitle-preview{margin:8px 0}.preview-layer,.preview-backdrop{position:absolute;inset:0}.preview-backdrop{background:center/100% 100% no-repeat;filter:blur(18px)}.subtitle-preview img{position:absolute;inset:0}.color-setting{display:flex;align-items:center;gap:8px}.color-setting input[type=color]{width:60px;flex:0 0 60px}.color-swatch{display:inline-block;width:24px;height:24px;border:1px solid #94a3b8;border-radius:5px;flex-shrink:0}.color-code{font:13px ui-monospace,monospace;color:var(--ink)}.font-sample{display:block;font-size:22px;line-height:1.4;padding:6px 10px;margin-top:6px;border:1px solid var(--border);border-radius:8px}.subtitle-controls select{min-height:46px}
+    [hidden]{display:none!important}footer{font-size:12px;color:var(--muted);padding:5px 0}#jobTitle{overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:13px;max-height:180px;overflow:auto;background:#f5f7fb;padding:12px;border-radius:10px}
+    .gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-height:320px;overflow:auto;margin:10px 0}.photo-card{margin:0;border:1px solid var(--border);border-radius:9px;overflow:hidden;background:#fff}.photo-card img{display:block;width:100%;height:100px;object-fit:contain;background:#eef3f8}.photo-card figcaption{font-size:12px;padding:6px;overflow-wrap:anywhere}.photo-card button{font-size:12px;padding:3px 8px;margin:0 6px 6px}.record-entry{padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;overflow-wrap:anywhere}.record-entry p{margin:4px 0}.record-list{max-height:420px;overflow:auto}.record-path{overflow-wrap:anywhere;font-size:12px}
+    .state-badge{font-size:12px;border-radius:99px;padding:2px 10px;background:#edf1f7;color:#526175;white-space:nowrap}.state-running{background:#fee2e2;color:#b91c1c;--state-color:#dc2626}.state-complete{background:#dcfce7;color:#166534;--state-color:#16a34a}.state-failed{background:#fce7f3;color:#9d174d;--state-color:#be185d}.state-paused{background:#fff3ce;color:#854d0e;--state-color:#b77900}.state-idle{--state-color:#64748b}.media-progress{width:100%;height:9px;margin:4px 0;accent-color:var(--state-color,#64748b);border:0;border-radius:99px;overflow:hidden;background:#e5eaf1}.media-progress::-webkit-progress-bar{background:#e5eaf1}.media-progress::-webkit-progress-value{background:var(--state-color,#64748b)}.media-progress::-moz-progress-bar{background:var(--state-color,#64748b)}.progress-hint{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    @media(max-width:900px){main{grid-template-columns:1fr}header,main{padding-left:16px;padding-right:16px}.voices{grid-template-columns:repeat(3,minmax(0,1fr))}header{width:calc(100% - 32px);align-items:flex-start}.tag{white-space:normal}}
+    body{background:#f2f4fa;font-size:14px}header{max-width:1440px;width:calc(100% - 48px);margin:20px auto 12px;background:linear-gradient(115deg,#202b64,#315ec9 65%,#078eaf);border:0;border-radius:18px;padding:17px 24px}header h1{font-size:25px;letter-spacing:.5px}header p{margin-top:5px}main{max-width:1488px;grid-template-columns:minmax(0,1.22fr) minmax(380px,1fr);padding:0 24px 30px;gap:20px}section{padding:22px;border-radius:16px;margin-bottom:18px;box-shadow:0 4px 16px #18254c04}h2{font-size:18px}.section-note{font-size:12px;font-weight:400;color:var(--muted);margin-left:10px}.workspace-nav,.creation-banner,.full-workspace{max-width:1440px;width:calc(100% - 48px);margin:0 auto 18px}.workspace-nav{display:flex;justify-content:space-between;align-items:center;padding:5px 0}.workspace-nav button{background:transparent;border:0;color:#52607c}.workspace-nav button.active{background:#e3eafa;color:#244ab2;font-weight:700}.creation-banner{display:flex;justify-content:space-between;align-items:center;padding:23px 28px;border:1px solid #dbe2f0;border-radius:16px;background:linear-gradient(105deg,#fff,#eef3ff)}.creation-banner h2{font-size:24px;margin:5px 0}.creation-banner p{font-size:13px;color:#68748f}.eyebrow{color:#4966ad;font-size:12px;font-weight:600;letter-spacing:2px}.mode-switch{display:flex;gap:8px}.mode-switch button{padding:13px 18px;background:#ffffffb0;text-align:left;min-width:145px}.mode-switch button small{display:block;font-size:11px;margin-top:4px}.mode-switch button.active{border-color:#335ac1;background:#e8efff;color:#244bb0;box-shadow:0 3px 8px #244bb011}.step{border-radius:8px;background:#edf0fc;color:#3554a2}#text{min-height:230px;height:230px;line-height:1.9}.primary{background:linear-gradient(105deg,#3154bc,#366cdc)!important;border:0!important;box-shadow:0 4px 10px #3154bc25}.full-workspace iframe{width:100%;height:calc(100vh - 210px);min-height:740px;border:1px solid var(--border);border-radius:12px}.empty-symbol{font-size:38px;color:#8098cf;margin:10px 0}.document-card{padding:12px;margin:8px 0;border:1px solid #d7dfef;background:#f8faff;border-radius:10px}.document-card label{font-weight:400;margin:5px 0}.document-card input[type=checkbox]{width:auto}.document-card .chapters{max-height:180px;overflow:auto}.document-card button{font-size:12px;padding:4px 9px}.product-entry{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--border)}.product-entry strong{flex:1;min-width:200px}.product-entry audio{max-width:300px;margin:0}#generateDock{position:sticky;bottom:14px;padding:13px;background:#fffffff5;border:1px solid #d7dfef;border-radius:14px;box-shadow:0 8px 24px #2345721a;z-index:2}#generateDock button{margin-top:0}#generateDock small{display:block;text-align:center;margin-top:5px}#videoAdvanced summary{font-weight:600;color:#3154a1}.mode-hint{font-size:12px;color:#617291;margin:0 0 12px}
+    .publish-button{background:#fff1ed!important;border-color:#f4a394!important;color:#bc3421!important;font-weight:700}.file-entry{background:#fff!important;color:#264cb2!important;font-weight:700}.product-entry video{max-width:300px;max-height:180px}.product-entry .archive-path{margin:0;font-size:12px}
+    #settingsSaveStatus{color:#edf4ff;font-size:12px;max-width:230px}header .row{justify-content:flex-end}
+    @media(max-width:900px){main{grid-template-columns:1fr}.creation-banner{align-items:flex-start;gap:12px;flex-direction:column}.creation-banner h2{font-size:21px}.workspace-nav{flex-wrap:wrap;gap:8px}header{align-items:flex-start;flex-direction:column}header,main{padding-left:16px;padding-right:16px}}
+  </style>
+</head>
+<body>
+<header><div><h1>听文声影工作台</h1><p class="muted">短视频口播 · 长篇评书 · 书籍朗读，一处完成。</p></div><div class="row"><span class="tag">独立产品 · {{ version }}</span><button id="savePreferences">保存配置</button><small id="settingsSaveStatus" role="status">正在恢复上次配置…</small><button id="clearWorkspace" title="清空工作区，保留样式配置；不删除文件，也不取消后台任务">刷新（清空界面）</button><button id="openFiles" class="file-entry">成品文件 · MP3 / MP4</button><button id="openVideos" aria-expanded="false" aria-controls="videosPanel">全部视频</button><button id="openRecords" aria-expanded="false" aria-controls="recordsPanel">版本与日志</button></div></header>
+<nav class="workspace-nav" aria-label="工作区"><div class="row"><button id="mainTab" class="active" aria-selected="true">创作工作区</button><button id="expertTab" aria-selected="false">专业朗读 · 完整功能</button><button id="productsTab">成品文件</button><button id="queueTab">待制作队列 · 夜间制作</button></div><small>稿件 → 音色 → MP3 → MP4</small></nav>
+<div class="creation-banner" id="creationBanner"><div><span class="eyebrow">一个工作台，两种创作节奏</span><h2>把文字，变成可听可看的作品。</h2><p>短视频与 2–5 小时长篇视频，共用稿件、音色、配图与背景音乐。</p></div><div class="mode-switch" role="group" aria-label="创作模式"><button id="shortMode" class="active" aria-pressed="true">▶ 短视频创作<small>语音 + 配图 + 成片</small></button><button id="longMode" aria-pressed="false">▤ 长篇朗读<small>书籍 + 配图 + 长视频</small></button></div></div>
+<main id="mainWorkspace">
+  <div>
+    <section>
+      <h2><span class="step">1</span>稿件整理 <span class="section-note">导入 · 整合 · 清洗</span></h2>
+      <label class="check"><input id="showTitle" type="checkbox">在首页显示标题</label><label for="title" class="title-label">视频标题（默认文案前 30 字，可修改）</label><textarea id="title" class="title-input" rows="3" placeholder="可信通信&#10;如何真正落地" aria-describedby="titleHint"></textarea><small id="titleHint">标题 0 / 30 字（换行不计）。默认文案前 30 字；MP3 / MP4 也按文案前 30 字命名。取消首页标题开关可不叠文字。</small><small>默认暖黄色大号粗体，无背景底板。可在右侧选择字体、字号和颜色，按 Enter 分行或自动分行。</small>
+      <label for="text">朗读文案 <span id="count" aria-live="polite" aria-atomic="true">0 字</span></label><textarea id="text" autocomplete="off" aria-describedby="count textHint" placeholder="直接粘贴文字，长文自动分段；整本书也可导入章节。"></textarea><small id="textHint">文案框随内容增加到适宜高度；长文在框内上下滚动，输入和转换不限制字数。</small>
+      <div class="row"><button id="importDocuments">导入书籍 / 文档</button><button id="import">导入 TXT / MD</button><button id="cleanText" title="在本机去掉格式符号，保留括号内正文和正常标点">文案清洗</button><button id="undoClean" disabled>撤销清洗</button></div><small>清洗去掉 Markdown 格式、链接地址及括号外壳，保留正文、数字和正常标点；只修改当前文案，不影响已生成音频。</small><p id="cleanStatus" class="muted" role="status"></p><input id="file" type="file" accept=".txt,.md,text/plain,text/markdown" hidden>
+      <input id="documentFiles" type="file" multiple accept=".txt,.md,.markdown,.doc,.docx,.pdf,.epub,.mobi" hidden>
+      <p id="documentStatus" class="muted" role="status"></p>
+      <details id="documentQueuePanel" hidden><summary>文档与章节 · 勾选、排序并整合</summary><div id="documentQueue"></div><button id="combineDocuments">将所选内容整合到稿件</button><small>按文档顺序、章节顺序整合，保留标题。可继续编辑或清洗；不会改写原文件。</small></details>
+    </section><section id="voiceStage">
+      <h2><span class="step">2</span>音色与语音 <span class="section-note">试听 · 克隆 · 常用参数</span></h2>
+      <label class="check"><input id="audioOnly" type="checkbox"><span>仅生成 MP3，稍后可添加照片制作 MP4</span></label>
+      <label for="audioProvider">语音来源</label><select id="audioProvider"><option value="edge-tts">微软在线语音</option><option value="omnivoice">克隆语音 · 本机多模型</option></select>
+      <div id="edgeVoiceBlock"><label>朗读音色</label><div class="row voice-summary"><div><strong id="currentVoice"></strong><small id="voiceSummaryHint">点击更换音色，选择后立即试听并收起。</small></div><button id="toggleVoices" aria-expanded="false" aria-controls="voicePanel">更换音色</button></div>
+      <div id="voicePanel" hidden><p><small>点击音色卡片，即可试听并自动收起</small></p><div class="voices" role="group" aria-label="音色">
+        {% for id,name,description in voices %}<button class="voice {{ 'selected' if loop.first else '' }}" data-voice="{{ id }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">{{ name }}<span>{{ description }}</span></button>{% endfor %}
+      </div><small id="voiceHint">试听使用随产品保存的本地 MP3，不等待云端合成。</small></div></div>
+      <div id="omniVoiceBlock" hidden>
+        <label for="localBackend">语音模型</label><select id="localBackend"><option>OmniVoice</option><option>IndexTTS 2.5</option><option>IndexTTS 2.0</option><option>Fish Audio S2 Pro</option><option>VoiceStudio · OmniVoice 原生</option><option>CosyVoice 3</option></select>
+        <label for="voiceSearch">查找音色</label><input id="voiceSearch" type="search" placeholder="输入音色名称，快速查找">
+        <label for="omniVoice">克隆音色库</label><select id="omniVoice"><option value="">正在加载已有音色…</option></select>
+        <div class="row links"><button id="refreshOmniVoices">刷新音色库</button><button id="previewOmniVoice">试听参考音色</button></div>
+        <label for="omniExpression">表达方式</label><select id="omniExpression"><option value="follow_reference">跟随参考音频</option><option value="calm">平静</option><option value="happy">高兴</option><option value="sad">悲伤</option><option value="energetic">激昂</option><option value="serious">严肃</option><option value="whisper">耳语</option></select>
+        <small>平静、高兴等为近似表达预设；耳语是原生样式。试听播放参考音频，最终声音以合成为准。</small>
+        <div class="subtitle-controls"><div><label for="speechSpeed">语速 <output id="speechSpeedValue">1.00×</output></label><input id="speechSpeed" type="range" min="0.5" max="2" step="0.05" value="1"></div><div><label for="speechSilence">分段停顿（毫秒）</label><input id="speechSilence" type="number" min="0" max="2000" step="50" value="250"></div></div>
+        <details id="speechAdvanced"><summary>高级语音参数 · 按模型分别保存</summary><div class="subtitle-controls"><div><label for="speechSeed">随机种子</label><input id="speechSeed" type="number" min="0" max="2147483647" value="42"></div><div><label for="speechTokens">分段长度（文本 token）</label><input id="speechTokens" type="number" min="30" max="300" value="120"></div><div data-index-param><label for="speechTemperature">采样温度</label><input id="speechTemperature" type="number" min="0.1" max="2" step="0.1" value="0.8"></div><div data-omni-param><label for="speechSteps">OmniVoice 推理步数</label><input id="speechSteps" type="number" min="4" max="100" value="32"></div><div data-omni-param><label for="speechGuidance">OmniVoice 引导强度</label><input id="speechGuidance" type="number" min="0" max="10" step="0.1" value="2"></div></div><small>其余模型专用参数、自动/设计音色、多音色和实时播放均在“专业朗读 · 完整功能”中。</small></details>
+        <details id="addOmniVoicePanel"><summary>添加自己的音色</summary>
+          <label for="omniVoiceName">音色名称</label><input id="omniVoiceName" maxlength="100" placeholder="例如：我的新闻口播音色">
+          <label for="omniVoiceFile">参考音频（WAV / MP3 / M4A / FLAC / AIFF / OGG）</label><input id="omniVoiceFile" type="file" accept=".wav,.mp3,.m4a,.flac,.aiff,.ogg,audio/*">
+          <label for="omniReferenceText">参考音频中实际说出的文案（选填，准确填写有助于还原音色）</label><textarea id="omniReferenceText" placeholder="请填写与音频一致的内容。"></textarea>
+          <button id="addOmniVoice" class="links">保存到本机音色库</button><small>建议使用清晰、少背景噪声的参考音频，单个文件不超过 20 MB。保存后即可选择；本应用使用自己的音色库，与原应用分别保存。</small>
+        </details>
+        <p><small id="omniVoiceStatus" role="status">正在检查本机 OmniVoice。</small></p>
+        <small>音色、表达和语音来源自动记住。修改只用于新任务或主动重试；本机语音字幕采用估算同步。</small>
+      </div>
+    </section>
+    <section id="pictureStage">
+      <h2><span class="step">3</span>画面素材 <span class="section-note">自选照片 · AI 配图</span></h2>
+      <label for="imageMode">配图方式</label><select id="imageMode"><option value="generate">AI 生成图片</option><option value="upload">选择本机照片</option><option value="url">粘贴网上图片网址</option></select><small>自动记住上次的配图方式和 AI 图片来源。本机照片需重新选择，图片网址与 API Key 不缓存。</small>
+      <div id="localPhotoSettings" hidden><label for="localPhoto">本机照片（可一次选择多张）</label><input id="localPhoto" type="file" multiple accept="image/*,.heic,.heif,.avif,.tif,.tiff"><small>可按住 Command 多选。每批最多 50 张，单张不超过 20 MB、合计不超过 40 MB；按下方顺序播放，平均分配完整音频时长。不上传给图片模型。重新选择会替换本批照片。</small><p id="localPhotoCount" role="status">尚未选择照片</p><div id="localPhotoPreview" class="gallery" aria-label="待上传照片预览与筛选" hidden></div></div>
+      <div id="urlPhotoSettings" hidden><label for="photoUrl">图片网址</label><input id="photoUrl" type="url" placeholder="https://网站/照片.jpg"><small>请填写图片本身的公开网址，不是网页链接。需登录或有防盗链的图片请下载后选择本机文件。</small></div>
+      <div id="aiPhotoSettings">
+      <label for="prompt">画面内容与风格</label><textarea id="prompt" placeholder="例如：夕阳中的中国山水，远处群山，前景一条安静的河流，电影写实风格，暖色光线，横向构图，不要文字。"></textarea>
+      <small>一张配图覆盖整段音频。豆包支持中文；本地模型的中文理解能力取决于所下载的模型，英文描述通常更稳妥。</small>
+      <label for="provider">图片来源</label><select id="provider">{% for id,source in sources.items() %}<option value="{{ id }}">{{ source.name }}</option>{% endfor %}</select>
+      <div id="drawthingsSettings">
+        <label for="drawthingsPort">Draw Things 本地 HTTP 端口</label><input id="drawthingsPort" type="number" min="1024" max="65535" value="7861">
+        <div class="row links"><button id="checkDrawThings">检查本地连接</button><small id="drawthingsStatus">先在 Draw Things 下载并选择一个模型。</small></div>
+        <details><summary>首次使用：本地免费，不需要 API Key</summary><p>安装 <a href="https://apps.apple.com/app/id6444050820" target="_blank" rel="noopener noreferrer">Draw Things</a>，下载模型并选中；使用本机计算，不启用付费云端／Server Offload。在“设置 → 高级 → HTTP API 服务器”选择 HTTP 协议，IP 选“127.0.0.1（仅限本地）”，端口设为 7861 并启用。不要选择允许所有连接。</p><p>工作台读取当前模型、采样器和步数；任务保存这份设置。首次下载需要网络和磁盘空间；之后在本机生成。默认请求 768×512，成片为 1920×1080。生成速度取决于模型和电脑配置，不保证秒出图。</p></details>
+      </div>
+      <div id="seedreamSettings" hidden>
+      <details open><summary>豆包设置 · 模型与 API Key</summary>
+        <label for="model">图片模型</label><select id="model">{% for model in models %}<option>{{ model }}</option>{% endfor %}</select>
+        <small>默认使用你指定的 Seedream 5.0 Pro，图片设置 2K，保留 AI 水印。可选择 Flash；视频仍为 1920×1080。</small>
+        <label for="key">火山方舟 API Key（必填）</label><input id="key" type="password" autocomplete="off" placeholder="只在内存中使用，不写入任务文件或源码">
+        <small>也可在启动前设置 ARK_API_KEY。刷新页面或重启后需重新填写。<a href="https://ark.volcengine.com/region:cn-beijing/apikey" target="_blank" rel="noopener noreferrer">管理 API Key</a></small>
+      </details>
+      <div class="notice">豆包是收费云端接口。Pro 按像素计费，2K 通常约 ¥0.60/张；Flash 参考价 ¥0.12/张。实际以方舟账单为准，不保证固定出图时间。图片要求会发送给火山方舟，请勿提交敏感内容。<a href="https://docs.volcengine.com/docs/ark/model-pricing?lang=zh" target="_blank" rel="noopener noreferrer">官方价格</a><br>出现 SetLimitExceeded 表示模型用量上限已触发，服务已暂停。请在方舟控制台“开通管理”检查限额；反复点击重试不能解除账户限制。</div>
+      <label class="check"><input id="consent" type="checkbox"><span>我同意调用豆包付费生成图片。每次新建、重试或重新生成均可能计费；请求超时不会自动重发。</span></label>
+      </div>
+      </div>
+      <button id="generate" class="primary wide">生成 MP3 和本地配图</button>
+      <p class="muted"><small>不会自动生成视频。需要你在右侧预览图片并确认。</small></p>
+    </section>
+  </div>
+  <div>
+    <section>
+      <h2><span class="step">4</span>试听、预览与导出</h2>
+      <div id="error" role="alert" hidden></div>
+      <details id="externalMediaPanel" class="status" style="margin-bottom:14px">
+        <summary><strong>使用已有音频制作 MP4</strong></summary>
+        <label for="externalAudio">已有音频文件</label><input id="externalAudio" type="file" accept=".mp3,.wav,.m4a,.aac,.flac,.ogg,.aiff,.aif,.opus,.wma,audio/*">
+        <small id="externalAudioInfo">支持 MP3、WAV、M4A、AAC、FLAC、OGG、AIFF、OPUS、WMA，单个音频最多 500 MB。</small>
+        <label for="externalPhotos">配套照片（一张或多张）</label><input id="externalPhotos" type="file" accept="image/*,.heic,.heif,.avif" multiple>
+        <div id="externalPhotoGallery" class="gallery" aria-label="已有音频的照片顺序" hidden></div>
+        <small>照片按选择顺序播放，平均分配完整音频时长；每批最多 50 张、合计 40 MB。</small>
+        <button id="importExternalMedia" class="primary wide">载入音频和照片，准备生成 MP4</button>
+        <small id="externalMediaStatus" role="status"></small>
+        <small>无需填写文案、不调用语音模型。载入后试听并确认生成 MP4；标题与背景音乐使用当前设置。需要字幕时，可先在左侧填写与音频对应的文案，字幕按时长估算同步。</small>
+      </details>
+      <div id="musicPanel" class="status" style="margin-bottom:14px">
+        <label class="row"><input id="musicEnabled" type="checkbox" style="width:auto"> 背景音乐 · 轻柔伴读</label>
+        <div id="musicOptions">
+          <label for="musicTrack">选择音乐</label><select id="musicTrack"><option value="vaporware">舒缓钢琴 · Vaporware</option></select>
+          <div class="subtitle-controls">
+            <div><label for="musicLoop">循环时长</label><select id="musicLoop"><option value="120">每 2 分钟</option><option value="180" selected>每 3 分钟</option><option value="300">每 5 分钟</option></select></div>
+            <div><label for="musicVolume">音乐音量 <output id="musicVolumeValue" for="musicVolume">15%</output></label><input id="musicVolume" type="range" min="0" max="100" value="15" step="1" aria-label="背景音乐音量"></div>
+          </div>
+          <small>默认小声伴读；循环交界处淡出淡入，持续陪伴整段朗读。长曲截取所选时长，短曲自动重复，不改变播放速度。</small>
+          <audio id="musicPreview" controls preload="none" aria-label="所选背景音乐试听"></audio>
+          <small id="musicSource"></small>
+          <details><summary>添加自己的音乐</summary><label for="musicFile">选择本机音频</label><input id="musicFile" type="file" accept=".mp3,.wav,.m4a,.aac,.flac,.ogg,.aiff,.aif,.opus,audio/*"><button id="addMusic" class="links">添加到音乐库</button><small>单首 40 MB 以内，最长 60 分钟；添加后保存在本机，可反复选择。</small></details>
+        </div>
+        <small id="musicStatus" role="status"></small>
+        <small>背景音乐写入 MP4；修改设置后需重新合成。MP3 保留原朗读音频。</small>
+      </div>
+      <div id="compositionActions"><button id="confirm" class="primary wide" disabled>生成 MP4（请先生成并确认素材）</button><small id="subtitleChangeHint" role="status"></small></div>
+      <div id="empty"><div class="empty-symbol">♫ ▶</div><strong>你的下一部作品，从这里开始</strong><br>整理稿件、选好声音，再生成并试听 MP3。<br>确认画面后，生成可以发布的 MP4。</div>
+      <div id="task" hidden>
+        <h3 id="jobTitle"></h3><small id="jobMode"></small>
+        <details><summary>查看本任务保存的文案与图片要求</summary><p class="muted"><small>确认的是本任务的素材。修改左侧文案后，需要创建新任务，才会生效；图片来源可以单独更换。</small></p><pre id="jobText"></pre><pre id="jobPrompt"></pre></details>
+        <div class="status"><strong>MP3 音频 <span id="audioState" class="state-badge"></span></strong><p id="audioMessage"></p><progress id="audioProgress" class="media-progress" max="100" aria-label="MP3 生成进度" hidden></progress><small id="audioProgressHint" class="progress-hint" hidden></small><audio id="audio" controls preload="metadata" hidden></audio><div class="row links"><a id="audioDownload" class="button" hidden>下载 MP3</a><button id="revealAudio" hidden>打开 MP3 所在文件夹</button><button id="retryAudio" hidden>重试音频</button><button id="retryOmniAudio" hidden>使用所选本机音色重试 MP3</button><small id="omniRetryHint" hidden>可在左侧选择任意已有音色，或添加自己的音色。</small></div><p id="audioPath" hidden></p></div>
+        <div class="status"><strong>生成配图 <span id="imageState" class="state-badge"></span></strong><p id="imageMessage"></p><img id="image" alt="当前任务的第一张图片" hidden><small id="imageInfo"></small><div id="taskGallery" class="gallery" aria-label="当前任务照片筛选" hidden></div><div class="links row"><a id="imageDownload" class="button" hidden>下载首张图片</a><button id="retryImage" hidden>重试豆包配图（可能收费）</button></div>
+          <details id="imageAdjustments"><summary>更换照片或重新生成图片（可选）</summary>
+          <div><label for="replacePhoto">使用自己满意的照片（可多选，保留 MP3）</label><input id="replacePhoto" type="file" multiple accept="image/*,.heic,.heif,.avif,.tif,.tiff"><label for="replacePhotoUrl">或粘贴网上图片网址</label><input id="replacePhotoUrl" type="url" placeholder="https://网站/照片.jpg"><button id="usePhotoUrl" class="links">使用这个网址的照片</button><p><small id="photoHint">选择本机照片后立即选用，可多选；每批最多 50 张、合计 40 MB。网上照片下载后显示预览。旧图保留，不调用 AI；换图后请重新确认。</small></p></div>
+          <div id="regeneratePanel" hidden><label for="newPrompt">图片不满意？修改要求后重新生成</label><textarea id="newPrompt" placeholder="可沿用原要求再生成一张，也可以修改画面内容、风格或光线。"></textarea><button id="regenerate" class="primary links">重新生成图片</button><p><small id="regenerateHint">只重新生成图片，保留 MP3 和旧图。新图需要重新确认后才能合成 MP4。</small></p><details><summary>需要更换图片来源或模型？</summary><p><small>先在左侧 AI 图片设置中选好新来源及配置，再点击下面的按钮。不会自动切换到收费来源。</small></p><button id="changeSource">使用左侧所选 AI 来源生成（保留 MP3）</button></details></div>
+          </details>
+        </div>
+        <div id="pauseNotice" hidden>已暂停本机音频／视频处理。已提交给 Draw Things 或豆包的配图请求不能在这里暂停，可能继续生成；程序会保存结果，不会自动开始合成。</div>
+        <div class="row links"><button id="pause">暂停</button><button id="resume" hidden>继续</button><button id="cancel">取消当前处理</button><button id="reveal">打开任务文件夹</button></div>
+        <div class="status"><strong>MP4 视频 <span id="videoState" class="state-badge"></span></strong><p id="videoMessage"></p><progress id="videoProgress" class="media-progress" max="100" aria-label="MP4 生成进度" hidden></progress><small id="videoProgressHint" class="progress-hint" hidden></small><video id="video" controls preload="metadata" hidden></video><div class="row links"><a id="videoDownload" class="button" hidden>下载 MP4</a><button id="revealVideo" hidden>打开 MP4 所在文件夹</button><button id="publishCurrentVideo" class="publish-button" hidden>发布到今日头条</button></div><p id="videoPath" hidden></p></div>
+        <small>合成使用当前确认的图片版本。口播字幕按下方设置写入 MP4；标题叠加在首页上。所有素材存放在新产品自己的任务目录。</small>
+      </div>
+    </section>
+    <section id="mp4Tools"><h2>MP4 生成与文件</h2>
+      <div class="live-preview">
+        <h3>标题与字幕实时预览</h3>
+        <div id="stylePreview" class="subtitle-preview" aria-label="标题与字幕实时预览">
+          <div id="previewBackdrop" class="preview-backdrop"></div><img id="previewPhoto" alt="当前预览照片" hidden>
+          <div id="titlePreview" class="preview-layer"><img id="titlePreviewImage" alt="当前视频标题的字体、字号和颜色预览" hidden></div>
+          <div id="subtitlePreview" class="preview-layer"><img id="subtitlePreviewImage" alt="当前字体、颜色、字号和位置的字幕样式预览" hidden></div>
+        </div>
+        <small id="titlePreviewStatus" role="status">正在加载标题样式预览。</small><small id="subtitlePreviewStatus" role="status">正在加载字幕样式预览。</small>
+        <small>随设置实时更新；这是样式预览，已生成的 MP4 需要重新合成后才应用修改。</small>
+      </div>
+      <h3>视频标题样式</h3>
+      <div class="subtitle-controls">
+        <div><label for="titleFont">标题字体</label><select id="titleFont">{% for key,font in title_fonts.items() %}<option value="{{ key }}">{{ font[0] }}</option>{% endfor %}</select><span id="titleFontSample" class="font-sample">字体效果 Aa</span></div>
+        <div><label for="titleColor">标题颜色</label><div class="color-setting"><input id="titleColor" type="color" value="#ffda35"><span id="titleColorSwatch" class="color-swatch" aria-hidden="true"></span><span id="titleColorCode" class="color-code"></span></div></div>
+      </div>
+      <label for="titleSize">标题字号 <span id="titleSizeValue">265 px</span></label><input id="titleSize" type="range" min="48" max="320" step="1" value="265" aria-describedby="titleSizeHint"><small id="titleSizeHint">以 1080p 画面为准，画面放不下时自动缩小，不裁切标题。暖黄色大字为默认样式，也可选择其他颜色。</small>
+
+      <hr style="border:0;border-top:1px solid var(--border);margin:18px 0">
+      <label class="check"><input id="subtitleEnabled" type="checkbox" checked>在 MP4 中显示口播字幕</label>
+      <div id="subtitleOptions">
+        <div class="subtitle-controls">
+          <div><label for="subtitleColor">字幕颜色</label><div class="color-setting"><input id="subtitleColor" type="color" value="#ffffff"><span id="subtitleColorSwatch" class="color-swatch" aria-hidden="true"></span><span id="subtitleColorCode" class="color-code"></span></div></div>
+          <div><label for="subtitleFont">字幕字体</label><select id="subtitleFont">{% for key,font in subtitle_fonts.items() %}<option value="{{ key }}">{{ font[0] }}</option>{% endfor %}</select><span id="subtitleFontSample" class="font-sample">字体效果 Aa</span></div>
+          <div><label for="subtitleSize">字号（1080p 像素）</label><select id="subtitleSize">{% for size in [28,36,48,60,72] %}<option value="{{ size }}" {{ 'selected' if size == 48 else '' }}>{{ size }} px</option>{% endfor %}</select></div>
+          <div><label for="subtitlePosition">垂直位置 <span id="subtitlePositionValue">90%</span></label><input id="subtitlePosition" type="range" min="6" max="94" value="90" aria-describedby="subtitlePositionHint"></div>
+        </div>
+        <label>位置快捷选择</label><div class="subtitle-position" role="group" aria-label="字幕位置"><button id="subtitleTop" data-position="10" aria-pressed="false">上方</button><button id="subtitleMiddle" data-position="50" aria-pressed="false">居中</button><button id="subtitleBottom" data-position="90" aria-pressed="true">下方</button></div>
+        <small id="subtitlePositionHint">拖动滑块可上下微调，水平居中。黑色描边帮助浅色字幕在照片上保持清晰。</small>
+
+      </div>
+      <p><small id="subtitleTimingHint">字幕使用任务的实际朗读文案。新音频按语音时间信息同步；旧音频会标明估算同步。</small></p>
+      <p><small id="stylePreferencesHint" role="status">标题与字幕样式自动保存，清空和刷新后保留。</small></p>
+      <div class="row links"><button id="showVideoFiles">查看全部 MP4 · 播放 / 下载</button><button id="openVideoFolder">打开视频保存目录</button></div><small>刷新只清空工作区，这些入口始终保留。选择历史任务后，可以下载或定位该任务已生成的 MP4。</small></section>
+    <section><h2>任务记录</h2><select id="history" class="history" aria-label="选择历史任务"><option value="">选择一个任务查看或恢复</option></select><p class="muted"><small>关闭程序不删除素材，不自动重新调用收费接口。旧 AI Horde 任务保留查看与本地合成，不再调用 AI Horde。</small></p></section>
+    <section id="videosPanel" hidden><h2>全部已生成视频</h2><div class="row"><button id="refreshVideos">刷新列表</button><button id="revealVideosRoot">打开全部视频保存目录</button></div><p id="videosStatus" role="status"></p><p id="videosRoot" class="archive-path"></p><small>视频保存在以下目录的各个任务子文件夹中。换图后保留的旧成片也会列出；清空界面不会删除这些文件。</small><div id="videosList" class="archive-list"></div></section>
+    <section id="recordsPanel" hidden><h2>版本与日志</h2><div class="row"><select id="recordKind" aria-label="记录类型"><option value="versions">版本变更</option><option value="all">运行日志</option><option value="models">模型调用记录</option></select><button id="refreshRecords">刷新</button><a class="button" href="/api/records/export" download>导出全部记录 JSON</a></div><p><small>历史版本根据已有开发记录整理。自动记录从 1.5 开始；开始和结束两条记录属于同一次调度，不等于两次计费。生成语音记录服务及音色；已有音频导入归入本机处理，不计入模型调用，完成时记录音频时长和原文件大小。FFmpeg 不使用 AI 模型。不记录 API Key、完整文案或远程网址。</small></p><p id="recordStatus" role="status"></p><p id="recordPath" class="record-path"></p><div id="recordList" class="record-list"></div><button id="moreRecords" hidden>查看更多记录</button></section>
+    <footer>听文声影工作台 {{ version }} · 独立保存稿件、音色、任务与成品</footer>
+  </div>
+</main>
+<section id="publishPanel" class="full-workspace" hidden><h2>发布到今日头条</h2><p id="publishStatus" role="status"></p><label for="publishTitle">可复制的视频标题</label><input id="publishTitle"><div class="row links"><button id="copyPublishTitle">复制标题</button><a class="button" href="https://mp.toutiao.com/profile_v4/xigua/upload-video" target="_blank" rel="noopener">重新打开今日头条发布页</a></div><p id="publishPath" class="archive-path"></p><small>视频由你在今日头条页面选择上传；标题、简介和最终发布均在平台完成。</small></section>
+<section id="queueWorkspace" class="full-workspace" hidden><h2>待制作队列 · 顺序自动合成</h2><p>每个稿件或章节保存为独立项目，按下方顺序制作。配图和参数随项目保存；开始后自动完成 MP3 与 MP4，无需逐项确认。</p><div class="row"><button id="queueRunMp4" class="primary">按顺序一键生成 MP4</button><button id="queueRunMp3">先按顺序生成 MP3</button><button id="queuePause" hidden>暂停队列</button><button id="queueResume" hidden>继续队列</button><button id="queueStop" hidden>停止队列</button><button id="queueRefresh">刷新</button></div><details><summary>预约夜间开始 · 北京时间</summary><label for="queueStartAt">开始日期与时间</label><input id="queueStartAt" type="datetime-local"><label for="queueScheduledOutput">预约输出</label><select id="queueScheduledOutput"><option value="mp4">MP3 → 配图与音乐 → MP4</option><option value="mp3">先生成 MP3，之后继续 MP4</option></select><div class="row links"><button id="queueSchedule">保存开始时间</button><button id="queueCancelSchedule" hidden>取消预约</button></div><small>程序在后台运行，电脑保持开机。预约和制作期间防止自动休眠；手动关机、合盖或退出服务会中断，重开后保留项目与素材。</small></details><p id="queueStatus" role="status"></p><small>某项失败会保留原因和素材，继续下一项；已完成项目不会自动重复制作。收费 AI 图片须先生成并确认后保存入队。</small><div id="queueProjects"></div><input id="queueReplaceFiles" type="file" accept="image/*,.heic,.heif,.avif" multiple hidden><details id="queueDraftPanel" hidden open><summary>保存的稿件</summary><pre id="queueDraftText"></pre></details></section>
+<section id="expertWorkspace" class="full-workspace" hidden><div class="row"><h2>专业朗读工作区</h2><button id="refreshExpertOutputs">刷新语音成品 · 转为视频</button><a class="button" href="http://127.0.0.1:7862/" target="_blank" rel="noopener">单独展开</a></div><p>保留 IndexTTS 的书籍章节、多文档队列、多人轮流朗读、所有模型参数、实时播放与 WAV / MP3 / FLAC 输出。使用同一独立音色库，生成后可送回视频流程。</p><p id="expertStatus" role="status"></p><div id="expertOutputs"></div><iframe id="expertFrame" title="完整专业朗读工作区" hidden></iframe></section>
+<section id="audioProducts" class="full-workspace" hidden><div class="row"><h2>成品文件 · MP3 / MP4</h2><button id="refreshAudioProducts">刷新列表</button><button id="openProductsRoot">打开成品文件夹</button></div><p id="audioProductsStatus" role="status"></p><div id="audioProductsList"></div></section>
+<script>
+let token = {{ token|tojson }};
+const sources = {{ sources|tojson }};
+const $ = id => document.getElementById(id);
+let voice = {{ voices[0][0]|tojson }}, job = null, selectedId = '', timer = null, creating = false, imageActionPending = false;
+const voiceButtons=Array.from(document.querySelectorAll('[data-voice]'));
+try{const savedVoice=localStorage.getItem('shengying-workbench-voice');if(voiceButtons.some(b=>b.dataset.voice===savedVoice))voice=savedVoice;}catch{}
+function setVoicePanel(open){$('voicePanel').hidden=!open;$('toggleVoices').setAttribute('aria-expanded',String(open));$('toggleVoices').textContent=open?'收起音色':'更换音色';}
+function selectVoice(id,remember=false){voice=id;voiceButtons.forEach(b=>{b.classList.toggle('selected',b.dataset.voice===voice);b.setAttribute('aria-pressed',String(b.dataset.voice===voice));});const selected=voiceButtons.find(b=>b.dataset.voice===voice);$('currentVoice').textContent='当前音色：'+(selected?.childNodes[0]?.textContent.trim()||voice);if(remember){try{localStorage.setItem('shengying-workbench-voice',voice);}catch{}setVoicePanel(false);}}
+$('toggleVoices').onclick=()=>setVoicePanel($('voicePanel').hidden);
+selectVoice(voice);
+const preview = new Audio(); preview.preload = 'auto';
+// 提前加载小型本地试听片段，浏览器仍可能需要首次解码。
+voiceButtons.forEach(button => {
+  const link=document.createElement('link');link.rel='preload';link.as='fetch';link.href='/api/preview/'+button.dataset.voice;link.crossOrigin='anonymous';document.head.append(link);
+  button.onclick=()=>{selectVoice(button.dataset.voice,true);preview.pause();preview.src='/api/preview/'+voice;preview.play().catch(()=>{$('voiceSummaryHint').textContent='试听播放失败，请再次点击音色或检查浏览器声音权限。';});};
+});
+const omniStorageKey='shengying-workbench-omnivoice';let omniAvailable=false;
+function audioPreferences(){try{const v=JSON.parse(localStorage.getItem(omniStorageKey)||'{}');return v&&typeof v==='object'?v:{};}catch{return {};}}
+function speechParameters(){
+  if($('audioProvider').value!=='omnivoice')return {};
+  const backend=$('localBackend').value;
+  const params={};
+  for(const [key,id] of Object.entries({speed:'speechSpeed', interval_silence:'speechSilence', seed:'speechSeed', max_text_tokens:'speechTokens', temperature:'speechTemperature', omnivoice_num_steps:'speechSteps', omnivoice_guidance_scale:'speechGuidance'})){
+    if(key==='temperature'&&!backend.startsWith('IndexTTS'))continue;
+    if(key.startsWith('omnivoice_')&&!backend.includes('OmniVoice'))continue;
+    params[key]=Number($(id).value);
+  }
+  return params;
+}
+
+function currentTitle(){return $('showTitle').checked===false?'':normalizeTitle($('title').value);}
+function audioOptions(){return {audio_provider:$('audioProvider').value||'edge-tts',omnivoice_settings:{voice_id:$('omniVoice').value,expression:$('omniExpression').value||'follow_reference',backend:$('localBackend').value,parameters:speechParameters()}};}
+function rememberAudioOptions(){try{localStorage.setItem(omniStorageKey,JSON.stringify(audioOptions()));}catch{}audioSourceUI();}
+function restoreAudioOptions(){const v=audioPreferences();$('audioProvider').value=['edge-tts','omnivoice'].includes(v.audio_provider)?v.audio_provider:'edge-tts';const expression=v.omnivoice_settings?.expression;if(['follow_reference','calm','happy','sad','energetic','serious','whisper'].includes(expression))$('omniExpression').value=expression;const id=v.omnivoice_settings?.voice_id;if(id&&Array.from($('omniVoice').options||[]).some(o=>o.value===id))$('omniVoice').value=id;audioSourceUI();}
+function audioSourceUI(){const local=$('audioProvider').value==='omnivoice';$('edgeVoiceBlock').hidden=local;$('omniVoiceBlock').hidden=!local;$('previewOmniVoice').disabled=!omniAvailable||!$('omniVoice').value;if(job)updateOmniRetry(job);}
+function updateOmniRetry(j){const failed=j.audio_provider!=='upload'&&['failed','interrupted','cancelled'].includes(j.audio_state);$('retryOmniAudio').hidden=!failed;$('omniRetryHint').hidden=!failed;$('retryOmniAudio').disabled=!omniAvailable||!$('omniVoice').value||['queued','working'].includes(j.video_state);}
+async function loadOmniVoices(selected){$('refreshOmniVoices').disabled=true;try{const data=await api('/api/omnivoice');if(!Array.isArray(data.voices))return;const current=selected||$('omniVoice').value||audioPreferences().omnivoice_settings?.voice_id;omniAvailable=Boolean(data.available);$('omniVoice').replaceChildren(new Option('请选择音色',''));for(const v of data.voices)$('omniVoice').add(new Option((v.is_favorite?'★ ':'')+v.name+' · '+v.id.slice(0,6),v.id));const choice=data.voices.find(v=>v.id===current)||(!current?data.voices.find(v=>v.name==='01_yunjian'):null);$('omniVoice').value=choice?.id||'';$('omniVoiceStatus').textContent=data.message+' · '+data.voices.length+' 个音色';audioSourceUI();}catch(e){$('omniVoiceStatus').textContent='克隆音色库加载失败：'+e.message;}finally{$('refreshOmniVoices').disabled=false;}}
+$('audioProvider').onchange=rememberAudioOptions;$('omniVoice').onchange=rememberAudioOptions;$('omniExpression').onchange=rememberAudioOptions;
+$('refreshOmniVoices').onclick=()=>loadOmniVoices();
+$('previewOmniVoice').onclick=()=>{if(!$('omniVoice').value)return;preview.pause();preview.src='/api/omnivoice/voices/'+$('omniVoice').value+'/preview';preview.play().catch(()=>{$('omniVoiceStatus').textContent='参考音色试听失败，请刷新音色库后再试。';});};
+$('addOmniVoice').onclick=async()=>{const button=$('addOmniVoice');button.disabled=true;try{const file=$('omniVoiceFile').files?.[0],name=$('omniVoiceName').value.trim();if(!file||!name)throw new Error('请填写音色名称并选择参考音频');if(file.size>20*1024*1024)throw new Error('参考音频请控制在 20 MB 以内');const audio_data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]);r.onerror=()=>reject(new Error('音频读取失败'));r.readAsDataURL(file);});const result=await api('/api/omnivoice/voices',{name,filename:file.name,audio_data,reference_text:$('omniReferenceText').value});await loadOmniVoices(result.voice_id);rememberAudioOptions();$('omniVoiceStatus').textContent=result.created?'音色已保存并选中，可用于生成 MP3。':'该参考音频已在音色库中，已选中已有音色。';$('omniVoiceFile').value='';}catch(e){$('omniVoiceStatus').textContent=e.message;}finally{button.disabled=false;}};
+restoreAudioOptions();loadOmniVoices();
+function showError(text){$('error').textContent=text;$('error').hidden=!text;}
+let sessionRefresh=null;
+async function renewSession(){if(!sessionRefresh){sessionRefresh=(async()=>{let response,result;try{response=await fetch('/api/session',{cache:'no-store'});result=await response.json();}catch{throw new Error('无法恢复本机连接。请先复制文案备份，再重新打开工作台。');}if(!response.ok||result.product!=='tingwen-shengying-workbench'||typeof result.token!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(result.token))throw new Error('本机会话恢复失败。请先复制文案备份，再重新打开工作台。');token=result.token;})().finally(()=>{sessionRefresh=null;});}return sessionRefresh;}
+async function api(path,data){const multipart=typeof FormData!=='undefined'&&data instanceof FormData;const body=data===undefined?null:multipart?data:JSON.stringify(data);for(let attempt=0;attempt<2;attempt++){const options=body===null?{}:{method:'POST',headers:multipart?{'X-Local-Token':token}:{'Content-Type':'application/json','X-Local-Token':token},body};let response;try{response=await fetch(path,options);}catch{throw new Error('无法连接本机服务，请重新打开听文声影工作台。');}let result;try{result=await response.json();}catch{throw new Error('本机服务没有返回有效结果，请检查是否正在运行。');}if(body!==null&&response.status===403&&result.code==='local_session_expired'&&attempt===0){await renewSession();continue;}if(!response.ok)throw new Error(result.error||'请求失败');if(result.warning)showError(result.warning);return result;}}
+function auth(provider){return provider==='seedream'?{api_key:$('key').value,payment_consent:$('consent').checked}:{};}
+function sourceConfig(){const provider=$('provider').value;return {provider,model:$('model').value,drawthings_port:$('drawthingsPort').value,...auth(provider)};}
+function sourceUI(){const paid=$('provider').value==='seedream',mode=$('imageMode').value||'generate';$('seedreamSettings').hidden=!paid;$('drawthingsSettings').hidden=paid;$('aiPhotoSettings').hidden=mode!=='generate';$('localPhotoSettings').hidden=mode!=='upload';$('urlPhotoSettings').hidden=mode!=='url';$('generate').textContent=mode!=='generate'?'生成 MP3，使用所选照片':paid?'生成 MP3 和豆包配图（收费）':'生成 MP3 和本地配图';}
+function rememberImagePreferences(){try{localStorage.setItem('shengying-workbench-image-mode',$('imageMode').value);localStorage.setItem('shengying-workbench-image-provider',$('provider').value);}catch{}}
+function restoreImagePreferences(){try{const mode=localStorage.getItem('shengying-workbench-image-mode'),provider=localStorage.getItem('shengying-workbench-image-provider');if(['generate','upload','url'].includes(mode))$('imageMode').value=mode;if(Object.prototype.hasOwnProperty.call(sources,provider))$('provider').value=provider;}catch{}sourceUI();}
+$('provider').onchange=()=>{rememberImagePreferences();sourceUI();};$('imageMode').onchange=()=>{rememberImagePreferences();sourceUI();};restoreImagePreferences();
+$('checkDrawThings').onclick=async()=>{const b=$('checkDrawThings');b.disabled=true;showError('');$('drawthingsStatus').textContent='正在检查…';try{const result=await api('/api/drawthings/check',{drawthings_port:$('drawthingsPort').value});$('drawthingsStatus').textContent='已连接 · '+result.model;}catch(e){$('drawthingsStatus').textContent='尚未就绪';showError(e.message);}finally{b.disabled=false;}};
+const names={idle:'未开始',queued:'等待',working:'处理中',ready:'已完成',done:'已完成',failed:'失败',cancelled:'已取消',interrupted:'待恢复'};
+function setMedia(id,url,visible){const el=$(id);el.hidden=!visible;if(visible&&el.getAttribute('src')!==url)el.src=url;}
+function download(id,url,visible){$(id).hidden=!visible;if(visible)$(id).href=url+'&download=1';}
+const titleDefaults={font:'sans-bold',color:'#FFDA35',size:265};
+let titleStyleJobId='',titlePreviewKey='',titlePreviewTimer=null,titlePreviewRequest=0;
+const titleControlIds=['titleFont','titleColor','titleSize'];
+function titleSettings(){return {font:$('titleFont').value,color:$('titleColor').value.toUpperCase(),size:Number($('titleSize').value)};}
+function restoreTitleSettings(settings=titleDefaults){const value={...titleDefaults,...settings};$('titleFont').value=value.font;$('titleColor').value=value.color;$('titleSize').value=String(value.size);updateTitlePreview();}
+const titleStyleStorageKey='shengying-workbench-title-style',subtitleStyleStorageKey='shengying-workbench-subtitle-style';
+const titleFontKeys={{ title_fonts|list|tojson }},subtitleFontKeys={{ subtitle_fonts|list|tojson }};
+function readStylePreferences(key,defaults,validators){
+  const value={...defaults};
+  try{const saved=JSON.parse(localStorage.getItem(key)||'null');if(saved&&typeof saved==='object'&&!Array.isArray(saved)){for(const field of Object.keys(defaults)){if(validators[field](saved[field]))value[field]=field==='color'?saved[field].toUpperCase():saved[field];}}}catch{}
+  return value;
+}
+const validStyleColor=value=>typeof value==='string'&&/^#[0-9a-fA-F]{6}$/.test(value);
+function titlePreferences(){return readStylePreferences(titleStyleStorageKey,titleDefaults,{font:value=>titleFontKeys.includes(value),color:validStyleColor,size:value=>Number.isInteger(value)&&value>=48&&value<=320});}
+function subtitlePreferences(){return readStylePreferences(subtitleStyleStorageKey,subtitleDefaults,{enabled:value=>typeof value==='boolean',font:value=>subtitleFontKeys.includes(value),color:validStyleColor,size:value=>[28,36,48,60,72].includes(value),position:value=>Number.isInteger(value)&&value>=6&&value<=94});}
+function rememberStylePreferences(key,settings){
+  try{localStorage.setItem(key,JSON.stringify(settings));$('stylePreferencesHint').textContent='样式已保存，清空、刷新和重新打开页面后保留。';}
+  catch{$('stylePreferencesHint').textContent='当前浏览器无法保存样式；本次设置仍可使用，刷新后可能无法保留。';}
+}
+function changeTitleStyle(){rememberStylePreferences(titleStyleStorageKey,titleSettings());updateTitlePreview();}
+function changeSubtitleStyle(){rememberStylePreferences(subtitleStyleStorageKey,subtitleSettings());updateSubtitleUI();}
+function titleSettingsChanged(j){return JSON.stringify(titleSettings())!==JSON.stringify({...titleDefaults,...(j.rendered_title_settings||j.title_settings||{})});}
+function updateStyleControl(prefix,settings){
+  const color=settings.color,select=$(prefix+'Font');
+  const rgb=[1,3,5].map(i=>parseInt(color.slice(i,i+2),16));
+  const background=(rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722)>145?'#23334C':'#F8FAFC';
+  const family={sans:'"Hiragino Sans GB",sans-serif','sans-bold':'"Hiragino Sans GB",sans-serif',hei:'STHeiti,sans-serif',song:'Songti SC,serif'}[settings.font]||'sans-serif';
+  for(const el of [select,$(prefix+'FontSample')]){el.style.color=color;el.style.backgroundColor=background;el.style.fontFamily=family;el.style.fontWeight=settings.font==='sans-bold'?'700':'400';}
+  select.style.borderColor=color;
+  for(const option of Array.from(select.options||[])){option.style.color=color;option.style.backgroundColor=background;}
+  $(prefix+'ColorSwatch').style.backgroundColor=color;$(prefix+'ColorCode').textContent=color;
+}
+function updatePreviewPhoto(){
+  const url=job?.image_version?(job.gallery?.[0]?.preview_url||('/api/jobs/'+job.id+'/media/image?v='+job.image_version)):(typeof selectedLocalPhotos!=='undefined'?selectedLocalPhotos[0]?.url:'');
+  if(!url){
+    const colors=[$('titleColor').value];if($('subtitleEnabled').checked)colors.push($('subtitleColor').value);
+    const luminance=colors.map(color=>[1,3,5].map(i=>parseInt(color.slice(i,i+2),16))).map(rgb=>rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722);
+    $('stylePreview').style.backgroundColor=Math.min(...luminance)>145?'#23334C':Math.max(...luminance)<=145?'#E5E9EF':'#8994A3';
+  }
+  $('previewBackdrop').style.backgroundImage=url?'url("'+url+'")':'';
+  $('previewPhoto').hidden=!url;if(url&&$('previewPhoto').getAttribute('src')!==url)$('previewPhoto').src=url;if(!url)$('previewPhoto').removeAttribute('src');
+}
+function updateTitlePreview(){
+  const settings=titleSettings();$('titleSizeValue').textContent=settings.size+' px';updateStyleControl('title',settings);updateSubtitleButton();updatePreviewPhoto();
+  const title=job?[job.title,job.title_secondary].filter(Boolean).join('\n'):currentTitle();
+  clearTimeout(titlePreviewTimer);const request=++titlePreviewRequest;
+  if(!title){
+    $('titlePreview').hidden=true;$('titlePreviewImage').hidden=true;$('titlePreviewImage').removeAttribute('src');
+    $('titlePreviewStatus').textContent=job?'当前任务未设置标题。':'输入视频标题后即可查看标题效果。';return;
+  }
+  $('titlePreview').hidden=false;
+  $('titlePreviewImage').hidden=true;$('titlePreviewStatus').textContent='正在更新标题预览…';
+  titlePreviewTimer=setTimeout(async()=>{try{
+    const result=await api('/api/title/preview',{settings,title});if(request!==titlePreviewRequest)return;
+    $('titlePreviewImage').src=result.image;$('titlePreviewImage').hidden=false;
+    $('titlePreviewStatus').textContent=(job?'当前任务标题预览':'标题样式预览')+' · 实际字号 '+result.actual_size+' px'+(result.actual_size<settings.size?'（已自动适配画面）':'');
+  }catch(e){if(request===titlePreviewRequest)$('titlePreviewStatus').textContent='标题预览暂不可用：'+e.message;}},120);
+}
+for(const id of titleControlIds){$(id).oninput=changeTitleStyle;$(id).onchange=changeTitleStyle;}
+function renderTitleSettings(j){if(titleStyleJobId!==j.id){titleStyleJobId=j.id;restoreTitleSettings(j.title_settings||titleDefaults);}for(const id of titleControlIds)$(id).disabled=['queued','working'].includes(j.video_state);const key=[j.id,j.image_version,j.title,j.title_secondary].join(':');if(key!==titlePreviewKey){titlePreviewKey=key;updateTitlePreview();}}
+const musicDefaults={enabled:false,track_id:'vaporware',volume:15,loop_seconds:180};
+const musicStorageKey='shengying-workbench-background-music';
+let musicTracks=[],musicJobId='',musicImportPending=false;
+const musicControlIds=['musicEnabled','musicTrack','musicLoop','musicVolume','musicFile','addMusic'];
+function musicPreferences(){try{const value=JSON.parse(localStorage.getItem(musicStorageKey)||'{}');if(!value||typeof value!=='object')return musicDefaults;return {enabled:typeof value.enabled==='boolean'?value.enabled:false,track_id:typeof value.track_id==='string'&&/^[a-z0-9-]{1,64}$/.test(value.track_id)?value.track_id:'vaporware',volume:typeof value.volume==='number'&&Number.isFinite(value.volume)&&value.volume>=0&&value.volume<=100?value.volume:15,loop_seconds:[120,180,300].includes(value.loop_seconds)?value.loop_seconds:180};}catch{return musicDefaults;}}
+function musicSettings(){return {enabled:$('musicEnabled').checked,track_id:$('musicTrack').value||'vaporware',volume:Number($('musicVolume').value),loop_seconds:Number($('musicLoop').value)||180};}
+function restoreMusic(settings=musicDefaults){const value={...musicDefaults,...settings};$('musicEnabled').checked=value.enabled;$('musicTrack').value=value.track_id;$('musicVolume').value=String(value.volume);$('musicLoop').value=String(value.loop_seconds);updateMusicUI();}
+function musicChanged(j){const saved={...musicDefaults,enabled:false,...(j.rendered_music_settings||j.music_settings||{})};return JSON.stringify(musicSettings())!==JSON.stringify(saved);}
+function updateMusicUI(){const settings=musicSettings();$('musicOptions').hidden=!settings.enabled;$('musicVolumeValue').textContent=settings.volume+'%';const audio=$('musicPreview'),track=musicTracks.find(t=>t.id===settings.track_id);audio.volume=Math.min(1,Math.max(0,settings.volume/100));audio.hidden=!track;const source=track?.preview_url||'';if(audio.getAttribute('src')!==source){audio.pause?.();if(source)audio.src=source;else audio.removeAttribute('src');audio.load?.();}if(!settings.enabled)audio.pause?.();$('musicSource').replaceChildren();if(track){$('musicSource').append?.(document.createTextNode((track.builtin?'内置 · ':'自定义 · ')+track.name+' · '+track.license+(track.author?' · '+track.author:'')+' '));if(track.source_url){const link=document.createElement('a');link.href=track.source_url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='来源与授权';$('musicSource').append?.(link);}}updateSubtitleButton();}
+function changeMusic(){try{localStorage.setItem(musicStorageKey,JSON.stringify(musicSettings()));}catch{}updateMusicUI();}
+async function loadMusic(selected){try{const data=await api('/api/music');if(!Array.isArray(data.tracks))return;musicTracks=data.tracks;const current=selected||$('musicTrack').value||musicPreferences().track_id;$('musicTrack').replaceChildren();for(const track of musicTracks)$('musicTrack').add(new Option((track.builtin?'':'自定义 · ')+track.name,track.id));$('musicTrack').value=musicTracks.some(t=>t.id===current)?current:'vaporware';updateMusicUI();}catch(e){$('musicStatus').textContent='音乐库加载失败：'+e.message;}}
+function renderMusic(j){if(musicJobId!==j.id){musicJobId=j.id;restoreMusic({...musicDefaults,enabled:false,...(j.music_settings||{})});}for(const id of musicControlIds)$(id).disabled=musicImportPending||['queued','working'].includes(j.video_state);updateMusicUI();}
+for(const id of musicControlIds.slice(0,4)){$(id).oninput=changeMusic;$(id).onchange=changeMusic;}
+$('addMusic').onclick=async()=>{if(musicImportPending)return;musicImportPending=true;$('addMusic').disabled=true;$('musicStatus').textContent='正在导入音乐…';updateSubtitleButton();try{const file=$('musicFile').files?.[0];if(!file)throw new Error('请先选择音乐文件');if(file.size>40*1024*1024)throw new Error('单首音乐请控制在 40 MB 以内');const audio_data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(new Error('音乐文件读取失败'));reader.readAsDataURL(file);});const result=await api('/api/music',{filename:file.name,audio_data});await loadMusic(result.track.id);$('musicEnabled').checked=true;changeMusic();$('musicFile').value='';$('musicStatus').textContent='音乐已保存并选中，可试听后生成 MP4。';}catch(e){$('musicStatus').textContent=e.message;}finally{musicImportPending=false;if(job)renderMusic(job);else $('addMusic').disabled=false;updateSubtitleButton();}};
+const subtitleDefaults={enabled:true,color:'#FFFFFF',font:'sans',size:48,position:90};
+let subtitleJobId='',subtitlePreviewKey='',subtitlePreviewTimer=null,subtitlePreviewRequest=0;
+const subtitleControlIds=['subtitleEnabled','subtitleColor','subtitleFont','subtitleSize','subtitlePosition','subtitleTop','subtitleMiddle','subtitleBottom'];
+function subtitleSettings(){return {enabled:$('subtitleEnabled').checked,color:$('subtitleColor').value.toUpperCase(),font:$('subtitleFont').value,size:Number($('subtitleSize').value),position:Number($('subtitlePosition').value)};}
+function restoreSubtitles(settings=subtitleDefaults){const value={...subtitleDefaults,...settings};$('subtitleEnabled').checked=value.enabled;$('subtitleColor').value=value.color;$('subtitleFont').value=value.font;$('subtitleSize').value=String(value.size);$('subtitlePosition').value=String(value.position);updateSubtitleUI();}
+function subtitleChanged(j){const saved={...subtitleDefaults,enabled:false,...(j.rendered_subtitle_settings||j.subtitle_settings||{})};return JSON.stringify(subtitleSettings())!==JSON.stringify(saved)||j.title_style!=='clean-yellow'||titleSettingsChanged(j)||musicChanged(j);}
+function updateSubtitleButton(){if(!job)return;const j=job;const changed=subtitleChanged(j);$('confirm').disabled=directMediaPending||musicImportPending||imageActionPending||j.paused||j.cancelled||j.audio_state!=='ready'||j.image_state!=='ready'||['queued','working'].includes(j.video_state)||(j.video_state==='done'&&!changed);$('confirm').textContent=j.video_state==='done'?(changed?'按当前设置重新生成 MP4':'视频已完成'):j.video_state==='failed'||j.video_state==='interrupted'?'重试合成（使用当前设置）':'确认 '+(j.gallery?.length||1)+' 张照片，生成 MP4';$('subtitleChangeHint').textContent=j.video_state==='done'&&changed?'标题、字幕或背景音乐新设置尚未应用；重新生成成功后替换此任务的 MP4，复用原有 MP3 和照片。':'';}
+function updateSubtitleUI(){
+  const settings=subtitleSettings();updateStyleControl('subtitle',settings);$('subtitleOptions').hidden=!settings.enabled;$('subtitlePreview').hidden=!settings.enabled;
+  $('subtitlePositionValue').textContent=settings.position+'%';for(const id of ['subtitleTop','subtitleMiddle','subtitleBottom'])$(id).setAttribute('aria-pressed',String(Number($(id).dataset.position)===settings.position));
+  updateSubtitleButton();updatePreviewPhoto();clearTimeout(subtitlePreviewTimer);const request=++subtitlePreviewRequest;
+  $('subtitlePreviewImage').hidden=true;
+  if(!settings.enabled){$('subtitlePreviewImage').removeAttribute('src');$('subtitlePreviewStatus').textContent='口播字幕已关闭。';return;}
+  const saved=String(job?.text||$('text').value||'').trim(),text=saved.slice(0,24)||'口播字幕效果预览';
+  $('subtitlePreviewStatus').textContent='正在更新字幕预览…';
+  subtitlePreviewTimer=setTimeout(async()=>{try{
+    const result=await api('/api/subtitles/preview',{settings,text});if(request!==subtitlePreviewRequest)return;
+    $('subtitlePreviewImage').src=result.image;$('subtitlePreviewImage').hidden=false;
+    $('subtitlePreviewStatus').textContent=(saved?'口播字幕样式预览':'示例字幕（仅预览，不写入成片）')+' · '+settings.color+' · '+settings.size+' px · 位置 '+settings.position+'%';
+  }catch(e){if(request===subtitlePreviewRequest)$('subtitlePreviewStatus').textContent='字幕预览暂不可用：'+e.message;}},120);
+}
+for(const id of subtitleControlIds.slice(0,5)){$(id).oninput=changeSubtitleStyle;$(id).onchange=changeSubtitleStyle;}
+for(const id of ['subtitleTop','subtitleMiddle','subtitleBottom'])$(id).onclick=()=>{$('subtitlePosition').value=$(id).dataset.position;changeSubtitleStyle();};
+function renderSubtitles(j){if(subtitleJobId!==j.id){subtitleJobId=j.id;restoreSubtitles({...subtitleDefaults,enabled:false,...(j.subtitle_settings||{})});}const busy=['queued','working'].includes(j.video_state);for(const id of subtitleControlIds)$(id).disabled=busy||(id==='subtitleEnabled'&&j.audio_provider==='upload'&&!j.text);const key=j.id+':'+j.image_version;if(subtitlePreviewKey!==key){subtitlePreviewKey=key;updatePreviewPhoto();updateSubtitleUI();}$('subtitleTimingHint').textContent=j.audio_provider==='upload'?(!j.text?'本任务未填写文案，口播字幕已关闭。需要字幕时，请填写对应文案后重新载入素材。':'已有音频没有词级语音时间，字幕按所填文案和完整音频时长估算；请保证文案与音频内容一致。'):j.audio_provider==='omnivoice'?'OmniVoice 未提供词级语音时间，字幕按本任务完整 MP3 时长估算；不使用微软旧片段的时间信息。':j.subtitle_timing==='estimated'?'本任务音频缺少完整语音时间信息，字幕按文案长度估算时间，可能存在同步偏差。需要准确同步时，请用同一文案创建新音频任务。':j.subtitle_timing==='speech'?'本任务字幕使用语音服务的时间信息，与实际朗读文案同步。':'字幕使用任务的实际朗读文案。新音频按语音时间信息同步；旧音频会标明估算同步。';updateSubtitleButton();}
+function render(j){if(job?.id!==j.id)$('imageAdjustments').open=false;job=j;$('task').hidden=false;$('empty').hidden=true;$('jobTitle').textContent=[j.title,j.title_secondary].filter(Boolean).join(' · ')||'未命名视频';$('jobMode').textContent=(j.audio_provider==='omnivoice'?'音频：OmniVoice · '+(j.omnivoice_settings?.voice_name||'本机音色')+'；':'')+(j.audio_provider==='upload'?'音频：本机导入 · '+(j.imported_audio?.source_name||'已有音频')+'；':'')+'当前任务使用：'+(sources[j.provider]?.name|| (j.provider==='manual'?'自选照片 · 无需 AI 图片接口':'旧 AI Horde 素材 · 不再联网生成'))+(j.model?' · '+j.model:'');
+  renderTaskGallery(j);
+  $('jobText').textContent=j.text;$('jobPrompt').textContent=j.prompt;
+  for(const part of ['audio','image','video']){renderState(j,part);$(part+'Message').textContent=j[part+'_message']||'';}
+  const base='/api/jobs/'+j.id+'/media/';const au=base+'audio?v='+j.created,im=base+'image?v='+j.image_version,vi=j.video_url?j.video_url+'&v='+j.updated:base+'video?v='+j.updated,hasVideo=Boolean(j.video_path);
+  setMedia('audio',au,j.audio_state==='ready');setMedia('image',im,Boolean(j.image_version)&&!j.gallery?.length);setMedia('video',vi,hasVideo);
+  download('audioDownload',au,j.audio_state==='ready');download('imageDownload',im,Boolean(j.image_version));download('videoDownload',vi,hasVideo);
+  $('videoDownload').textContent=j.video_state==='done'?'下载 MP4':'下载上次生成的 MP4';
+  if(hasVideo&&j.video_state!=='done')$('videoMessage').textContent+=(j.video_message?'。':'')+'下方为上次已生成的 MP4，不代表当前照片版本已合成；旧文件仍可播放、下载和定位。';
+  for(const [part,label] of [['audio','Audio'],['video','Video']]){const path=j[part+'_path']||'';$(part+'Path').hidden=!path;$(part+'Path').textContent=path?'保存位置：'+path:'';$('reveal'+label).hidden=!path;}
+  updateOmniRetry(j);$('retryAudio').textContent=j.audio_provider==='upload'?'重新处理已导入音频':j.audio_provider==='omnivoice'?'重试当前 OmniVoice 音色':'重试微软音色';$('retryAudio').hidden=!['failed','interrupted','cancelled'].includes(j.audio_state);$('retryImage').hidden=!sources[j.provider]||!['failed','interrupted','cancelled'].includes(j.image_state);
+  $('retryImage').textContent=j.provider==='seedream'?'重试豆包配图（可能收费）':'重试本地配图';
+  $('regeneratePanel').hidden=false;
+  $('regenerate').hidden=!sources[j.provider];$('regenerate').textContent=imageActionPending||['queued','working'].includes(j.image_state)?'正在生成图片…':'重新生成图片';
+  $('regenerateHint').textContent='只重新生成图片，保留 MP3 和旧图。新图需要重新确认后才能合成 MP4。'+(j.provider==='seedream'?' 使用本任务豆包模型，每次重新生成可能收费；需在左侧豆包设置中填写 Key 并勾选付费同意。':j.provider==='drawthings'?' 使用本任务保存的 Draw Things 模型与参数，不自动调用豆包。':' 如需 AI 生图，请在左侧选择 AI 生成并配置来源，再点击下方按钮。');
+  if(document.activeElement!==$('newPrompt')&&$('newPrompt').dataset.version!==j.prompt){$('newPrompt').value=j.prompt;$('newPrompt').dataset.version=j.prompt;}
+  const metadata=j.image_metadata;const imageProvider=metadata?.provider||j.provider;$('imageInfo').textContent=metadata?'原图 '+metadata.dimensions.join('×')+' · '+(imageProvider==='upload'?'本机照片 · '+metadata.source_name:imageProvider==='webpage'?'网页照片 · '+metadata.source_name:imageProvider==='url'?'网上照片 · '+metadata.source_name:(metadata.model||j.model)+(imageProvider==='seedream'?' · AI 水印已开启':imageProvider==='drawthings'?' · 本地生成':' · 旧版素材'))+(metadata.first_frame?' · 动图使用第一帧':''):'';
+  $('pauseNotice').hidden=!j.paused;$('pause').hidden=j.paused;$('resume').hidden=!(j.paused||j.cancelled);
+  const busy=['audio','image','video'].some(p=>['queued','working'].includes(j[p+'_state']));$('pause').disabled=!busy;$('cancel').disabled=!busy;
+  $('changeSource').disabled=busy||imageActionPending;$('regenerate').disabled=busy||imageActionPending;$('retryImage').disabled=busy||imageActionPending;
+  const photoBusy=imageActionPending||['image','video'].some(p=>['queued','working'].includes(j[p+'_state']));$('replacePhoto').disabled=photoBusy;$('usePhotoUrl').disabled=photoBusy;$('replacePhotoUrl').disabled=photoBusy;$('history').disabled=imageActionPending;
+  $('photoHint').textContent=imageActionPending?'正在处理照片，请稍候…':'选择本机照片后立即选用，可多选；每批最多 50 张、单张 20 MB、合计 40 MB。多张平均分配音频时长。旧图保留，不调用 AI；换图后请重新确认。';
+  renderTitleSettings(j);
+  renderMusic(j);
+  renderSubtitles(j);
+}
+async function refresh(){const id=selectedId;if(!id)return;try{const j=await api('/api/jobs/'+id);if(selectedId===id)render(j);}catch(e){showError(e.message);}}
+async function history(){try{const data=await api('/api/jobs');const current=$('history').value;$('history').replaceChildren(new Option('选择一个任务查看或恢复',''));data.jobs.forEach(j=>$('history').add(new Option((j.title||'未命名视频')+' · '+new Date(j.created*1000).toLocaleString(),j.id)));$('history').value=current;}catch(e){showError(e.message);}}
+function select(id){selectedId=id;clearInterval(timer);refresh();timer=setInterval(refresh,2500);}
+$('history').onchange=()=>{if($('history').value)select($('history').value);};
+let lastCleanup=null;
+function cleanNarration(text){
+  return text.replace(/\r\n?/g,'\n').replace(/[\u200B\uFEFF]/g,'')
+    .replace(/<!--[\s\S]*?-->/g,'')
+    .replace(/^[ \t]*(?:```|~~~)[^\n]*$/gm,'')
+    .replace(/!\[[^\]\n]*\]\((?:[^()\n]|\([^()\n]*\))*\)/g,'')
+    .replace(/\[([^\]\n]+)\]\((?:[^()\n]|\([^()\n]*\))*\)/g,'$1')
+    .replace(/<\/?[a-zA-Z][^>]*>/g,'')
+    .replace(/(?:https?:\/\/|www\.)[^\s<>()（）\[\]，。；！？、]+/gi,url=>(url.match(/[.,!?;:]+$/)||[''])[0])
+    .replace(/^[ \t]*(?:[-*_—=][ \t]*){3,}$/gm,'')
+    .replace(/^[ \t]*>[ \t]?/gm,'')
+    .replace(/^[ \t]*[-+•●▪◆■][ \t]+(?=[^\d\n])/gm,'')
+    .replace(/(\d)[ \t]*\*[ \t]*(?=\d)/g,'$1乘以')
+    .replace(/[*＊#＃`]/g,'')
+    .replace(/_{1,2}([^_\n]+)_{1,2}/g,'$1')
+    .replace(/[()（）\[\]【】{}｛｝]/g,'')
+    .replace(/\|/g,' ').replace(/[ \t]+/g,' ')
+    .split('\n').map(line=>line.trim()).join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+$('text').oninput=()=>{const el=$('text'),length=Array.from(el.value).length;$('count').textContent=length.toLocaleString()+' 字';$('textHint').textContent=length>1000?'长文请在框内上下滚动查看，转换使用全文，不截断文字。':'文案框随内容增加到适宜高度；长文在框内上下滚动，输入和转换不限制字数。';el.style.height='auto';el.style.height=Math.min(420,Math.max(145,el.scrollHeight))+'px';$('undoClean').disabled=!lastCleanup||el.value!==lastCleanup.after;updateSubtitleUI();};
+$('cleanText').onclick=()=>{const before=$('text').value;if(!before.trim()){$('cleanStatus').textContent='请先输入需要清洗的文案。';return;}const after=cleanNarration(before);if(after===before){$('cleanStatus').textContent='当前文案无需进一步清洗。';return;}lastCleanup={before,after};$('text').value=after;$('text').oninput();$('cleanStatus').textContent='清洗完成：'+Array.from(before).length.toLocaleString()+' 字 → '+Array.from(after).length.toLocaleString()+' 字。请检查正文，需要时可撤销。';};
+$('undoClean').onclick=()=>{if(!lastCleanup||$('text').value!==lastCleanup.after)return;$('text').value=lastCleanup.before;lastCleanup=null;$('text').oninput();$('cleanStatus').textContent='已撤销本次清洗，原文已恢复。';};
+function normalizeTitle(text){return text.replace(/\r\n?/g,'\n').split('\n').map(line=>line.trim().replace(/\s+/g,' ')).filter(Boolean).join('\n');}
+function titleCount(){return Array.from(normalizeTitle($('title').value).replace(/\n/g,'')).length;}
+$('title').oninput=()=>{updateTitlePreview();const count=titleCount();$('titleHint').textContent='标题 '+count+' / 30 字（换行不计）。'+(count>30?'标题超出限制，请缩短后生成。':'默认取文案前 30 字；取消“在首页显示标题”可不叠标题。MP3 / MP4 文件名均取文案前 30 字。');};
+$('import').onclick=()=>$('file').click();
+$('file').onchange=async()=>{const file=$('file').files[0];if(!file)return;try{let text=await file.text();if(file.name.toLowerCase().endsWith('.md'))text=text.replace(/```[\s\S]*?```/g,'').replace(/^#{1,6}\s+/gm,'').replace(/!\[[^\]]*\]\([^)]+\)/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/[`*_]/g,'');$('text').value=text;$('text').oninput();}catch(e){showError('文件读取失败：'+e.message);}finally{$('file').value='';}};
+async function readPhoto(file){if(!file)throw new Error('请先选择一张本机照片');if(file.size>20*1024*1024)throw new Error('单张照片请控制在 20 MB 以内');return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve({image_mode:'upload',photo_name:file.name,photo_data:String(reader.result).split(',')[1]});reader.onerror=()=>reject(new Error('照片读取失败，请重新选择'));reader.readAsDataURL(file);});}
+let selectedLocalPhotos=[];
+function checkPhotoFiles(files){if(!files.length)throw new Error('请先选择至少一张本机照片');if(files.length>50)throw new Error('每批最多选择 50 张照片');if(files.some(file=>file.size>20*1024*1024))throw new Error('单张照片请控制在 20 MB 以内');if(files.reduce((total,file)=>total+file.size,0)>40*1024*1024)throw new Error('本批照片总大小请控制在 40 MB 以内');}
+async function readPhotos(files){const list=Array.from(files);checkPhotoFiles(list);const photos=[];for(const file of list){const {photo_name,photo_data}=await readPhoto(file);photos.push({photo_name,photo_data});}return {image_mode:'upload',photos};}
+function renderLocalPhotos(){updateTitlePreview();const photos=selectedLocalPhotos;if(typeof DataTransfer!=='undefined'){const selection=new DataTransfer();photos.forEach(p=>selection.items.add(p.file));$('localPhoto').files=selection.files;}$('localPhotoCount').textContent=photos.length?'已选择 '+photos.length+' 张 · 合计 '+(photos.reduce((sum,p)=>sum+p.file.size,0)/1024/1024).toFixed(1)+' MB · 视频时长由保留照片平均分配':'尚未选择照片';$('localPhotoPreview').hidden=!photos.length;$('localPhotoPreview').replaceChildren(...photos.map((p,i)=>photoCard(p.url,(i+1)+' · '+p.file.name,()=>{if(creating)return;URL.revokeObjectURL(p.url);selectedLocalPhotos=selectedLocalPhotos.filter(item=>item!==p);renderLocalPhotos();},creating)));}
+function clearLocalPhotos(){selectedLocalPhotos.forEach(p=>URL.revokeObjectURL(p.url));selectedLocalPhotos=[];renderLocalPhotos();}
+$('localPhoto').onchange=()=>{const files=Array.from($('localPhoto').files);if(!files.length)return;try{checkPhotoFiles(files);clearLocalPhotos();selectedLocalPhotos=files.map(file=>({file,url:URL.createObjectURL(file)}));renderLocalPhotos();showError('');}catch(e){renderLocalPhotos();showError(e.message);}};
+let directMediaPending=false,selectedExternalPhotos=[];
+function renderExternalPhotos(){const gallery=$('externalPhotoGallery');gallery.hidden=!selectedExternalPhotos.length;gallery.replaceChildren(...selectedExternalPhotos.map((p,i)=>photoCard(p.url,'照片 '+(i+1)+' · '+p.file.name,()=>{URL.revokeObjectURL(p.url);selectedExternalPhotos=selectedExternalPhotos.filter(item=>item!==p);renderExternalPhotos();},directMediaPending)));}
+function clearExternalPhotos(){selectedExternalPhotos.forEach(p=>URL.revokeObjectURL(p.url));selectedExternalPhotos=[];renderExternalPhotos();}
+$('externalPhotos').onchange=()=>{const files=Array.from($('externalPhotos').files||[]);if(!files.length)return;try{checkPhotoFiles(files);clearExternalPhotos();selectedExternalPhotos=files.map(file=>({file,url:URL.createObjectURL(file)}));renderExternalPhotos();}catch(e){showError(e.message);}};
+$('externalAudio').onchange=()=>{const file=$('externalAudio').files?.[0];$('externalAudioInfo').textContent=file?file.name+' · '+(file.size/1024/1024).toFixed(2)+' MB':'请选择已有音频，最多 500 MB';};
+$('importExternalMedia').onclick=async()=>{if(directMediaPending||creating||imageActionPending||musicImportPending)return;directMediaPending=true;for(const id of ['importExternalMedia','externalAudio','externalPhotos','generate'])$(id).disabled=true;renderExternalPhotos();updateSubtitleButton();showError('');$('externalMediaStatus').textContent='正在读取并载入本机素材…';try{const file=$('externalAudio').files?.[0];if(!file)throw new Error('请选择已有音频文件');if(!file.size||file.size>500*1024*1024)throw new Error('音频不能为空，且需在 500 MB 以内');if(!/\.(mp3|wav|m4a|aac|flac|ogg|aiff|aif|opus|wma)$/i.test(file.name))throw new Error('请选择支持的音频格式');if(titleCount()>30)throw new Error('视频标题最多 30 字');const photos=await readPhotos(selectedExternalPhotos.map(p=>p.file));const metadata={title:currentTitle(),title_enabled:$('showTitle').checked,text:$('text').value,title_settings:titleSettings(),subtitle_settings:subtitleSettings(),music_settings:musicSettings(),...photos};const form=new FormData();form.append('metadata',JSON.stringify(metadata));form.append('audio',file,file.name);const j=await api('/api/jobs/import-audio',form);select(j.id);render(j);await history();$('history').value=j.id;$('externalMediaStatus').textContent='素材已载入；音频验证完成后，点击下方“确认照片，生成 MP4”。';}catch(e){$('externalMediaStatus').textContent=e.message;showError(e.message);}finally{directMediaPending=false;for(const id of ['importExternalMedia','externalAudio','externalPhotos','generate'])$(id).disabled=false;renderExternalPhotos();updateSubtitleButton();}};
+$('generate').onclick=async()=>{if(creating||imageActionPending||musicImportPending||directMediaPending)return;creating=true;$('generate').disabled=true;$('localPhoto').disabled=true;renderLocalPhotos();showError('');try{if(titleCount()>30)throw new Error('视频标题最多 30 字，请缩短后再生成');const mode=$('audioOnly').checked?'none':$('imageMode').value||'generate';const photo=mode==='none'?{image_mode:'none'}:mode==='upload'?await readPhotos(selectedLocalPhotos.map(p=>p.file)):mode==='url'?{image_mode:'url',photo_url:$('photoUrl').value}:{image_mode:'generate',...sourceConfig()};const j=await api('/api/jobs',{title:currentTitle(),title_enabled:$('showTitle').checked,text:$('text').value,voice,...audioOptions(),title_settings:titleSettings(),subtitle_settings:subtitleSettings(),music_settings:musicSettings(),prompt:$('prompt').value,...photo});select(j.id);render(j);await history();$('history').value=j.id;}catch(e){showError(e.message);}finally{creating=false;$('generate').disabled=false;$('localPhoto').disabled=false;renderLocalPhotos();}};
+async function act(action,extra={}){if(!job)return;showError('');try{render(await api('/api/jobs/'+job.id+'/'+action,extra));await history();}catch(e){showError(e.message);}}
+$('retryOmniAudio').onclick=()=>{if(!omniAvailable||!$('omniVoice').value)return;$('audioProvider').value='omnivoice';rememberAudioOptions();act('retry-audio',audioOptions());};
+$('pause').onclick=()=>act('pause');$('resume').onclick=()=>act('resume');$('cancel').onclick=()=>act('cancel');$('reveal').onclick=()=>act('reveal');$('retryAudio').onclick=()=>act('retry-audio');
+$('revealAudio').onclick=()=>act('reveal',{kind:'audio'});$('revealVideo').onclick=()=>act('reveal',{kind:'video'});
+async function usePhoto(load){if(!job||imageActionPending)return;imageActionPending=true;render(job);showError('');try{const data=await load();await act('use-image',data);}catch(e){showError(e.message);}finally{imageActionPending=false;if(job)render(job);}}
+$('replacePhoto').onchange=async()=>{const files=Array.from($('replacePhoto').files);try{if(files.length)await usePhoto(()=>readPhotos(files));}finally{$('replacePhoto').value='';}};
+$('usePhotoUrl').onclick=()=>usePhoto(async()=>({image_mode:'url',photo_url:$('replacePhotoUrl').value}));
+function paidRetryAck(provider){return !(job.submitting&&provider==='seedream')||window.confirm('上次收费请求结果未知。请先检查方舟用量；新请求可能重复扣费。是否继续？');}
+async function imageAct(action,provider,extra={}){if(!job||imageActionPending)return;const credentials=auth(provider);if(provider==='seedream'&&!credentials.payment_consent){$('imageMode').value='generate';$('provider').value='seedream';sourceUI();showError('重新生成图片可能收费，请在左侧豆包设置中勾选付费同意。');return;}if(!paidRetryAck(provider))return;imageActionPending=true;render(job);try{await act(action,{...extra,...credentials,confirm_resubmit:true});}finally{imageActionPending=false;if(job)render(job);}}
+$('retryImage').onclick=()=>imageAct('retry-image',job.provider);
+$('regenerate').onclick=()=>imageAct('regenerate',job.provider,{prompt:$('newPrompt').value});
+$('changeSource').onclick=()=>{const config=sourceConfig();return imageAct('change-source',config.provider,{...config,prompt:$('newPrompt').value});};
+$('confirm').onclick=()=>act('confirm',{image_version:job.image_version,title_settings:titleSettings(),subtitle_settings:subtitleSettings(),music_settings:musicSettings()});
+function renderState(j,part){const state=j[part+'_state'],active=['queued','working'].includes(state),done=['ready','done'].includes(state),paused=j.paused&&active&&part!=='image';const color=done?'state-complete':paused||state==='interrupted'?'state-paused':j.cancelled&&active?'state-idle':active?'state-running':state==='failed'?'state-failed':'state-idle';const badge=$(part+'State');badge.className='state-badge '+color;badge.textContent=paused?'已暂停':j.cancelled&&active?'正在取消':names[state]||state;if(part==='image')return;const bar=$(part+'Progress'),hint=$(part+'ProgressHint'),progress=j[part+'_progress'];bar.className='media-progress '+color;bar.hidden=hint.hidden=state==='idle';const percent=done?100:progress?.percent;const known=typeof percent==='number'&&Number.isFinite(percent);if(known)bar.value=Math.max(0,Math.min(100,percent));else bar.removeAttribute?.('value');let label=done?'已完成':progress?.stage||(state==='queued'?'等待处理':'处理中');if(progress?.completed!==undefined&&progress.completed!==null&&progress.total)label+=' · '+progress.completed+'/'+progress.total+(part==='audio'?' 段':' 张');hint.textContent=(known?Math.floor(percent)+'% · ':'')+label+(paused?' · 暂停，进度保留':state==='failed'?' · 失败，可重试':state==='cancelled'?' · 已取消':'');}
+let galleryKey='',recordOffset=null,recordsBusy=false;
+function photoCard(url,label,remove,disabled=false){const card=document.createElement('figure');card.className='photo-card';const a=document.createElement('a');a.href=url.startsWith('blob:')?url:url+(url.includes('?')?'&':'?')+'full=1';a.target='_blank';a.rel='noopener noreferrer';a.title='打开大图预览';const img=document.createElement('img');img.src=url;img.alt=label;img.loading='lazy';a.append(img);const caption=document.createElement('figcaption');caption.textContent=label;const button=document.createElement('button');button.textContent='删除';button.disabled=disabled;button.onclick=remove;card.append(a,caption,button);return card;}
+function renderTaskGallery(j){const gallery=j.gallery||[];const key=[j.id,j.image_version,imageActionPending,j.video_state,j.image_state,j.audio_duration].join(':');$('taskGallery').hidden=!gallery.length;if(key===galleryKey)return;galleryKey=key;$('taskGallery').replaceChildren(...gallery.map((p,i)=>photoCard(p.preview_url,'照片 '+(i+1)+(j.audio_duration?' · 约 '+(j.audio_duration/gallery.length).toFixed(2)+' 秒':''),async()=>{if(imageActionPending)return;imageActionPending=true;render(job);try{await act('select-images',{image_version:j.image_version,selected_indices:gallery.map((_,n)=>n).filter(n=>n!==i)});}finally{imageActionPending=false;render(job);}},imageActionPending||gallery.length<=1||['working','queued'].includes(j.video_state)||['working','queued'].includes(j.image_state))));}
+const eventLabels={audio_import:'导入已有音频',model_call:'模型调度',processing:'本机处理',web_import:'网页提取',create_task:'创建任务',replace_photos:'更换照片',select_photos:'筛选照片',task_action:'任务操作',service:'服务'};
+const recordStatuses={started:'开始',completed:'完成',failed:'失败',cancelled:'取消',stopped:'停止',created:'已创建',accepted:'已执行'};
+async function loadRecords(more=false){if(recordsBusy)return;recordsBusy=true;$('refreshRecords').disabled=true;$('moreRecords').disabled=true;try{const kind=$('recordKind').value;const data=await api('/api/records?kind='+(kind==='models'?'models':'all')+'&offset='+(more?(recordOffset||0):0));if(!more)$('recordList').replaceChildren();$('recordPath').textContent='自动日志保存位置：'+data.log_path;if(kind==='versions'){for(const r of data.releases){const el=document.createElement('div');el.className='record-entry';const h=document.createElement('strong');h.textContent='版本 '+r.version+(r.date?' · '+r.date:'');const origin=document.createElement('p');origin.textContent=r.origin;const list=document.createElement('ul');r.changes.forEach(text=>{const item=document.createElement('li');item.textContent=text;list.append(item);});el.append(h,origin,list);$('recordList').append(el);}$('recordStatus').textContent='当前版本 '+data.version+' · 历史版本为整理记录';recordOffset=null;}else{data.entries.forEach(r=>{const el=document.createElement('div');el.className='record-entry';const h=document.createElement('strong');h.textContent=new Date(r.time*1000).toLocaleString()+' · '+(eventLabels[r.event]||r.event)+' · '+(recordStatuses[r.status]||r.status);const p=document.createElement('p');p.textContent=['版本 '+r.version,r.part,r.provider,r.model,r.duration_ms!==undefined?'耗时 '+(r.duration_ms/1000).toFixed(2)+' 秒':'',r.count!==undefined?r.count+' 张照片':'',r.size_bytes!==undefined?(r.size_bytes/1024/1024).toFixed(2)+' MB':'',r.audio_duration!==undefined?'音频 '+r.audio_duration.toFixed(2)+' 秒':'',r.job_id?'任务 '+r.job_id:'',r.import_id?'提取 '+r.import_id:''].filter(Boolean).join(' · ');el.append(h,p);$('recordList').append(el);});recordOffset=data.next_offset;$('recordStatus').textContent='共 '+data.total+' 条记录'+(data.total?'':'；从本次升级开始自动记录');}$('moreRecords').hidden=recordOffset===null;}catch(e){$('recordStatus').textContent=e.message;}finally{recordsBusy=false;$('refreshRecords').disabled=false;$('moreRecords').disabled=false;}}
+$('openRecords').onclick=()=>{const panel=$('recordsPanel');panel.hidden=!panel.hidden;$('openRecords').setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden){loadRecords();panel.scrollIntoView({behavior:'smooth',block:'start'});}};$('recordKind').onchange=()=>loadRecords();$('refreshRecords').onclick=()=>loadRecords();$('moreRecords').onclick=()=>loadRecords(true);
+let videosBusy=false;
+async function loadVideos(){if(videosBusy)return;videosBusy=true;$('refreshVideos').disabled=true;$('videosStatus').textContent='正在查找成片…';try{const data=await api('/api/videos');$('videosRoot').textContent='保存目录：'+data.root_folder;$('videosStatus').textContent='共 '+data.total+' 个视频'+(data.total?'':'，生成成功后会显示在这里');$('videosList').replaceChildren();for(const item of data.videos){const row=document.createElement('div');row.className='record-entry';const name=document.createElement('strong');name.textContent=item.filename;const info=document.createElement('p');info.textContent=new Date(item.modified*1000).toLocaleString()+' · '+(item.size_bytes/1024/1024).toFixed(1)+' MB';const path=document.createElement('p');path.className='archive-path';path.textContent=item.path;const actions=document.createElement('div');actions.className='row';for(const [label,download] of [['播放',false],['下载 MP4',true]]){const link=document.createElement('a');link.className='button';link.textContent=label;link.href=item.media_url+(download?'&download=1':'');link.target='_blank';link.rel='noopener noreferrer';actions.append(link);}const reveal=document.createElement('button');reveal.textContent='打开所在文件夹';reveal.onclick=async()=>{try{await api('/api/videos/'+item.job_id+'/reveal',{filename:item.filename});}catch(e){$('videosStatus').textContent=e.message;}};actions.append(reveal,createPublishButton(item.job_id,item.filename));row.append(name,info,path,actions);$('videosList').append(row);}}catch(e){$('videosStatus').textContent=e.message;}finally{videosBusy=false;$('refreshVideos').disabled=false;}}
+function showVideoFiles(){const panel=$('videosPanel');panel.hidden=false;$('openVideos').setAttribute('aria-expanded','true');loadVideos();panel.scrollIntoView({behavior:'smooth',block:'start'});}
+$('openVideos').onclick=()=>{if($('videosPanel').hidden)showVideoFiles();else{$('videosPanel').hidden=true;$('openVideos').setAttribute('aria-expanded','false');}};
+$('showVideoFiles').onclick=showVideoFiles;
+$('refreshVideos').onclick=loadVideos;
+$('revealVideosRoot').onclick=async()=>{try{await api('/api/videos/reveal-root',{});}catch(e){$('videosStatus').textContent=e.message;}};
+$('openVideoFolder').onclick=async()=>{try{await api('/api/videos/reveal-root',{});showError('');}catch(e){showError(e.message);}};
+function clearWorkspaceUI(){clearInterval(timer);timer=null;selectedId='';job=null;restoreAudioOptions();musicJobId='';restoreMusic(musicPreferences());$('musicPreview').pause?.();$('musicFile').value='';$('musicStatus').textContent='';for(const id of musicControlIds)$(id).disabled=musicImportPending;galleryKey='';titleStyleJobId='';titlePreviewKey='';restoreTitleSettings(titlePreferences());for(const id of titleControlIds)$(id).disabled=false;subtitleJobId='';subtitlePreviewKey='';restoreSubtitles(subtitlePreferences());updatePreviewPhoto();$('subtitleChangeHint').textContent='';for(const id of subtitleControlIds)$(id).disabled=false;lastCleanup=null;$('cleanStatus').textContent='';clearLocalPhotos();clearExternalPhotos();$('externalAudio').value='';$('externalPhotos').value='';$('externalMediaStatus').textContent='';$('externalAudioInfo').textContent='支持 MP3、WAV、M4A、AAC、FLAC、OGG、AIFF、OPUS、WMA，单个音频最多 500 MB。';$('externalMediaPanel').open=false;preview.pause?.();preview.removeAttribute?.('src');preview.load?.();for(const id of ['title','text','prompt','newPrompt','photoUrl','replacePhotoUrl','key','file','localPhoto','replacePhoto','omniVoiceName','omniVoiceFile','omniReferenceText']){$(id).value='';}for(const id of ['audio','video','image']){const el=$(id);el.pause?.();el.removeAttribute?.('src');el.load?.();el.hidden=true;}for(const id of ['jobText','jobPrompt','imageInfo','audioPath','videoPath','jobTitle'])$(id).textContent='';$('taskGallery').replaceChildren();$('task').hidden=true;$('addOmniVoicePanel').open=false;$('imageAdjustments').open=false;$('empty').hidden=false;$('history').value='';$('videosPanel').hidden=true;$('videosList').replaceChildren();$('openVideos').setAttribute('aria-expanded','false');$('consent').checked=false;$('confirm').disabled=true;$('confirm').textContent='生成 MP4（请先生成并确认素材）';restoreImagePreferences();showError('');$('text').oninput();$('title').oninput();try{localStorage.removeItem?.('shengying-workbench-last');localStorage.removeItem?.('shengying-web-import-last');for(const key of Object.keys(localStorage)){if(key.startsWith('shengying-web-removed-'))localStorage.removeItem?.(key);}}catch{}}
+$('clearWorkspace').onclick=()=>window.location.reload();
+clearWorkspaceUI();
+loadMusic();
+if(typeof window!=='undefined'&&window.addEventListener){window.addEventListener('pageshow',clearWorkspaceUI);window.addEventListener('resize',()=>$('text').oninput());}
+history();
+</script>
+<script src="/static/integration.js"></script>
+<script src="/static/preferences.js"></script>
+<script src="/static/production-queue.js"></script>
+</body></html>
