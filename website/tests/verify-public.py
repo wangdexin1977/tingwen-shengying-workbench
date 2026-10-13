@@ -45,8 +45,8 @@ assert len(set(p['title'] for p in pages))==len(pages),'duplicate titles'
 assert len(set(p['description'] for p in pages))==len(pages),'duplicate descriptions'
 key=(root/'seo/indexnow-key.txt').read_text().strip()
 resources=[]
-for route in ['/robots.txt','/sitemap.xml','/llms.txt','/llms-full.txt','/product-facts.json','/'+key+'.txt','/assets/social.png',*['/assets/cases/'+c['id']+'.jpg' for c in json.loads((root/'src/cases.json').read_text())],'/assets/yunjian.mp3','/downloads/product.html','/downloads/technical.html','/downloads/shengying-specification.md','/downloads/shengying-specification.html','/downloads/shengying-api.json','/specification-source.json','/assets/shengying-architecture.svg']:
- body,h,final,status=get(origin+route);assert status==200 and len(body)>0
+for route in ['/robots.txt','/sitemap.xml','/llms.txt','/llms-full.txt','/product-facts.json','/'+key+'.txt','/assets/social.png',*['/assets/cases/'+c['id']+'.jpg' for c in json.loads((root/'src/cases.json').read_text())],'/assets/yunjian.mp3','/downloads/product.html','/downloads/technical.html','/downloads/shengying-specification.md','/downloads/shengying-specification.html','/downloads/shengying-api.json','/specification-source.json','/assets/diagrams/shengying-architecture.svg']:
+ body,h,final,status=get(origin+route);assert status==200 and len(body)>0,(route,status,len(body))
  if route=='/'+key+'.txt':assert body.decode().strip()==key
  if route=='/downloads/shengying-specification.md':assert hashlib.sha256(body).digest()==hashlib.sha256((root.parent/'docs/产品规格说明书.md').read_bytes()).digest()
  if route=='/downloads/shengying-api.json':assert json.loads(body)==json.loads((root.parent/'docs/接口与参数清单.json').read_text())
