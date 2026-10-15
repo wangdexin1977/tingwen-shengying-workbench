@@ -4,11 +4,16 @@ import threading
 import time
 from pathlib import Path
 
-VERSION = "1.2.2"
+VERSION = "1.2.3"
 LOG_FILE = Path(__file__).resolve().parent / "records" / "events.jsonl"
 LOCK = threading.RLock()
 WRITE_ERROR = False
 RELEASES = [
+    {"version": "1.2.3", "date": "2026-10-15", "origin": "紧凑创作界面与公开源码更新", "changes": [
+        "压缩顶部标题、工作区导航与创作模式区域，减少首屏占用",
+        "生成 MP3、保存待制作项目与一键 MP4 操作区随页面滚动，移除底部固定定位与额外留白",
+        "保留已有制作按钮与流程，同步公开 GitHub 源码、版本标签与更新记录"]},
+
     {"version": "1.2.2", "date": "2026-10-13", "origin": "锁定底部生成操作区", "changes": [
         "生成 MP3、保存待制作项目与一键 MP4 操作区固定在屏幕最底部，上下滚动不再漂移",
         "按操作区实际高度为页面末尾留出空间，避免遮挡最后的内容；宽度与按钮换行自适应",

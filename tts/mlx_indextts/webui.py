@@ -5163,6 +5163,7 @@ def build_ui() -> gr.Blocks:
                     </tbody>
                   </table>
                   <div class="about-changelog-title">版本变更日志</div>
+                  <section class="about-release"><div class="about-release-head"><strong>听文声影工作台 v1.2.3</strong><span>2026-10-15</span></div><ul><li>压缩顶部标题、导航与模式区域，减少首屏占用。</li><li>生成操作区随页面滚动，移除底部固定定位和额外留白，保留原制作流程。</li><li>同步公开 GitHub 源码与版本标签。</li></ul></section>
                   <section class="about-release"><div class="about-release-head"><strong>听文声影工作台 v1.2.2</strong><span>2026-10-13</span></div><ul><li>主工作区生成操作区锁定屏幕底部，滚动位置稳定，页面末尾预留空间。</li><li>保留生成 MP3、保存项目与一键 MP4 操作。</li></ul></section>
                   <section class="about-release"><div class="about-release-head"><strong>听文声影工作台 v1.2.1</strong><span>2026-10-13</span></div><ul><li>主工作区音色选择、语音模型和参数默认折叠，显示当前音色与参数摘要。</li><li>保留录音上传、试听和命名保存，已保存配置继续生效。</li></ul></section>
                   <section class="about-release"><div class="about-release-head"><strong>听文声影工作台 v1.2.0</strong><span>2026-10-13</span></div><ul><li>主工作区支持麦克风录音、上传、试听及命名保存独立音色。</li><li>头条分享可自动将选定 MP4 送入专用 Chrome 上传页面，首次登录后继续载入。</li><li>保留全部原专业功能，最终发布由用户确认。</li></ul></section>

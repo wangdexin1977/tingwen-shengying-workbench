@@ -1,4 +1,4 @@
-# 听文声影工作台 1.2.2
+# 听文声影工作台 1.2.3
 
 详细文档：[产品规格说明书](docs/产品规格说明书.md)（26个主体章节、专业参数和46条接口） · [接口与参数JSON](docs/接口与参数清单.json) · [公开产品网站](https://tingwen-creator-studio-102.pages.dev/) · [网站源码与部署说明](website/README.md)。
 
@@ -71,7 +71,7 @@
 
 ## 1.0.1 更新与源码
 
-完整更新记录见 [CHANGELOG.md](CHANGELOG.md)，产品内“版本与日志”显示同一版本的更新摘要。专业工作区的“关于”也有本次更新说明。独立私有源码仓库： https://github.com/wangdexin1977/tingwen-shengying-workbench 。
+完整更新记录见 [CHANGELOG.md](CHANGELOG.md)，产品内“版本与日志”显示同一版本的更新摘要。专业工作区的“关于”也有本次更新说明。独立公开源码仓库： https://github.com/wangdexin1977/tingwen-shengying-workbench 。
 
 代码不包含模型、个人音色和用户数据。另一台 Mac 需先准备 Python 3.11+、FFmpeg、原有本机语音依赖和合法取得的模型权重，不自动下载安装模型。工作台使用自己的 `.venv`（或者 `SHENGYING_PYTHON` 指定的现有环境）；本机整合安装通过目录链接复用已有环境。`tts/.venv`、`tts/models` 与 `tts/vendor` 指向本机已安装的语音环境、权重和 CosyVoice 运行库，不随 Git 上传。VoiceStudio 可通过 `VOICESTUDIO_PROJECT_ROOT` 指定源码位置，默认使用相邻的 VoiceStudio 目录。
 
@@ -130,3 +130,5 @@
 浏览器验证默认隐藏、按需展开、修改停顿后收起及重新打开恢复通过；同时重新验证录音、文件上传、命名保存和头条文件控件交接。相关 28 项回归再次通过。
 
 1.2.2 按用户选择，将生成 MP3、保存项目和一键 MP4 操作区固定在屏幕最底部，上下滚动保持可见。页面末尾按操作区实际高度留白，避免遮住最后的内容；切换到专业朗读、成品或队列时隐藏操作区。原按钮与制作流程保留。
+
+1.2.3 压缩顶部标题、导航与模式区域；生成 MP3、保存项目和一键 MP4 操作区随页面正常滚动，移除底部固定定位及额外留白。保留原制作流程，源码与版本标签同步至上述公开 GitHub 仓库。
