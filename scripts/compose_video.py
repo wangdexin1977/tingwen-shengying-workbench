@@ -178,6 +178,9 @@ def main():
     ap.add_argument("--bg", action="append", required=True,
                     help="背景图；可重复传入多次，按参数顺序播放")
     ap.add_argument("--audio", required=True, help="配音音频")
+    ap.add_argument("--avatar-face", default="", help="按最终人声生成的 25fps 口型片段")
+    ap.add_argument("--avatar-image", default=str(Path(__file__).resolve().parents[1] / "assets/avatar/news-anchor-male.png"))
+    ap.add_argument("--avatar-config", default=str(Path(__file__).resolve().parents[1] / "assets/avatar/news-anchor-male.json"))
     ap.add_argument("--music", default="", help="可选的本机背景音乐")
     ap.add_argument("--music-volume", type=float, default=15, help="音乐音量 0–100%，默认 15%")
     ap.add_argument("--music-loop-seconds", type=int, choices=[120, 180, 300], default=180)
@@ -206,6 +209,16 @@ def main():
     if not os.path.exists(args.audio):
         sys.exit(f"[error] 音频不存在: {args.audio}")
     total = audio_duration(args.audio)
+    avatar = None
+    caption_x = 0
+    if args.avatar_face:
+        if not os.path.isfile(args.avatar_face) or not os.path.isfile(args.avatar_image):
+            ap.error("数字人口型或形象文件不存在")
+        avatar = json.loads(Path(args.avatar_config).read_text(encoding="utf-8"))
+        caption_x = round(args.canvas_width * .3) + 48
+        if abs(audio_duration(args.avatar_face) - total) > .08:
+            ap.error("数字人口型与人声音频时长不一致，请重新生成口型")
+    caption_width = args.canvas_width - caption_x
     if not math.isfinite(args.music_volume) or not 0 <= args.music_volume <= 100:
         ap.error('背景音乐音量需为 0–100%')
     music_cycle = None
@@ -225,7 +238,7 @@ def main():
         timeline = json.loads(Path(args.subtitle_timeline).read_text(encoding="utf-8"))
         style = normalize_style(timeline["style"])
         subtitle_sequence, subtitle_y = render_sequence(timeline, style,
-            Path(args.out).resolve().parent / "subtitle_frames", total, args.canvas_width, args.canvas_height)
+            Path(args.out).resolve().parent / "subtitle_frames", total, caption_width, args.canvas_height)
         print(f"[ok] 口播字幕 {len(timeline['captions'])} 条 · {timeline['mode']} · {style}")
     elif args.no_subtitle:
         print("[info] 字幕未启用（--no-subtitle），仅合成背景图+音频")
@@ -263,7 +276,7 @@ def main():
             while True:
                 paths, heights = [], []
                 for i, ((t0, t1), text) in enumerate(zip(bounds, lines)):
-                    p, hh = render_subtitle_png(text, font_size, rgb, args.canvas_width,
+                    p, hh = render_subtitle_png(text, font_size, rgb, caption_width,
                                                 args.margin_x, os.path.join(workdir, f"l{i:02d}.png"))
                     paths.append(p)
                     heights.append(hh)
@@ -279,7 +292,7 @@ def main():
             font_size = args.font_size
             paths, heights = [], []
             for i, ((t0, t1), text) in enumerate(zip(bounds, lines)):
-                p, hh = render_subtitle_png(text, font_size, rgb, args.canvas_width,
+                p, hh = render_subtitle_png(text, font_size, rgb, caption_width,
                                             args.margin_x, os.path.join(workdir, f"l{i:02d}.png"))
                 paths.append(p)
                 heights.append(hh)
@@ -289,7 +302,9 @@ def main():
     # ---------- 3. 图片时间线 + 单命令合成 ----------
     sequence_file = os.path.join(os.path.dirname(os.path.abspath(args.out)), "image_sequence.ffconcat")
     sequence, durations = build_image_sequence(args.bg, total, sequence_file)
-    if args.fps > 0:
+    if avatar:
+        output_fps = 25
+    elif args.fps > 0:
         output_fps = args.fps
     elif not args.no_subtitle:
         output_fps = 10
@@ -315,6 +330,10 @@ def main():
     if subtitle_sequence:
         inputs += ["-f", "concat", "-safe", "0", "-i", str(subtitle_sequence)]
     audio_idx = len(subs) + 1 + bool(subtitle_sequence)
+    avatar_idx = audio_idx
+    if avatar:
+        inputs += ["-i", args.avatar_image, "-i", args.avatar_face]
+        audio_idx += 2
     fc_parts = []
     if len(args.bg) == 1:
         fc_parts.append(
@@ -327,9 +346,21 @@ def main():
         fc_parts.append(f"[0:v]fps={output_fps},tpad=stop_mode=clone:stop_duration=2,"
                         f"trim=duration={total:.6f}[base]")
         prev = "base"
+    if avatar:
+        x1, y1, x2, y2 = avatar["face_box"]
+        presenter_width = round(args.canvas_width * .3 / 2) * 2
+        fc_parts.append(f"[{avatar_idx}:v]loop=loop=-1:size=1:start=0,trim=duration={total:.6f},"
+                        f"setpts=N/({output_fps}*TB),format=rgba,split[presenter][mask_source]")
+        fc_parts.append(f"[mask_source]crop={x2-x1}:{y2-y1}:{x1}:{y1},alphaextract[face_alpha]")
+        fc_parts.append(f"[{avatar_idx + 1}:v]fps={output_fps},setpts=PTS-STARTPTS[face]")
+        fc_parts.append("[face][face_alpha]alphamerge[face_rgba]")
+        fc_parts.append(f"[presenter][face_rgba]overlay=x={x1}:y={y1}:format=auto:eof_action=repeat,"
+                        f"crop=iw:1152:0:0,scale={presenter_width}:-2:flags=lanczos,format=rgba[avatar]")
+        fc_parts.append(f"[{prev}][avatar]overlay=x=24:y=main_h-overlay_h-24:format=auto[with_avatar]")
+        prev = "with_avatar"
     if subtitle_sequence:
         fc_parts.append(f"[1:v]fps={output_fps}[captions]")
-        fc_parts.append(f"[{prev}][captions]overlay=x=0:y={subtitle_y}:eof_action=pass,format=yuv420p[v]")
+        fc_parts.append(f"[{prev}][captions]overlay=x={caption_x}:y={subtitle_y}:eof_action=pass,format=yuv420p[v]")
     elif not subs:
         fc_parts.append(f"[{prev}]format=yuv420p[v]")
     else:
@@ -341,7 +372,7 @@ def main():
             else:
                 y_expr = f"main_h-overlay_h-{args.margin_bottom}"  # 贴底对齐
             fc_parts.append(
-                f"[{prev}][{i + 1}:v]overlay=x=(main_w-overlay_w)/2:y={y_expr}"
+                f"[{prev}][{i + 1}:v]overlay=x={caption_x}+(main_w-{caption_x}-overlay_w)/2:y={y_expr}"
                 f":enable='between(t,{a:.3f},{b:.3f})'[{out}]"
             )
             prev = out

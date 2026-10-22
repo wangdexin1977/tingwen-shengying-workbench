@@ -1,7 +1,7 @@
 let productionQueue=null,queuePoll=null,replacementProject='';
 const queueStateNames={waiting:'待制作',running:'正在制作',audio_ready:'MP3 已完成 · 可继续 MP4',done:'MP4 已完成',failed:'失败 · 保留待重试',interrupted:'已中断 · 素材保留'};
 function queueSettings(){return {voice,...audioOptions(),title:currentTitle(),title_enabled:$('showTitle').checked,
-  title_settings:titleSettings(),subtitle_settings:subtitleSettings(),music_settings:musicSettings()};}
+  title_settings:titleSettings(),subtitle_settings:subtitleSettings(),music_settings:musicSettings(),avatar_settings:avatarSettings()};}
 async function queuePictures(){
   if($('imageMode').value==='upload'&&selectedLocalPhotos.length)return readPhotos(selectedLocalPhotos.map(item=>item.file));
   if($('imageMode').value==='url'&&$('photoUrl').value.trim())return {photo_url:$('photoUrl').value.trim()};

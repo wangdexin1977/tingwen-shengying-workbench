@@ -205,3 +205,81 @@ const originalRender=render;
 render=j=>{originalRender(j);$('publishCurrentVideo').hidden=!j.video_path;};
 $('publishCurrentVideo').onclick=()=>{if(job?.video_path)prepareToutiao(job.id,job.video_path.split('/').pop(),$('publishCurrentVideo'));};
 $('copyPublishTitle').onclick=async()=>{try{await navigator.clipboard.writeText($('publishTitle').value);$('publishStatus').textContent='标题已复制，可在今日头条粘贴。';}catch{$('publishTitle').focus();$('publishTitle').select();$('publishStatus').textContent='请按 Command+C 复制标题。';}};
+
+// 授权曲目署名入口随前端脚本加载，运行中的制作任务无需重启。
+const musicLabel=$('musicEnabled').parentElement;
+for(const node of musicLabel.childNodes){if(node.nodeType===Node.TEXT_NODE&&node.textContent.includes('背景音乐'))node.textContent=' 背景音乐 · 伴读 / 新闻 / 军事专题';}
+const attributionPanel=document.createElement('div');attributionPanel.id='musicAttributionPanel';attributionPanel.hidden=true;
+const attributionLabel=document.createElement('label');attributionLabel.htmlFor='musicAttribution';attributionLabel.textContent='发布时请在视频说明或片尾加入以下音乐署名';
+const attributionText=document.createElement('textarea');attributionText.id='musicAttribution';attributionText.rows=3;attributionText.readOnly=true;attributionText.style.minHeight='88px';attributionText.style.height='88px';
+const attributionCopy=document.createElement('button');attributionCopy.id='copyMusicAttribution';attributionCopy.type='button';attributionCopy.className='links';attributionCopy.textContent='复制发布署名';
+const attributionStatus=document.createElement('small');attributionStatus.id='musicAttributionStatus';attributionStatus.setAttribute('role','status');
+attributionPanel.append(attributionLabel,attributionText,attributionCopy,attributionStatus);$('musicSource').after(attributionPanel);
+const updateOriginalMusicUI=updateMusicUI;
+updateMusicUI=function(){
+  updateOriginalMusicUI();
+  const track=musicTracks.find(t=>t.id===musicSettings().track_id),text=track?.attribution||'';
+  attributionPanel.hidden=!text;
+  if(attributionText.value!==text){attributionText.value=text;attributionStatus.textContent='';}
+};
+attributionCopy.onclick=async()=>{
+  if(!attributionText.value)return;
+  try{await navigator.clipboard.writeText(attributionText.value);attributionStatus.textContent='音乐署名已复制，请粘贴到视频说明或片尾。';}
+  catch{attributionText.focus();attributionText.select();attributionStatus.textContent='请按 Command+C 或 Ctrl+C 复制所选署名。';}
+};
+updateMusicUI();
+
+// MP3 的任务耗时与音频播放时长分别显示；完成后的值来自已保存任务。
+const audioElapsed=document.createElement('p');audioElapsed.id='audioElapsed';audioElapsed.className='muted';audioElapsed.hidden=true;$('audioMessage').after(audioElapsed);
+const generateElapsed=document.createElement('small');generateElapsed.id='generateElapsed';generateElapsed.hidden=true;$('generateDock').append(generateElapsed);
+function formatAudioElapsed(seconds){
+  seconds=Math.round(Math.max(0,Number(seconds))*10)/10;
+  if(seconds<60)return seconds.toFixed(1)+' 秒';
+  const hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),remaining=(seconds%60).toFixed(1);
+  return (hours?hours+' 小时 ':'')+(minutes?minutes+' 分 ':'')+remaining+' 秒';
+}
+function renderAudioTiming(current){
+  let text='';
+  if(current){
+    let elapsed=current.audio_elapsed_seconds;
+    if(current.audio_state==='working'&&Number.isFinite(current.audio_started_at))elapsed=Math.max(0,Date.now()/1000-current.audio_started_at);
+    if(Number.isFinite(elapsed)){
+      const label=current.audio_provider==='upload'?'MP3 导入':'MP3 生成';
+      text=label+(current.audio_state==='working'?'已用时：':'总耗时：')+formatAudioElapsed(elapsed);
+      if(current.audio_state==='failed')text+='（本次失败）';
+      if(current.audio_state==='cancelled')text+='（已取消）';
+    }
+  }
+  for(const element of [audioElapsed,generateElapsed]){element.textContent=text;element.hidden=!text;}
+}
+const renderWithoutAudioTiming=render;
+render=current=>{renderWithoutAudioTiming(current);renderAudioTiming(current);if(current?.audio_provider==='omnivoice'&&current.omnivoice_settings?.backend){$('jobMode').textContent=$('jobMode').textContent.replace('音频：OmniVoice','音频：'+current.omnivoice_settings.backend);}};
+setInterval(()=>renderAudioTiming(job),1000);
+
+// 固定新闻主播：预览布局与 MP4 使用相同的 30% 宽度及右侧字幕区。
+const avatarStorageKey='shengying-workbench-avatar';
+const avatarPreview=document.createElement('div');avatarPreview.id='previewAvatar';avatarPreview.hidden=true;
+Object.assign(avatarPreview.style,{position:'absolute',left:'1.25%',bottom:'2.222%',width:'30%',height:'60%',overflow:'hidden',zIndex:'4',pointerEvents:'none'});
+const avatarPortrait=document.createElement('img');avatarPortrait.src='/api/avatar/portrait';avatarPortrait.alt='虚拟新闻男主播形象预览';avatarPortrait.style.width='100%';avatarPortrait.style.display='block';avatarPreview.append(avatarPortrait);$('stylePreview').append(avatarPreview);$('subtitlePreview').style.zIndex='5';
+function avatarPreference(){try{return JSON.parse(localStorage.getItem(avatarStorageKey)||'{}').enabled===true;}catch{return false;}}
+function updateAvatarPreview(){avatarPreview.hidden=!avatarSettings().enabled;}
+function renderAvatar(current){
+  let changed=false;
+  if(current&&avatarJobId!==current.id){avatarJobId=current.id;const checked=Boolean(current.avatar_settings?.enabled);changed=$('avatarEnabled').checked!==checked;$('avatarEnabled').checked=checked;}
+  $('avatarEnabled').disabled=!avatarAvailable||Boolean(current&&['queued','working'].includes(current.video_state));
+  updateAvatarPreview();
+  const elapsed=current?.avatar_elapsed_seconds;
+  $('avatarElapsed').hidden=!current?.rendered_avatar_settings?.enabled||!Number.isFinite(elapsed);
+  $('avatarElapsed').textContent=Number.isFinite(elapsed)?(current.avatar_cached?'口型已复用 · 首次生成耗时：':'口型生成耗时：')+formatAudioElapsed(elapsed):'';
+  if(changed){updateSubtitleUI();updateTitlePreview();}
+}
+$('avatarEnabled').onchange=()=>{try{localStorage.setItem(avatarStorageKey,JSON.stringify(avatarSettings()));}catch{}updateAvatarPreview();updateSubtitleUI();updateTitlePreview();};
+const renderWithoutAvatar=render;
+render=current=>{renderWithoutAvatar(current);renderAvatar(current);updateSubtitleButton();};
+const clearWithoutAvatar=clearWorkspaceUI;
+clearWorkspaceUI=()=>{clearWithoutAvatar();avatarJobId='';$('avatarEnabled').checked=avatarAvailable&&avatarPreference();renderAvatar(null);updateSubtitleUI();};
+api('/api/avatar').then(result=>{
+  avatarAvailable=result.available===true;$('avatarStatus').textContent=result.message;
+  if(!job)$('avatarEnabled').checked=avatarAvailable&&avatarPreference();
+  renderAvatar(job);updateSubtitleUI();
+}).catch(error=>{$('avatarStatus').textContent='数字人口型模型暂不可用：'+error.message;renderAvatar(job);});

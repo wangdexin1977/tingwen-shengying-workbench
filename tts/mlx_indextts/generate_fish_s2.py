@@ -8,6 +8,7 @@ import re
 import tempfile
 import time
 from pathlib import Path
+from contextlib import contextmanager
 from typing import Callable
 
 import numpy as np
@@ -17,6 +18,19 @@ from mlx_indextts.generate_v2 import GenerationCancelled
 
 
 SAMPLE_RATE = 44_100
+FISH_CACHE_LIMIT_BYTES = 512 * 1024 * 1024
+
+
+@contextmanager
+def _bounded_fish_cache():
+    import mlx.core as mx
+
+    previous = mx.set_cache_limit(FISH_CACHE_LIMIT_BYTES)
+    try:
+        yield
+    finally:
+        mx.clear_cache()
+        mx.set_cache_limit(previous)
 
 
 class _TokenizerAdapter:
@@ -155,21 +169,34 @@ class FishS2ProTTS:
             joined.append(segment)
         return np.concatenate(joined)
 
-    def _generate_results(self, **kwargs):
-        """Reuse one deterministic codec prompt, without changing sampling or KV state.
+    def _generation_batches(self, pieces: list[str], speed: float) -> list[list[str]]:
+        """Bound parallel work by device memory and total spoken text length."""
+        recommended = int(getattr(self, 'wired_memory_limit', 0))
+        size = 4 if recommended >= 17 * 1024 ** 3 else 2 if recommended >= 11 * 1024 ** 3 else 1
+        if not callable(getattr(self.runtime, 'batch_generate', None)):
+            size = 1
+        budget = max(self.MAX_SEGMENT_CHARACTERS, int(160 * min(1., max(.5, float(speed)))))
+        batches = []
+        current = []
+        for piece in pieces:
+            if current and (len(current) >= size or max(len(piece), max(map(len, current))) * (len(current) + 1) > budget):
+                batches.append(current)
+                current = []
+            current.append(piece)
+        if current:
+            batches.append(current)
+        return batches
 
-        The installed mlx-audio runtime prepares the reference inside generate().
-        Scope the override to this call and restore it even on cancellation/error.
-        The WebUI serializes model jobs; this adapter is not thread-safe.
-        """
+    def _generate_results(self, *, batch_texts=None, control_check=None, **kwargs):
+        """Share the codec prompt across texts; preserve native sampling controls."""
         import mlx.core as mx
 
-        original = getattr(self.runtime, "_prepare_reference_prompt", None)
-        if original is None or kwargs.get("ref_audio") is None:
-            return list(self.runtime.generate(**kwargs))
+        original = getattr(self.runtime, '_prepare_reference_prompt', None)
+        original_sample = getattr(self.runtime, '_sample_semantic_batch', None)
+        original_decode = getattr(self.runtime, '_decode_codes_batch', None)
 
         def prepare(audio, text):
-            cached = getattr(self, "_encoded_reference", None)
+            cached = getattr(self, '_encoded_reference', None)
             if cached is not None and cached[0] is audio and cached[1] == text:
                 return cached[2]
             prepared = original(audio, text)
@@ -177,12 +204,51 @@ class FishS2ProTTS:
             self._encoded_reference = (audio, text, prepared)
             return prepared
 
-        self.runtime._prepare_reference_prompt = prepare
+        def sample(**arguments):
+            if control_check:
+                control_check()
+            return original_sample(**arguments)
+
+        def decode_one_at_a_time(codes_list):
+            # Parallel autoregressive decoding reuses the large language model.
+            # Decode each waveform separately so the audio codec does not need
+            # a large padded batch of 44.1 kHz convolution activations.
+            decoded = []
+            for codes in codes_list:
+                if control_check:
+                    control_check()
+                audio = self.runtime._decode_codes(codes)
+                mx.eval(audio)
+                decoded.append(audio)
+            return decoded
+
         try:
+            if original is not None and kwargs.get('ref_audio') is not None:
+                self.runtime._prepare_reference_prompt = prepare
+            if batch_texts is not None:
+                if original_sample is not None and control_check:
+                    self.runtime._sample_semantic_batch = sample
+                if original_decode is not None:
+                    self.runtime._decode_codes_batch = decode_one_at_a_time
+                arguments = dict(kwargs)
+                audio = arguments.pop('ref_audio', None)
+                text = arguments.pop('ref_text', None)
+                instruct = arguments.pop('instruct', None)
+                return list(self.runtime.batch_generate(
+                    texts=batch_texts, ref_audios=[audio] * len(batch_texts),
+                    ref_texts=[text] * len(batch_texts), instructs=[instruct] * len(batch_texts),
+                    **arguments,
+                ))
             return list(self.runtime.generate(**kwargs))
         finally:
-            self.runtime._prepare_reference_prompt = original
+            if original is not None:
+                self.runtime._prepare_reference_prompt = original
+            if original_sample is not None:
+                self.runtime._sample_semantic_batch = original_sample
+            if original_decode is not None:
+                self.runtime._decode_codes_batch = original_decode
 
+    @_bounded_fish_cache()
     def generate(
         self,
         *,
@@ -234,43 +300,36 @@ class FishS2ProTTS:
             int(self.sample_rate * max(0, int(interval_silence)) / 1000),
             dtype=np.float32,
         )
-        try:
-            for piece_index, piece in enumerate(planned_pieces, start=1):
-                while pause_requested and pause_requested():
-                    if cancel_requested and cancel_requested():
-                        raise GenerationCancelled("用户已终止当前任务")
-                    time.sleep(0.1)
+        def check_control():
+            while pause_requested and pause_requested():
                 if cancel_requested and cancel_requested():
                     raise GenerationCancelled("用户已终止当前任务")
+                time.sleep(0.1)
+            if cancel_requested and cancel_requested():
+                raise GenerationCancelled("用户已终止当前任务")
 
-                token_limit = max(self.MIN_AUDIO_TOKENS, int(max_tokens))
-                token_limit = min(self.MAX_AUDIO_TOKENS, token_limit)
+        completed = 0
+        try:
+            for batch in self._generation_batches(planned_pieces, speed):
+                check_control()
+                token_limit = min(self.MAX_AUDIO_TOKENS, max(self.MIN_AUDIO_TOKENS, int(max_tokens)))
                 while True:
                     if progress_callback:
-                        progress_callback(
-                            piece_index - 1,
-                            len(planned_pieces),
-                            f"Fish S2 Pro 片段 {piece_index}/{len(planned_pieces)} 正在生成",
-                        )
-                    mx.random.seed(int(seed) + piece_index - 1)
-                    results = self._generate_results(
-                        text=piece,
-                        ref_audio=ref_audio,
-                        ref_text=aligned_ref_text or None,
-                        instruct=str(instruct or "").strip() or None,
-                        temperature=float(temperature),
-                        top_p=float(top_p),
-                        top_k=int(top_k),
-                        max_tokens=token_limit,
-                        speed=float(speed),
-                        chunk_length=int(chunk_length),
-                        stream=False,
-                        verbose=False,
-                    )
+                        progress_callback(completed, len(planned_pieces),
+                                          f"Fish S2 Pro 片段 {completed + 1}–{completed + len(batch)}/{len(planned_pieces)} 正在生成")
+                    mx.random.seed(int(seed) + completed)
+                    arguments = dict(ref_audio=ref_audio, ref_text=aligned_ref_text or None,
+                                     instruct=str(instruct or "").strip() or None,
+                                     temperature=float(temperature), top_p=float(top_p), top_k=int(top_k),
+                                     max_tokens=token_limit, speed=float(speed), chunk_length=int(chunk_length),
+                                     stream=False, verbose=False)
+                    if len(batch) > 1:
+                        results = self._generate_results(batch_texts=batch, control_check=check_control, **arguments)
+                    else:
+                        results = self._generate_results(text=batch[0], **arguments)
                     if not results:
                         raise RuntimeError("Fish S2 Pro 未返回音频。")
-                    capped = any(int(getattr(result, "token_count", 0)) >= token_limit for result in results)
-                    if not capped:
+                    if not any(int(getattr(result, "token_count", 0)) >= token_limit for result in results):
                         break
                     del results
                     gc.collect()
@@ -282,34 +341,28 @@ class FishS2ProTTS:
                         )
                     token_limit = min(self.MAX_AUDIO_TOKENS, token_limit * 2)
 
-                result_audio = [np.asarray(result.audio, dtype=np.float32).squeeze().copy() for result in results]
-                piece_audio = np.clip(
-                    self._join_audio(result_audio, int(interval_silence), self.sample_rate),
-                    -1.0,
-                    1.0,
-                )
-                if partial_file is None:
-                    partial_file = sf.SoundFile(
-                        str(partial),
-                        mode="w",
-                        samplerate=self.sample_rate,
-                        channels=1,
-                        subtype="PCM_16",
-                    )
-                elif silence.size:
-                    partial_file.write(silence)
-                partial_file.write(piece_audio)
-                partial_file.flush()
-                generated.append(piece_audio)
-                if audio_chunk_callback:
-                    audio_chunk_callback(piece_audio, self.sample_rate)
-                if progress_callback:
-                    progress_callback(
-                        piece_index,
-                        len(planned_pieces),
-                        f"Fish S2 Pro 片段 {piece_index}/{len(planned_pieces)} 已完成并保存",
-                    )
-                del results, result_audio
+                for index, piece in enumerate(batch):
+                    check_control()
+                    selected = results if len(batch) == 1 else [r for r in results if r.sequence_idx == index]
+                    if not selected:
+                        raise RuntimeError("Fish S2 Pro 未返回完整的并行片段，已停止保存。")
+                    result_audio = [np.asarray(result.audio, dtype=np.float32).squeeze().copy() for result in selected]
+                    piece_audio = np.clip(self._join_audio(result_audio, int(interval_silence), self.sample_rate), -1., 1.)
+                    if partial_file is None:
+                        partial_file = sf.SoundFile(str(partial), mode="w", samplerate=self.sample_rate,
+                                                    channels=1, subtype="PCM_16")
+                    elif silence.size:
+                        partial_file.write(silence)
+                    partial_file.write(piece_audio)
+                    partial_file.flush()
+                    generated.append(piece_audio)
+                    completed += 1
+                    if audio_chunk_callback:
+                        audio_chunk_callback(piece_audio, self.sample_rate)
+                    if progress_callback:
+                        progress_callback(completed, len(planned_pieces),
+                                          f"Fish S2 Pro 片段 {completed}/{len(planned_pieces)} 已完成并保存")
+                del results, selected, result_audio
                 gc.collect()
                 mx.clear_cache()
         except BaseException:

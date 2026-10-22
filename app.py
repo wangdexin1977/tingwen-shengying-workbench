@@ -32,6 +32,7 @@ from PIL import Image
 import subtitles
 import omnivoice_local
 import background_music
+import avatar
 import audio_import
 VOICE_IMPORT_LOCK = threading.Lock()
 MUSIC_IMPORT_LOCK = threading.Lock()
@@ -159,7 +160,7 @@ def message(job_id, part, text):
 
 def probe(path):
     binary = "/opt/homebrew/bin/ffprobe" if Path("/opt/homebrew/bin/ffprobe").exists() else "ffprobe"
-    result = subprocess.run([binary, "-v", "error", "-show_entries", "format=duration:stream=codec_type,width,height",
+    result = subprocess.run([binary, "-v", "error", "-show_entries", "format=duration:stream=codec_type,width,height,r_frame_rate",
                              "-of", "json", str(path)], capture_output=True, text=True, timeout=30)
     if result.returncode:
         raise RuntimeError("生成的媒体文件未通过播放检查")
@@ -170,6 +171,16 @@ def probe(path):
 
 
 def audio_worker(job_id, control):
+    started = time.monotonic()
+    update(job_id, audio_started_at=time.time(), audio_finished_at=None, audio_elapsed_seconds=None)
+    try:
+        _audio_worker_impl(job_id, control)
+    finally:
+        update(job_id, audio_finished_at=time.time(),
+               audio_elapsed_seconds=round(max(0, time.monotonic() - started), 3))
+
+
+def _audio_worker_impl(job_id, control):
     job = read_job(job_id)
     update(job_id, audio_state="working")
     if job.get("audio_provider") == "upload":
@@ -327,7 +338,7 @@ def encoding_progress(path, duration):
     return {"stage": "视频编码", "percent": min(99, max(0, int(seconds * 100 / duration)))}
 
 
-def run_process(cmd, job_id, control, track=None):
+def run_process(cmd, job_id, control, track=None, progress_json=None):
     with (folder(job_id) / "render.log").open("ab") as log:
         process = subprocess.Popen(cmd, stdout=log, stderr=log, start_new_session=True)
         stopped = False
@@ -340,6 +351,14 @@ def run_process(cmd, job_id, control, track=None):
                     os.killpg(process.pid, signal.SIGSTOP if stopped else signal.SIGCONT)
                 if track:
                     current = encoding_progress(*track)
+                    if current and current != last_progress:
+                        update(job_id, video_progress=current)
+                        last_progress = current
+                if progress_json:
+                    try:
+                        current = json.loads(Path(progress_json).read_text(encoding="utf-8"))
+                    except (OSError, ValueError):
+                        current = None
                     if current and current != last_progress:
                         update(job_id, video_progress=current)
                         last_progress = current
@@ -358,8 +377,45 @@ def run_process(cmd, job_id, control, track=None):
                     process.wait()
 
 
+def avatar_face_clip(job, control):
+    avatar.require_available()
+    directory = folder(job["id"])
+    path = directory / ("avatar-face-" + avatar.cache_key(audio_path(job)) + ".mp4")
+    stats_path = path.with_suffix(".json")
+    cached = path.is_file() and stats_path.is_file()
+    if cached:
+        try:
+            cached_stats = json.loads(stats_path.read_text(encoding="utf-8"))
+            cached_info = probe(path)
+            cached_video = next((s for s in cached_info.get("streams", []) if s["codec_type"] == "video"), {})
+            cached = (cached_stats["fps"] == 25 and isinstance(cached_stats["elapsed_seconds"], (int, float))
+                      and cached_video.get("r_frame_rate") == "25/1"
+                      and abs(float(cached_info["format"]["duration"]) - job["audio_duration"]) <= .08)
+        except (OSError, ValueError, KeyError, RuntimeError):
+            cached = False
+    if not cached:
+        message(job["id"], "video", "正在按成品人声生成数字人口型")
+        progress = directory / "avatar-progress.json"
+        progress.unlink(missing_ok=True)
+        pending = path.with_suffix(".pending.mp4")
+        update(job["id"], video_progress={"stage": "生成数字人口型", "percent": 0})
+        command = [str(avatar.RUNTIME / ".venv/bin/python"), str(ROOT / "scripts/generate_avatar.py"),
+                   "--runtime", str(avatar.RUNTIME), "--audio", str(audio_path(job)),
+                   "--out", str(pending), "--progress-file", str(progress)]
+        run_process(command, job["id"], control, progress_json=progress)
+        control.check_cancel()
+        if abs(float(probe(pending)["format"]["duration"]) - job["audio_duration"]) > .08:
+            raise RuntimeError("数字人口型与人声时长不一致，请重试口型生成")
+        pending.with_suffix(".json").replace(stats_path)
+        pending.replace(path)
+    stats = json.loads(stats_path.read_text(encoding="utf-8"))
+    update(job["id"], avatar_elapsed_seconds=stats["elapsed_seconds"], avatar_cached=cached)
+    return path
+
+
 def video_worker(job_id, control):
     job = read_job(job_id)
+    avatar_settings = avatar.normalize_settings(job.get("avatar_settings"))
     version = job["image_version"]
     if not version or job["confirmed_version"] != version:
         raise RuntimeError("当前图片尚未确认")
@@ -382,6 +438,8 @@ def video_worker(job_id, control):
                "--title-font-size", str(title_settings["size"]),
                "--title-secondary=" + (job.get("title_secondary", "") if index == 0 else ""),
                "--width", "1920", "--height", "1080", "--mode", "fit-blur"]
+        if avatar_settings["enabled"]:
+            cmd.extend(["--title-left", "624"])
         run_process(cmd, job_id, control)
         covers.append(cover)
         update(job_id, video_progress={"stage": "画面准备", "percent": int((index + 1) * 100 / len(images)),
@@ -399,6 +457,7 @@ def video_worker(job_id, control):
         timeline_path.write_text(json.dumps(timeline, ensure_ascii=False), encoding="utf-8")
         subtitle_args = ["--subtitle-timeline", str(timeline_path)]
     update(job_id, subtitle_timing=mode)
+    face_clip = avatar_face_clip(job, control) if avatar_settings["enabled"] else None
     label = "口播字幕" if mode == "speech" else "估算时间字幕" if mode == "estimated" else "无字幕"
     message(job_id, "video", f"正在合成 MP4（1920×1080，{label}）")
     progress_file = directory / "encode-progress.txt"
@@ -409,6 +468,8 @@ def video_worker(job_id, control):
         cmd.extend(["--bg", str(cover)])
     cmd.extend(["--audio", str(audio_path(job)), "--out", str(directory / "video.pending.mp4"), *subtitle_args,
                 "--progress-file", str(progress_file)])
+    if face_clip:
+        cmd.extend(["--avatar-face", str(face_clip)])
     music = background_music.normalize_settings(job.get("music_settings"))
     music_entry = None
     if music["enabled"] and music["volume"] > 0:
@@ -424,13 +485,17 @@ def video_worker(job_id, control):
     audio = next((s for s in info["streams"] if s["codec_type"] == "audio"), None)
     if not video or not audio or (video["width"], video["height"]) != (1920, 1080):
         raise RuntimeError("视频画面或音轨验证失败")
-    if abs(float(info["format"]["duration"]) - job["audio_duration"]) > 1.5:
+    if face_clip and video.get("r_frame_rate") != "25/1":
+        raise RuntimeError("数字人视频帧率验证失败")
+    if abs(float(info["format"]["duration"]) - job["audio_duration"]) > (.08 if face_clip else 1.5):
         raise RuntimeError("视频与音频时长不匹配")
     (directory / "video.pending.mp4").replace(video_path(job))
     music_label = f" · 背景音乐 {music_entry['name']}（{music['volume']}%）" if music_entry else ""
-    update(job_id, video_state="done", video_message=f"视频已完成 · {len(images)} 张照片平均播放 · {label}{music_label}",
+    avatar_label = " · 新闻男主播（口型随人声）" if face_clip else ""
+    update(job_id, video_state="done", video_message=f"视频已完成 · {len(images)} 张照片平均播放 · {label}{music_label}{avatar_label}",
            rendered_subtitle_settings=style, rendered_title_settings=title_settings,
            rendered_music_settings=music,
+           rendered_avatar_settings=avatar_settings,
            video_progress={"stage": "MP4 已完成", "percent": 100},
            video_duration=float(info["format"]["duration"]), image_durations=[job["audio_duration"] / len(images)] * len(images))
 
@@ -536,6 +601,16 @@ def music_library():
     return jsonify(tracks=background_music.catalog(), defaults=background_music.DEFAULTS)
 
 
+@app.get('/api/avatar')
+def avatar_capability():
+    return jsonify(avatar.capability())
+
+
+@app.get('/api/avatar/portrait')
+def avatar_portrait():
+    return send_file(avatar.ASSETS / 'news-anchor-male.png', mimetype='image/png')
+
+
 @app.get('/api/music/<track_id>/preview')
 def music_preview(track_id):
     try:
@@ -618,7 +693,7 @@ def title_preview():
         if title_character_count(title) > 30:
             abort(400, "视频标题最多 30 字")
         canvas = Image.new("RGBA", (1920, 1080))
-        layout = draw_yellow_title(canvas, title, settings)
+        layout = draw_yellow_title(canvas, title, settings, left=624 if data.get("avatar_enabled") is True else 0)
     except ValueError as exc:
         abort(400, str(exc))
     output = io.BytesIO()
@@ -636,7 +711,7 @@ def subtitle_preview():
         abort(400, str(exc))
     text = str(data.get("text", "口播字幕效果预览"))[:80]
     output = io.BytesIO()
-    subtitles.preview_image(style, text).save(output, format="PNG")
+    subtitles.preview_image(style, text, left=624 if data.get("avatar_enabled") is True else 0).save(output, format="PNG")
     return jsonify(image="data:image/png;base64," + base64.b64encode(output.getvalue()).decode())
 
 
@@ -788,6 +863,9 @@ def create():
         title_settings = normalize_title_settings(data.get("title_settings"))
         subtitle_settings = subtitles.normalize_style(data.get("subtitle_settings"))
         music_settings = background_music.normalize_settings(data.get("music_settings"))
+        avatar_settings = avatar.normalize_settings(data.get("avatar_settings"))
+        if avatar_settings["enabled"]:
+            avatar.require_available()
         if music_settings["enabled"]:
             background_music.entry(music_settings["track_id"])
         audio_config = audio_configuration(data)
@@ -824,6 +902,7 @@ def create():
                "title_secondary": "", "title_style": "clean-yellow",
                "subtitle_settings": subtitle_settings, "title_settings": title_settings,
                "music_settings": music_settings,
+               "avatar_settings": avatar_settings,
                "video_filename": video_filename(title, text), "audio_filename": media_filename(text, "mp3"),
                "text": text, "prompt": prompt, "voice": voice, **audio_config, **config,
                "paused": False, "remote_id": "", "submitting": False,
@@ -857,6 +936,9 @@ def create_from_audio():
         if not text:
             style['enabled'] = False
         music = background_music.normalize_settings(data.get('music_settings'))
+        avatar_settings = avatar.normalize_settings(data.get('avatar_settings'))
+        if avatar_settings['enabled']:
+            avatar.require_available()
         if music['enabled']:
             background_music.entry(music['track_id'])
         photos = local_photos(data)
@@ -871,7 +953,7 @@ def create_from_audio():
                 shutil.copyfile(source, directory / metadata['source_filename'])
                 job = {'id': job_id, 'created': time.time(), 'title': title, 'title_secondary': '',
                        'title_style': 'clean-yellow', 'title_settings': title_settings, 'subtitle_settings': style,
-                       'music_settings': music, 'video_filename': video_filename(title, text or Path(metadata['source_name']).stem),
+                       'music_settings': music, 'avatar_settings': avatar_settings, 'video_filename': video_filename(title, text or Path(metadata['source_name']).stem),
                        'audio_filename': media_filename(text or Path(metadata['source_name']).stem, 'mp3'),
                        'text': text, 'prompt': '', 'voice': VOICES[0][0], 'audio_provider': 'upload',
                        'omnivoice_settings': None, 'imported_audio': metadata,
@@ -891,6 +973,9 @@ def create_from_audio():
 
 def job_view(job):
     directory = folder(job["id"])
+    timing = {}
+    if job.get('audio_state') == 'working' and isinstance(job.get('audio_started_at'), (int, float)):
+        timing['audio_elapsed_seconds'] = round(max(0, time.time() - job['audio_started_at']), 3)
     # 换图/重试可能将状态重置，但不应隐藏磁盘上已经保存的成片入口。
     try:
         saved_video = archive_video_path(job["id"], video_path(job).name)
@@ -899,7 +984,7 @@ def job_view(job):
     gallery = [{"index": index, "metadata": item["metadata"],
                 "preview_url": f"/api/jobs/{job['id']}/images/{index}?v={job['image_version']}"}
                for index, item in enumerate(job.get("image_gallery", []))]
-    return {**job, "audio_message": speech_error_message(job.get("audio_message", "")), "gallery": gallery, "output_folder": str(directory),
+    return {**job, **timing, "audio_message": speech_error_message(job.get("audio_message", "")), "gallery": gallery, "output_folder": str(directory),
             "audio_path": str(audio_path(job)) if job["audio_state"] == "ready" else "",
             "video_path": str(saved_video) if saved_video else "",
             "video_url": url_for("archive_video_media", job_id=job["id"], filename=saved_video.name) if saved_video else ""}
@@ -1049,6 +1134,7 @@ def action(job_id, action):
                 try: config = {} if job.get('audio_provider') == 'upload' else audio_configuration(data, job)
                 except ValueError as exc: abort(400, str(exc))
                 update(job_id, **config)
+                update(job_id, audio_started_at=None, audio_finished_at=None, audio_elapsed_seconds=None)
             control.paused.clear()
             update(job_id, paused=False, cancelled=False, confirmed_version="", confirmed_digest="", video_state="idle",
                    video_message="等待你重新确认素材", video_progress=None,
@@ -1067,6 +1153,9 @@ def action(job_id, action):
                     abort(400, '本任务没有字幕文案，请关闭口播字幕；如需字幕，填写对应文案后重新载入素材')
                 title_settings = normalize_title_settings(data.get("title_settings", job.get("title_settings")))
                 music_settings = background_music.normalize_settings(data.get("music_settings", job.get("music_settings")))
+                avatar_settings = avatar.normalize_settings(data.get("avatar_settings", job.get("avatar_settings")))
+                if avatar_settings["enabled"]:
+                    avatar.require_available()
                 if music_settings["enabled"]:
                     background_music.entry(music_settings["track_id"])
             except ValueError as exc:
@@ -1075,7 +1164,8 @@ def action(job_id, action):
                 return jsonify(job_view(job))
             previous = job.get("rendered_subtitle_settings", subtitles.normalize_style(job.get("subtitle_settings"), default_enabled=False))
             previous_music = background_music.normalize_settings(job.get("rendered_music_settings", job.get("music_settings")))
-            if job["video_state"] == "done" and style == previous and music_settings == previous_music and job.get("title_style") == "clean-yellow" and title_settings == normalize_title_settings(job.get("rendered_title_settings", job.get("title_settings"))):
+            previous_avatar = avatar.normalize_settings(job.get("rendered_avatar_settings", job.get("avatar_settings")))
+            if job["video_state"] == "done" and style == previous and music_settings == previous_music and avatar_settings == previous_avatar and job.get("title_style") == "clean-yellow" and title_settings == normalize_title_settings(job.get("rendered_title_settings", job.get("title_settings"))):
                 return jsonify(job_view(job))
             if ACTIVE:
                 abort(409, "还有其他步骤正在运行，请稍后确认")
@@ -1084,7 +1174,7 @@ def action(job_id, action):
                 abort(400, "历史标题超过 30 字，请新建任务并缩短标题")
             digest = image_digest(job)
             update(job_id, title=merged_title, title_secondary="", title_style="clean-yellow", title_settings=title_settings, confirmed_version=job["image_version"], confirmed_digest=digest,
-                   video_state="queued", subtitle_settings=style, music_settings=music_settings, video_progress=None, video_message="已确认图片、标题、字幕与背景音乐设置，等待合成")
+                   video_state="queued", subtitle_settings=style, music_settings=music_settings, avatar_settings=avatar_settings, video_progress=None, video_message="已确认图片、标题、字幕、数字人与背景音乐设置，等待合成")
             launch(job_id, "video")
         elif action == "reveal":
             kind = data.get("kind")

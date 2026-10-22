@@ -34,6 +34,7 @@ class OmniVoiceTests(unittest.TestCase):
         (self.library/'metadata.json').write_text(json.dumps({'id':self.voice_id,'name':'测试音色','source_filename':'source.wav'}))
         (self.library/'source.wav').write_bytes(b'source'); (self.library/'preview.wav').write_bytes(b'preview')
         self.enterContext(patch.object(app,'JOBS',self.jobs));self.enterContext(patch.object(app.records,'LOG_FILE',self.root/'events.jsonl'))
+        self.enterContext(patch.object(omni, 'project_root', return_value=self.model))
         self.enterContext(patch.dict(os.environ,{'INDEXTTS_PROJECT_ROOT':str(self.model)}))
         self.client=app.app.test_client();self.headers={'Host':'127.0.0.1','X-Local-Token':app.TOKEN}
 
@@ -78,7 +79,8 @@ class OmniVoiceTests(unittest.TestCase):
             app.audio_worker(identifier,app.Control())
         ready=app.read_job(identifier);self.assertEqual(ready['audio_state'],'ready');self.assertGreater(ready['audio_duration'],.9)
         self.assertEqual(old.read_bytes(),b'cloud-part')
-        timeline=subtitles.build_timeline(directory,j['text'],'omnivoice:'+self.voice_id,app.probe,force_estimated=True)
+        timeline=subtitles.build_timeline(directory,j['text'],'omnivoice:'+self.voice_id,app.probe,force_estimated=True,
+                                          audio_file=app.audio_path(ready))
         self.assertEqual(timeline['mode'],'estimated');self.assertAlmostEqual(timeline['captions'][-1]['end'],ready['audio_duration'])
         with self.client.get('/api/jobs/'+identifier+'/media/audio',headers=self.headers) as result:self.assertEqual(result.status_code,200)
 
@@ -96,7 +98,7 @@ class OmniVoiceTests(unittest.TestCase):
         self.assertEqual(self.client.get('/api/omnivoice/voices/'+self.voice_id+'/preview').status_code,404)
 
     def test_cancel_subprocess_does_not_publish_partial_audio(self):
-        (self.model/'mlx_indextts/webui.py').write_text('''import threading,time\n_generation_cancelled=threading.Event()\nDEFAULT_SETTINGS={}\nDEFAULT_OMNIVOICE_SETTINGS={}\ndef read_user_config():return {}\ndef synthesize(**kwargs):\n while not _generation_cancelled.is_set():time.sleep(.02)\n return None,'已取消',''\n''')
+        (self.model/'mlx_indextts/webui.py').write_text('''import threading,time\n_generation_cancelled=threading.Event()\nDEFAULT_SETTINGS={}\nDEFAULT_OMNIVOICE_SETTINGS={}\nDEFAULT_FISH_S2_SETTINGS={}\nDEFAULT_COSYVOICE3_SETTINGS={}\ndef read_user_config():return {}\ndef synthesize(**kwargs):\n while not _generation_cancelled.is_set():time.sleep(.02)\n return None,'已取消',''\n''')
         text=self.root/'narration.txt';text.write_text('测试')
         control=app.Control();threading.Timer(.2,control.cancelled.set).start()
         started=time.monotonic()

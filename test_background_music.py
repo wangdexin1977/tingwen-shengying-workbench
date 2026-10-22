@@ -36,13 +36,22 @@ class BackgroundMusicTests(unittest.TestCase):
     def test_bundled_tracks_decode_sources_and_safe_paths(self):
         tracks = music.catalog()
         builtins = [t for t in tracks if t['builtin']]
-        self.assertEqual(len(builtins), 3)
+        self.assertEqual({t['id'] for t in builtins}, {'vaporware', 'first-light', 'emotional-piano',
+                                                    'news-jingle', 'world-anticipation', 'military-war-theme',
+                                                    'decisive-hours', 'hearts-of-iron', 'the-hunting', 'acceleration', 'i-spy'})
+        client = app.app.test_client()
         for t in builtins:
             path = music.entry(t['id'])['path']
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), t['sha256'])
-            self.assertEqual(t['license'], 'CC0 1.0')
-            self.assertTrue(t['source_url'].startswith('https://opengameart.org/content/'))
+            self.assertIn(t['license'], ('CC0 1.0', 'CC BY 3.0', 'CC BY 4.0'))
+            if t['license'].startswith('CC BY'):
+                self.assertIn(t['author'].split(' (')[0], t['attribution'])
+                self.assertIn(t['license_url'], t['attribution'])
+            self.assertTrue(t['source_url'].startswith(('https://opengameart.org/content/', 'https://www.free-stock-music.com/')))
             subprocess.run([FFMPEG, '-v', 'error', '-i', str(path), '-f', 'null', '-'], check=True)
+            with client.get(t['preview_url'], headers={'Range': 'bytes=0-9'}) as response:
+                self.assertEqual(response.status_code, 206)
+                self.assertEqual(len(response.data), 10)
         for identifier in ['../app.py', '/tmp/a', 'user-xxx', 'missing']:
             with self.assertRaises(ValueError):
                 music.entry(identifier)

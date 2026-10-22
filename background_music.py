@@ -1,4 +1,4 @@
-"""本机背景音乐库：内置 CC0 曲目与用户导入音频。"""
+"""本机背景音乐库：内置授权曲目与用户导入音频。"""
 import base64
 import binascii
 import hashlib

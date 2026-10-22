@@ -92,10 +92,13 @@ class ProductionQueue:
         title_style = wb.normalize_title_settings(settings.get('title_settings'))
         subtitles = wb.subtitles.normalize_style(settings.get('subtitle_settings'))
         music = wb.background_music.normalize_settings(settings.get('music_settings'))
+        presenter = wb.avatar.normalize_settings(settings.get('avatar_settings'))
+        if presenter['enabled']:
+            wb.avatar.require_available()
         if music['enabled']:
             wb.background_music.entry(music['track_id'])
         return {'voice': voice, **audio, 'title_settings': title_style,
-                'subtitle_settings': subtitles, 'music_settings': music,
+                'subtitle_settings': subtitles, 'music_settings': music, 'avatar_settings': presenter,
                 'title_enabled': bool(settings.get('title_enabled', False))}
 
     def save_projects(self, data):
@@ -205,7 +208,8 @@ class ProductionQueue:
         self.invoke(f'/api/jobs/{job_id}/confirm', {'image_version': job['image_version'],
                     'title_settings': project['settings']['title_settings'],
                     'subtitle_settings': project['settings']['subtitle_settings'],
-                    'music_settings': project['settings']['music_settings']})
+                    'music_settings': project['settings']['music_settings'],
+                    'avatar_settings': project['settings'].get('avatar_settings')})
         self.wait_for(job_id, 'video')
         self.update(identifier, state='done', error='')
 

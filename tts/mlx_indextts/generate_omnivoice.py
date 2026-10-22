@@ -16,6 +16,7 @@ import soundfile as sf
 
 from mlx_indextts.generate_v2 import GenerationCancelled
 from mlx_indextts.narration_text import attach_narration_punctuation
+from mlx_indextts.omnivoice_text import normalize_omnivoice_text
 
 
 SAMPLE_RATE = 24_000
@@ -338,7 +339,10 @@ class OmniVoiceTTS:
 
         import mlx.core as mx
 
-        pieces = self.split_text(text, max_text_tokens_per_segment)
+        # Normalize before splitting and estimating duration so digits have
+        # their Chinese spoken form and SM1 is not treated as an English word.
+        spoken_text = normalize_omnivoice_text(text, language)
+        pieces = self.split_text(spoken_text, max_text_tokens_per_segment)
         ref_tokens = None
         aligned_ref_text = ""
         if mode == "clone":

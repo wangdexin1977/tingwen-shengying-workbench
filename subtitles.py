@@ -177,11 +177,11 @@ def strip_y(style, height, strip_height):
     return round(max(0, min(height - strip_height, height * style["position"] / 100 - strip_height / 2)))
 
 
-def preview_image(style, text):
+def preview_image(style, text, left=0):
     image = Image.new("RGBA", (1920, 1080))
     if style["enabled"]:
-        strip = render_strip(text, style)
-        image.alpha_composite(strip, (0, strip_y(style, 1080, strip.height)))
+        strip = render_strip(text, style, width=1920-left)
+        image.alpha_composite(strip, (left, strip_y(style, 1080, strip.height)))
     return image.resize((960, 540), Image.Resampling.LANCZOS)
 
 

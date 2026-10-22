@@ -1,0 +1,32 @@
+{
+  "id": "news-anchor-male",
+  "name": "新闻男主播",
+  "image": "news-anchor-male.png",
+  "face_box": [
+    320,
+    300,
+    704,
+    652
+  ],
+  "width_ratio": 0.3,
+  "fps": 25,
+  "style": "沉稳新闻播报",
+  "source": "AI generated fictional presenter, imagegen, 2026-10-21",
+  "sha256": "25a6afc1643b8000e4c5387160a727cd17d7312e6bc5b82efebc74bef41a5fed",
+  "blink_image": "news-anchor-male-blink.png",
+  "blink_sha256": "1ff0ac680c772240914effbc3659fa3cdbbdc588fb6f71491a91b748a9653cce",
+  "eyes": [
+    [
+      421,
+      407,
+      57,
+      23
+    ],
+    [
+      602,
+      407,
+      54,
+      23
+    ]
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "tool": "image_gen.imagegen built-in",
+  "created": "2026-10-21",
+  "transparent_background": true,
+  "images": [
+    {
+      "file": "news-anchor-male.png",
+      "mode": "generate",
+      "prompt": "Create a production-ready photorealistic fictional Chinese male news presenter asset for an audio-driven lip-sync digital human. One single original fictional man, approximately 40 years old, short neat black hair, clean shaven, calm serious but approachable neutral expression, looking straight into camera, lips gently closed in rest position, eyebrows and mouth fully unobstructed, no glasses. He wears a well-fitted dark navy business suit, white shirt, muted burgundy tie, discreet lapel microphone. Straight frontal head and shoulders with upper torso to waist, head upright, shoulders level, arms relaxed and hands outside crop. Full hair and both shoulders entirely inside image with generous margins. Natural realistic skin texture, sharp face especially mouth, soft even frontal studio lighting without harsh shadows, realistic proportional anatomy. Portrait oriented composition, subject centered. Completely transparent background with clean alpha edge including hair, no studio backdrop, no desk, no text, no logos, no props, no border. This will be overlaid at the lower left of a 1920x1080 news video and driven by Mandarin male narration. Choose a distinct fictional identity, not any recognizable news anchor."
+    },
+    {
+      "file": "news-anchor-male-blink.png",
+      "mode": "edit",
+      "reference": "news-anchor-male.png",
+      "prompt": "Make a minimal exact edit of the provided presenter image to create the closed-eyelid keyframe for a natural blink animation. Change ONLY the eyelids: both eyes gently closed as in a calm ordinary 100ms blink, no squinting, no smiling, eyebrows remain exactly in place. Preserve the exact same fictional male identity, head angle, head position, face proportions, hair, nose, mouth, closed lips, clothing, lapel microphone, lighting, image framing, canvas dimensions and genuine transparent alpha background. Every feature outside the immediate eye and eyelid area must stay pixel-aligned to the reference, because only the eye region will be composited back into an animation. Do not move the subject, do not change resolution or crop, do not alter the mouth. Single image, no text or graphics."
+    }
+  ]
+}

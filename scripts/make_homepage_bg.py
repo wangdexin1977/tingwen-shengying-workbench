@@ -65,7 +65,7 @@ def unified_title(title, secondary=""):
     return normalize_title("\n".join(value for value in [normalize_title(title), normalize_title(secondary)] if value))
 
 
-def draw_yellow_title(canvas, title, settings=None):
+def draw_yellow_title(canvas, title, settings=None, left=0):
     """按用户样式绘制自然比例标题，仅描绘字形、轻描边与阴影。"""
     title = normalize_title(title)
     settings = normalize_title_settings(settings)
@@ -74,7 +74,9 @@ def draw_yellow_title(canvas, title, settings=None):
     if title_character_count(title) > 30:
         raise ValueError("视频标题最多 30 字")
     width, height = canvas.size
-    region = [width * .05, height * .24, width * .95, height * .77]
+    if not 0 <= left < width - 100:
+        raise ValueError("标题区域超出画面")
+    region = [left + (width-left) * .05, height * .24, left + (width-left) * .95, height * .77]
     texts = []
     for paragraph in title.splitlines():
         count = max(1, math.ceil(len(paragraph) / 10))
@@ -114,7 +116,7 @@ def draw_yellow_title(canvas, title, settings=None):
               "colors": [settings["color"]], "settings": settings, "outline_width": stroke, "lines": []}
     for text, box in zip(texts, boxes):
         row_width, row_height = box[2] - box[0], box[3] - box[1]
-        x = (width - row_width) / 2
+        x = (region[0] + region[2] - row_width) / 2
         origin = (x - box[0], y - box[1])
         shadow_draw.text((origin[0] + stroke, origin[1] + stroke * 1.5), text, font=font,
                          fill=(0, 0, 0, 145), stroke_width=stroke, stroke_fill=(0, 0, 0, 145))
@@ -390,6 +392,7 @@ def main():
     ap.add_argument("--title-font", choices=list(TITLE_FONTS), default=DEFAULT_TITLE_SETTINGS["font"])
     ap.add_argument("--title-color", default=YELLOW_TITLE_COLOR)
     ap.add_argument("--title-font-size", type=int, default=DEFAULT_TITLE_SETTINGS["size"])
+    ap.add_argument("--title-left", type=int, default=0, help="标题区域左边界，供数字人避让使用")
     ap.add_argument("--bg", required=True, help="背景图路径（高清原图）")
     ap.add_argument("--out", required=True, help="输出路径")
     ap.add_argument("--width", type=int, default=1920)
@@ -433,7 +436,7 @@ def main():
     if theme or args.title_secondary:
         if args.title_style == "clean-yellow":
             settings = normalize_title_settings({"font": args.title_font, "color": args.title_color, "size": args.title_font_size})
-            layout = draw_yellow_title(canvas, unified_title(theme, args.title_secondary), settings)
+            layout = draw_yellow_title(canvas, unified_title(theme, args.title_secondary), settings, left=args.title_left)
         elif args.title_style == "poster":
             layout = draw_poster_title(canvas, theme, args.title_secondary)
         else:
