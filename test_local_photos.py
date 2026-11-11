@@ -2,16 +2,19 @@
 import base64
 import hashlib
 import io
+import json
 import re
 import shutil
 import subprocess
 import time
+from pathlib import Path
 from unittest.mock import patch
 
 from PIL import Image
 import app as server
 import photo_import
 import records
+import production_queue
 import test_workbench as fixtures
 
 
@@ -25,6 +28,23 @@ def batch(colors=("red", "green", "blue")):
 
 
 class LocalPhotoTests(fixtures.WorkbenchTests):
+    def test_multipart_photos_create_replace_and_queue(self):
+        def form(metadata):
+            return {'metadata': json.dumps(metadata), 'photos': [(io.BytesIO(base64.b64decode(item['photo_data'])), item['photo_name'])
+                                                               for item in batch()['photos']]}
+        with patch.object(server, 'launch'):
+            created = self.client.post('/api/jobs', data=form({'text': '表单照片验证', 'image_mode': 'upload'}), headers=self.headers)
+        self.assertEqual(created.status_code, 201, created.json)
+        self.assertEqual(len(created.json['gallery']), 3)
+        replaced = self.client.post('/api/jobs/'+created.json['id']+'/use-image', data=form({'image_mode': 'upload'}), headers=self.headers)
+        self.assertEqual(replaced.status_code, 200, replaced.json)
+        with patch.object(production_queue, 'ROOT', Path(self.tmp.name) / 'queue'):
+            saved = self.client.post('/api/queue/projects', data=form({'projects': [{'text': '表单队列'}]}), headers=self.headers)
+            self.assertEqual(saved.status_code, 201, saved.json)
+            identifier = saved.json['ids'][0]
+            replaced = self.client.post('/api/queue/projects/'+identifier+'/images', data=form({}), headers=self.headers)
+            self.assertEqual(replaced.status_code, 200, replaced.json)
+
     def test_batch_create_saves_all_photos_in_order_without_ai(self):
         with patch.object(server, "launch") as launch, patch.object(server, "image_configuration") as ai:
             response = self.post("/api/jobs", {"text": "多图测试", **batch()})
@@ -67,13 +87,23 @@ class LocalPhotoTests(fixtures.WorkbenchTests):
 
     def test_batch_total_size_and_single_size_limits(self):
         with patch.object(photo_import, "MAX_BATCH_BYTES", 100), patch.object(photo_import, "local_photo") as decode:
-            with self.assertRaisesRegex(photo_import.PhotoError, "40 MB"):
+            with self.assertRaisesRegex(photo_import.PhotoError, "500 MB"):
                 photo_import.local_photos(batch())
             decode.assert_not_called()
         with patch.object(photo_import, "MAX_BYTES", 100):
             with self.assertRaisesRegex(photo_import.PhotoError, "第 1 张"):
                 photo_import.local_photos(batch())
 
+    def test_batch_limit_is_500mb_inclusive_and_rejects_next_byte(self):
+        self.assertEqual(photo_import.MAX_BATCH_BYTES, 500 * 1024 * 1024)
+        self.assertEqual(photo_import.MAX_BYTES, 20 * 1024 * 1024)
+        # 按比例缩小数据，检查原文件字节计数的等于/超过边界。
+        payload = {'photos': [{'photo_name': 'a.png', 'photo_data': base64.b64encode(b'a' * 10).decode()}] * 35}
+        with patch.object(photo_import, 'MAX_BATCH_BYTES', 350), patch.object(photo_import, 'local_photo', return_value=(b'normalized', {})):
+            self.assertEqual(len(photo_import.local_photos(payload)), 35)
+            payload['photos'][-1] = {'photo_data': base64.b64encode(b'a' * 11).decode()}
+            with self.assertRaisesRegex(photo_import.PhotoError, '500 MB'):
+                photo_import.local_photos(payload)
     def test_replacing_and_filtering_preserve_audio_and_old_media(self):
         identifier = self.create_job()
         version = self.ready(identifier)
@@ -202,6 +232,12 @@ async function main(){
  assert.equal(selectedLocalPhotos.length,2);assert.equal(revoked.length,1);assert.equal(el('localPhoto').files.length,2);
  const payload=await readPhotos(selectedLocalPhotos.map(p=>p.file));
  assert.deepEqual(payload.photos.map(p=>p.photo_name),['1.png','3.png']);
+ await api('/test-photo-form',{...payload,text:'表单验证'});
+ const photoRequest=calls.find(([path])=>path==='/test-photo-form')[1];
+ assert.ok(photoRequest.body instanceof FormData);assert.ok(!photoRequest.headers['Content-Type']);
+ assert.ok(!JSON.parse(photoRequest.body.get('metadata')).photos);
+ assert.deepEqual(photoRequest.body.getAll('photos').map(file=>file.name),['1.png','3.png']);
+ assert.deepEqual(photoRequest.body.getAll('photos').map(file=>file.size),[1,1]);
  let submitted;api=async(path,data)=>{if(path==='/api/jobs'&&data){submitted=data;return {id:'test'}};return {jobs:[]}};
  select=()=>{};render=()=>{};history=async()=>{};
  el('imageMode').value='upload';el('text').value='测试文案';await el('generate').onclick();
@@ -209,7 +245,9 @@ async function main(){
  assert.equal(selectedLocalPhotos.length,2);assert.equal(el('localPhoto').disabled,false);
  await assert.rejects(readPhotos([]));await assert.rejects(readPhotos(Array(51).fill(files[0])));
  await assert.rejects(readPhotos([{name:'large',size:21*1024*1024}]));
- await assert.rejects(readPhotos(Array(3).fill({name:'large',size:15*1024*1024})));
+ assert.doesNotThrow(()=>checkPhotoFiles(Array(35).fill({name:'large',size:14*1024*1024})));
+ assert.doesNotThrow(()=>checkPhotoFiles(Array(25).fill({name:'large',size:20*1024*1024})));
+ assert.throws(()=>checkPhotoFiles([...Array(25).fill({name:'large',size:20*1024*1024}),{name:'extra',size:1}]),/500 MB/);
  el('localPhoto').files=[{name:'too large',size:22*1024*1024}];el('localPhoto').onchange();assert.equal(selectedLocalPhotos.length,2);
  job={id:'test'};usePhoto=async(load)=>{submitted=await load()};el('replacePhoto').files=files;await el('replacePhoto').onchange();assert.equal(submitted.photos.length,3);
  clearWorkspaceUI();assert.equal(selectedLocalPhotos.length,0);assert.equal(el('localPhotoPreview').children.length,0);assert.equal(revoked.length,3);

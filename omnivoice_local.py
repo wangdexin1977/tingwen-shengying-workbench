@@ -7,6 +7,7 @@ import signal
 import subprocess
 import threading
 from pathlib import Path
+from model_availability import MODEL_BACKENDS, available_backends
 
 EXPRESSIONS = {'follow_reference': '跟随参考音频', 'calm': '平静', 'happy': '高兴',
                'sad': '悲伤', 'energetic': '激昂', 'serious': '严肃', 'whisper': '耳语'}
@@ -14,6 +15,19 @@ EXPRESSIONS = {'follow_reference': '跟随参考音频', 'calm': '平静', 'happ
 
 def project_root():
     return Path(__file__).resolve().parent / 'tts'
+
+
+def runtime_python(backend):
+    root = project_root()
+    upgraded = root / '.omnivoice-venv'
+    if backend == 'OmniVoice' and (upgraded / 'bin/python').is_file():
+        try:
+            marker = json.loads((upgraded / 'validated.json').read_text(encoding='utf-8'))
+            if marker.get('ok') is True and marker.get('mlx_audio') == '0.6.3':
+                return upgraded / 'bin/python'
+        except (OSError, ValueError, AttributeError):
+            pass
+    return root / '.venv/bin/python'
 
 
 def library_entry(voice_id):
@@ -34,9 +48,16 @@ def library_entry(voice_id):
         raise ValueError('所选 OmniVoice 音色已不存在，请刷新音色库') from exc
 
 
+def installed_models():
+    root = project_root()
+    if not (root / 'mlx_indextts/webui.py').is_file():
+        return []
+    return [backend for backend in available_backends(root) if runtime_python(backend).is_file()]
+
+
 def capabilities():
     root = project_root()
-    ready = (root / '.venv/bin/python').is_file() and (root / 'mlx_indextts/webui.py').is_file() and (root / 'models/OmniVoice-bfloat16').is_dir()
+    models = installed_models()
     voices = []
     for p in (root / 'outputs/webui/voices/library').glob('*/metadata.json'):
         try:
@@ -46,22 +67,26 @@ def capabilities():
         except ValueError:
             continue
     voices.sort(key=lambda x: (x['is_favorite'], x['added_at']), reverse=True)
-    return {'available': ready, 'voices': voices, 'expressions': EXPRESSIONS,
-            'message': '本机语音已就绪（独立音色库）' if ready else '未找到已安装的 OmniVoice；请检查 INDEXTTS_PROJECT_ROOT 配置，不会自动下载模型'}
+    upgraded = 'OmniVoice' in models and runtime_python('OmniVoice') == root / '.omnivoice-venv/bin/python'
+    message = '本机语音已就绪（独立音色库）' if models else '本机暂无可用语音模型，安装完整后请刷新页面'
+    if upgraded:
+        message += ' · OmniVoice 运行库 0.6.3'
+    return {'available': bool(models), 'models': models, 'voices': voices,
+            'expressions': EXPRESSIONS, 'message': message}
 
 
 def settings(value):
     if not isinstance(value, dict):
         raise ValueError('请先选择 OmniVoice 音色和表达方式')
+    backend = value.get('backend', 'OmniVoice')
+    if backend not in MODEL_BACKENDS and backend != '':
+        raise ValueError('语音模型无效')
+    if backend not in installed_models():
+        raise ValueError(f'本机语音模型未安装或文件不完整：{backend or "未选择模型"}。请刷新页面后选择可用模型')
     voice = library_entry(value.get('voice_id'))
     expression = value.get('expression', 'follow_reference')
     if expression not in EXPRESSIONS:
         raise ValueError('OmniVoice 表达方式无效')
-    if not capabilities()['available']:
-        raise ValueError('本机 OmniVoice 模型尚未就绪')
-    backend = value.get('backend', 'OmniVoice')
-    if backend not in {'OmniVoice', 'IndexTTS 2.5', 'IndexTTS 2.0', 'Fish Audio S2 Pro', 'VoiceStudio · OmniVoice 原生', 'CosyVoice 3'}:
-        raise ValueError('语音模型无效')
     limits = {'speed': (.5, 2), 'interval_silence': (0, 2000), 'seed': (0, 2147483647),
               'temperature': (.1, 2), 'top_p': (.1, 1), 'top_k': (1, 100),
               'max_text_tokens': (30, 300), 'omnivoice_num_steps': (4, 100),
@@ -91,7 +116,8 @@ def run(request, directory, control=None, progress=None):
     events = queue.Queue()
     root = project_root()
     env = {**os.environ, 'INDEXTTS_PROJECT_ROOT': str(root), 'HF_HUB_OFFLINE': '1', 'TRANSFORMERS_OFFLINE': '1'}
-    command = [str(root / '.venv/bin/python'), str(Path(__file__).parent / 'scripts/omnivoice_runner.py'), str(request_path)]
+    backend = request.get('backend', 'OmniVoice') if not request.get('operation') else ''
+    command = [str(runtime_python(backend)), str(Path(__file__).parent / 'scripts/omnivoice_runner.py'), str(request_path)]
     with (directory / 'omnivoice.log').open('ab') as log:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=log, text=True, env=env, start_new_session=True)
         def reader():

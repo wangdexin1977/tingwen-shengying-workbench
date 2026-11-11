@@ -5,6 +5,7 @@ music_uploads/
 tts/outputs/
 tts/tmp/
 tts/.venv
+tts/.omnivoice-venv/
 tts/models
 tts/vendor
 __pycache__/
@@ -32,5 +33,6 @@ docs/成品文件入口.png
 queue/
 
 avatar_runtime/
+随机配图/
 
 docs/*验证.png

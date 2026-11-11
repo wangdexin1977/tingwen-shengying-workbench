@@ -157,14 +157,11 @@ class OmniVoiceTTS:
         if cleaned.size == 0:
             return cleaned
         cleaned = cleaned - float(np.mean(cleaned))
-        peak = float(np.max(np.abs(cleaned)))
-        threshold = max(1e-4, peak * 0.003)
-        active = np.flatnonzero(np.abs(cleaned) >= threshold)
-        if active.size:
-            padding = int(SAMPLE_RATE * 0.05)
-            start = max(0, int(active[0]) - padding)
-            end = min(cleaned.size, int(active[-1]) + padding + 1)
-            cleaned = cleaned[start:end]
+        # Match the official output cleanup: retain ordinary pauses, shorten
+        # abnormally long near-silence, and leave 100ms at existing edges.
+        from mlx_audio.tts.models.omnivoice.utils import _remove_silence
+
+        cleaned = _remove_silence(cleaned, SAMPLE_RATE, mid_sil=500, lead_sil=100, trail_sil=100)
         fade = min(int(SAMPLE_RATE * 0.01), cleaned.size // 2)
         if fade:
             ramp = np.linspace(0.0, 1.0, fade, dtype=np.float32)
@@ -263,21 +260,33 @@ class OmniVoiceTTS:
     @staticmethod
     def split_text(text: str, max_tokens_per_segment: int = 120) -> list[str]:
         limit = max(30, min(240, int(max_tokens_per_segment)))
-        units = re.split(r"(?<=[。！？；，.!?;,\n])", str(text))
+        sentences = re.split(r"(?<=[。！？；.!?;\n])", str(text))
         pieces: list[str] = []
         current = ""
-        for unit in units:
-            while len(unit) > limit:
-                if current.strip():
+        for sentence in sentences:
+            # Pack complete sentences first. Only a sentence longer than the
+            # safety limit may be broken at a comma/colon (or a hard boundary).
+            if len(sentence) <= limit:
+                if current and len(current) + len(sentence) > limit:
                     pieces.append(current.strip())
-                    current = ""
-                pieces.append(unit[:limit].strip())
-                unit = unit[limit:]
-            if current and len(current) + len(unit) > limit:
+                    current = ''
+                current += sentence
+                continue
+            if current.strip():
                 pieces.append(current.strip())
-                current = unit
-            else:
-                current += unit
+                current = ''
+            for unit in re.split(r"(?<=[，,、：:])", sentence):
+                while len(unit) > limit:
+                    if current.strip():
+                        pieces.append(current.strip())
+                        current = ''
+                    pieces.append(unit[:limit].strip())
+                    unit = unit[limit:]
+                if current and len(current) + len(unit) > limit:
+                    pieces.append(current.strip())
+                    current = unit
+                else:
+                    current += unit
         if current.strip():
             pieces.append(current.strip())
         return attach_narration_punctuation(pieces)
@@ -294,13 +303,36 @@ class OmniVoiceTTS:
     def _join_audio(segments: list[np.ndarray], interval_silence: int) -> np.ndarray:
         if len(segments) == 1:
             return segments[0]
-        silence = np.zeros(int(SAMPLE_RATE * max(0, interval_silence) / 1000), np.float32)
+        target_gap = int(SAMPLE_RATE * max(0, interval_silence) / 1000)
+        def edge_silence(audio, leading):
+            edge = np.asarray(audio[:target_gap] if leading else audio[-target_gap:])
+            if not edge.size or not target_gap:
+                return 0
+            threshold = max(1e-4, float(np.max(np.abs(audio))) * .003)
+            active = np.flatnonzero(np.abs(edge) >= threshold)
+            if not active.size:
+                return edge.size
+            return int(active[0] if leading else edge.size - active[-1] - 1)
         joined: list[np.ndarray] = []
         for index, segment in enumerate(segments):
-            if index and silence.size:
-                joined.append(silence)
+            if index and target_gap:
+                existing = edge_silence(segments[index - 1], False) + edge_silence(segment, True)
+                missing = max(0, target_gap - existing)
+                if missing:
+                    joined.append(np.zeros(missing, np.float32))
             joined.append(segment)
         return np.concatenate(joined)
+
+    @staticmethod
+    def _reference_duration(text, ref_tokens, ref_text, speed):
+        """Use the official reference-conditioned token budget, not a dummy voice."""
+        shape = getattr(ref_tokens, 'shape', ())
+        if not ref_text or len(shape) != 2 or shape[0] <= 0:
+            return None
+        from mlx_audio.tts.models.omnivoice.duration import RuleDurationEstimator
+
+        tokens = RuleDurationEstimator().estimate_duration(text, ref_text, int(shape[0]))
+        return max(.4, tokens / (SAMPLE_RATE / 960) / max(.5, float(speed)))
 
     @_bounded_mlx_cache("synthesis")
     def generate(
@@ -368,8 +400,10 @@ class OmniVoiceTTS:
             if float(duration_s) > 0:
                 weight = len(re.sub(r"\s", "", piece))
                 piece_duration = max(0.4, float(duration_s) * weight / total_weight)
-            elif abs(float(speed) - 1.0) > 0.01:
-                piece_duration = self._estimated_duration(piece, float(speed))
+            else:
+                piece_duration = self._reference_duration(piece, ref_tokens, aligned_ref_text, speed)
+                if piece_duration is None and abs(float(speed) - 1.0) > .01:
+                    piece_duration = self._estimated_duration(piece, float(speed))
 
             results = list(
                 self.runtime.generate(

@@ -1,10 +1,11 @@
 """保存用户已有音频，保持原文件；媒体转换由可暂停的任务执行。"""
 from pathlib import Path
+from photo_import import MAX_REQUEST_BYTES as PHOTO_REQUEST_BYTES
 
 MAX_BYTES = 500 * 1024 * 1024
-MAX_REQUEST_BYTES = 560 * 1024 * 1024  # 音频、照片的 JSON 编码与表单开销
-# 照片以 Base64 放在 metadata 表单字段中，40 MB 原图约占 54 MB。
-MAX_FORM_MEMORY_BYTES = 64 * 1024 * 1024
+# 单个音频 500 MB，加上照片的 Base64/JSON 预算及表单开销。
+MAX_REQUEST_BYTES = MAX_BYTES + PHOTO_REQUEST_BYTES + 8 * 1024 * 1024
+MAX_FORM_MEMORY_BYTES = PHOTO_REQUEST_BYTES
 EXTENSIONS = {'.mp3', '.wav', '.m4a', '.aac', '.flac', '.ogg', '.aiff', '.aif', '.opus', '.wma'}
 
 

@@ -13,7 +13,9 @@ from pillow_heif import register_heif_opener
 
 register_heif_opener()
 MAX_BYTES = 20 * 1024 * 1024
-MAX_BATCH_BYTES = 40 * 1024 * 1024
+MAX_BATCH_BYTES = 500 * 1024 * 1024
+# 照片经 Base64 编码约增加三分之一，另给文案及设置保留 64 MB。
+MAX_REQUEST_BYTES = (MAX_BATCH_BYTES + 2) // 3 * 4 + 64 * 1024 * 1024
 MAX_BATCH_COUNT = 50
 MAX_PIXELS = 50_000_000
 
@@ -64,19 +66,44 @@ def local_photos(data):
         raise PhotoError("请至少选择一张本机照片，每批最多 50 张")
     total = 0
     for item in photos:
-        if not isinstance(item, dict) or not isinstance(item.get("photo_data"), str):
+        if not isinstance(item, dict):
             raise PhotoError("本机照片上传数据无效，请重新选择文件")
-        encoded = item["photo_data"]
-        total += len(encoded) * 3 // 4 - (2 if encoded.endswith("==") else 1 if encoded.endswith("=") else 0)
+        if isinstance(item.get('_photo_bytes'), bytes):
+            total += len(item['_photo_bytes'])
+        elif isinstance(item.get('photo_data'), str):
+            encoded = item['photo_data']
+            total += len(encoded) * 3 // 4 - (2 if encoded.endswith('==') else 1 if encoded.endswith('=') else 0)
+        else:
+            raise PhotoError("本机照片上传数据无效，请重新选择文件")
     if total > MAX_BATCH_BYTES:
-        raise PhotoError("本批照片总大小请控制在 40 MB 以内，可减少照片或压缩后上传")
+        raise PhotoError("本批照片总大小请控制在 500 MB 以内，可减少照片或压缩后上传")
     result = []
     for index, item in enumerate(photos):
         try:
-            result.append(local_photo(item["photo_data"], item.get("photo_name", "")))
+            if isinstance(item.get('_photo_bytes'), bytes):
+                name = str(item.get('photo_name', '')).replace('\\', '/').rsplit('/', 1)[-1]
+                result.append(normalize(item['_photo_bytes'], 'upload', name))
+            else:
+                result.append(local_photo(item["photo_data"], item.get("photo_name", "")))
         except PhotoError as exc:
             raise PhotoError(f"第 {index + 1} 张照片：{exc}") from None
     return result
+
+
+def uploaded_photos(uploads):
+    """逐文件读取表单图片，不将整批大文件拼成 Base64 字符串。"""
+    if not 1 <= len(uploads) <= MAX_BATCH_COUNT:
+        raise PhotoError('请至少选择一张本机照片，每批最多 50 张')
+    photos, total = [], 0
+    for upload in uploads:
+        raw = upload.stream.read(MAX_BYTES + 1)
+        if not raw or len(raw) > MAX_BYTES:
+            raise PhotoError('照片不能为空，单张照片请控制在 20 MB 以内')
+        total += len(raw)
+        if total > MAX_BATCH_BYTES:
+            raise PhotoError('本批照片总大小请控制在 500 MB 以内')
+        photos.append({'photo_name': upload.filename, '_photo_bytes': raw})
+    return photos
 
 
 def public_target(url):

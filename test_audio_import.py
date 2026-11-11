@@ -14,6 +14,7 @@ from werkzeug.datastructures import FileStorage
 from PIL import Image
 import app
 import audio_import
+import photo_import
 from scripts.compose_video import FFMPEG
 
 
@@ -138,12 +139,19 @@ class AudioImportTests(unittest.TestCase):
                 audio_import.save_upload(FileStorage(stream=io.BytesIO(b'a'*11),filename='audio.mp3'),self.root)
         with app.app.test_request_context('/api/jobs/import-audio',headers={'Host':'127.0.0.1'}):
             app.guard()
-            self.assertEqual(app.request.max_content_length,560*1024*1024)
-            self.assertEqual(app.request.max_form_memory_size,64*1024*1024)
-        with app.app.test_request_context('/api/jobs',headers={'Host':'127.0.0.1'}):
+            self.assertGreaterEqual(app.request.max_content_length,audio_import.MAX_BYTES+(500*1024*1024+2)//3*4)
+            self.assertGreaterEqual(app.request.max_form_memory_size,(500*1024*1024+2)//3*4)
+        with app.app.test_request_context('/api/music',headers={'Host':'127.0.0.1'}):
             app.guard()
             self.assertEqual(app.request.max_content_length,64*1024*1024)
             self.assertEqual(app.request.max_form_memory_size,500000)
+
+    def test_photo_json_routes_accept_base64_500mb_budget(self):
+        for path in ['/api/jobs', '/api/jobs/00000000-0000-0000-0000-000000000000/use-image',
+                     '/api/queue/projects', '/api/queue/projects/00000000-0000-0000-0000-000000000000/images']:
+            with app.app.test_request_context(path,method='POST',json={},headers=self.headers):
+                app.guard()
+                self.assertGreaterEqual(app.request.max_content_length,(500*1024*1024+2)//3*4,path)
 
     def test_source_path_rejects_escape_and_symlinks(self):
         for metadata in [{'source_filename':'../source-audio.mp3'},{'source_filename':'source-audio.exe'}]:

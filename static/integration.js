@@ -5,7 +5,7 @@ const speechControls = {speed:'speechSpeed', interval_silence:'speechSilence', s
 const speechKey='shengying-speech-profiles';
 let currentBackend=$('localBackend').value;
 function saveSpeechProfile(){
-  try{const profiles=JSON.parse(localStorage.getItem(speechKey)||'{}');profiles[currentBackend]=speechParameters();localStorage.setItem(speechKey,JSON.stringify(profiles));}catch{}
+  if(currentBackend)try{const profiles=JSON.parse(localStorage.getItem(speechKey)||'{}');profiles[currentBackend]=speechParameters();localStorage.setItem(speechKey,JSON.stringify(profiles));}catch{}
   $('speechSpeedValue').textContent=Number($('speechSpeed').value).toFixed(2)+'×';
   rememberAudioOptions();
 }
@@ -79,7 +79,9 @@ const originalAudioSourceUI=audioSourceUI;
 function updateCloneVoiceSummary(){
   const choice=$('omniVoice').selectedOptions[0];
   $('currentCloneVoice').textContent=$('omniVoice').value?choice.text.split(' · ')[0]:'请选择克隆音色';
-  $('cloneModelSummary').textContent=$('localBackend').value+' · '+$('omniExpression').selectedOptions[0].text;
+  $('cloneModelSummary').textContent=$('localBackend').value
+    ? $('localBackend').value+' · '+$('omniExpression').selectedOptions[0].text
+    : '本机暂无可用语音模型';
   $('voiceParametersSummary').textContent='语音参数 · '+Number($('speechSpeed').value).toFixed(2)+'× · 停顿 '+$('speechSilence').value+' ms';
 }
 audioSourceUI=()=>{originalAudioSourceUI();updateCloneVoiceSummary();$('textHint').textContent=$('audioProvider').value==='omnivoice'?'本机单次合成最多 100000 个有效字符，长文自动分批；更长书籍可在专业工作区用文档队列分卷制作。':'全文提交，长文自动分段；文案框内可上下滚动。';};

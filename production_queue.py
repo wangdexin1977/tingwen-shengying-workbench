@@ -68,8 +68,8 @@ class ProductionQueue:
             if job['image_state'] != 'ready' or data.get('image_version') != job['image_version']:
                 raise ValueError('当前图片尚未完成或版本已变化，请重新选择')
             return [(path.read_bytes(), {'source': 'saved-task', 'source_name': path.name}) for path in wb.image_paths(job)]
-        if data.get('photos'):
-            return wb.local_photos(data)
+        if data.get('photos') or data.get('random_photo_selection'):
+            return wb.import_photos(data)
         if data.get('photo_url'):
             return [wb.download_photo(data['photo_url'])]
         return []
@@ -320,7 +320,7 @@ def install(workbench):
     @app.post('/api/queue/projects')
     def save_projects():
         try:
-            saved = manager.save_projects(request.get_json() or {})
+            saved = manager.save_projects(manager.workbench.request_payload() or {})
         except (ValueError, OSError, RuntimeError) as exc:
             abort(400, str(exc))
         return jsonify(ids=saved, queue=manager.view()), 201
@@ -335,7 +335,7 @@ def install(workbench):
             abort(409, '请先暂停并停止队列，再更改保存的配图')
         project = manager.project(identifier)
         try:
-            photos = manager.photos(request.get_json() or {})
+            photos = manager.photos(manager.workbench.request_payload() or {})
             if not photos:
                 raise ValueError('请至少选择一张照片')
             version = uuid.uuid4().hex

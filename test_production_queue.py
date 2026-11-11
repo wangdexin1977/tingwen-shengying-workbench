@@ -163,7 +163,7 @@ class ProductionQueueTests(unittest.TestCase):
         voice = {'id': 'a' * 16, 'name': '测试音色'}
         with patch.object(app.omnivoice_local, 'project_root', return_value=tts), \
              patch.object(app.omnivoice_local, 'library_entry', return_value=voice), \
-             patch.object(app.omnivoice_local, 'capabilities', return_value={'available': True}):
+             patch.object(app.omnivoice_local, 'installed_models', return_value=['OmniVoice']):
             ids = self.save(['保存参数'], settings={'audio_provider': 'omnivoice',
                 'omnivoice_settings': {'voice_id': voice['id'], 'backend': 'OmniVoice'}})
         config.write_text(json.dumps({'model_profiles': {'OmniVoice': {'omnivoice_num_steps': 32, 'seed': 88}}}))

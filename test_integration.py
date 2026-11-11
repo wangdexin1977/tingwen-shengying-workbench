@@ -117,7 +117,7 @@ class IntegrationTests(unittest.TestCase):
 
     def test_model_parameters_reject_nonfinite_and_unknown_values(self):
         entry = {'id': 'a' * 16, 'name': 'test'}
-        with patch.object(omnivoice_local, 'library_entry', return_value=entry), patch.object(omnivoice_local, 'capabilities', return_value={'available': True}):
+        with patch.object(omnivoice_local, 'library_entry', return_value=entry), patch.object(omnivoice_local, 'installed_models', return_value=['OmniVoice', 'IndexTTS 2.5']):
             for parameters in [{'speed': float('nan')}, {'speed': 0}, {'shell': 'bad'}]:
                 with self.assertRaises(ValueError):
                     omnivoice_local.settings({'voice_id': entry['id'], 'parameters': parameters})

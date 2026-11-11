@@ -1,15 +1,16 @@
 // 浏览器缓存提供即时恢复，本机配置文件提供跨浏览器和重启后的恢复。
 const preferenceIds=['showTitle','musicEnabled','subtitleEnabled','audioOnly','audioProvider','localBackend',
   'omniVoice','omniExpression','speechSpeed','speechSilence','speechSeed','speechTokens','speechTemperature',
-  'speechSteps','speechGuidance','imageMode','provider','model','drawthingsPort','titleFont','titleColor','titleSize',
+  'speechSteps','speechGuidance','imageMode','randomPhotoCount','provider','model','drawthingsPort','titleFont','titleColor','titleSize',
   'subtitleFont','subtitleColor','subtitleSize','subtitlePosition','musicTrack','musicLoop','musicVolume','queueScheduledOutput'];
 const numericPreferences=new Set(['speechSpeed','speechSilence','speechSeed','speechTokens','speechTemperature',
-  'speechSteps','speechGuidance','drawthingsPort','titleSize','subtitleSize','subtitlePosition','musicLoop','musicVolume']);
+  'speechSteps','speechGuidance','randomPhotoCount','drawthingsPort','titleSize','subtitleSize','subtitlePosition','musicLoop','musicVolume']);
 let restoringPreferences=true,preferencesTimer=null,preferencesQueue=Promise.resolve(),preferenceRevision=0;
 $('generate').disabled=true;$('savePreferences').disabled=true;
 function capturePreferences(){
   const controls={edgeVoice:voice};
   for(const id of preferenceIds){const input=$(id);controls[id]=input.type==='checkbox'?input.checked:numericPreferences.has(id)?Number(input.value):input.value;}
+  if(!controls.localBackend)delete controls.localBackend;
   let profiles={};try{profiles=JSON.parse(localStorage.getItem(speechKey)||'{}');}catch{}
   return {controls,mode:$('longMode').getAttribute('aria-pressed')==='true'?'long':'short',speech_profiles:profiles};
 }
@@ -48,10 +49,20 @@ async function restorePreferences(settings){
   restoringPreferences=true;
   const c=settings.controls;cachePreferences(settings);
   if(c.edgeVoice)selectVoice(c.edgeVoice);
-  for(const id of preferenceIds){if(!(id in c))continue;const input=$(id);if(input.type==='checkbox')input.checked=c[id];else input.value=String(c[id]);}
+  for(const id of preferenceIds){
+    if(!(id in c))continue;
+    const input=$(id);
+    if(id==='localBackend'&&![...input.options].some(option=>option.value===c[id])){
+      input.selectedIndex=0;
+      continue;
+    }
+    if(input.type==='checkbox')input.checked=c[id];else input.value=String(c[id]);
+  }
   restoreSpeechProfile();
   // 当前模型最后编辑的参数按快照恢复。
-  for(const id of Object.values(speechControls))if(id in c)$(id).value=String(c[id]);
+  if(!c.localBackend||c.localBackend===$('localBackend').value){
+    for(const id of Object.values(speechControls))if(id in c)$(id).value=String(c[id]);
+  }
   $('speechSpeedValue').textContent=Number($('speechSpeed').value).toFixed(2)+'×';
   creationMode(settings.mode==='long',true);
   restoreTitleSettings({font:c.titleFont,color:c.titleColor,size:c.titleSize});

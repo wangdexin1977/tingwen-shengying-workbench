@@ -4,6 +4,7 @@ import math
 import os
 import threading
 from pathlib import Path
+from model_availability import MODEL_BACKENDS
 
 PATH = Path(__file__).resolve().parent / 'settings' / 'preferences.json'
 LOCK = threading.RLock()
@@ -14,11 +15,11 @@ RANGES = {
     'speechGuidance': (0, 10), 'drawthingsPort': (1024, 65535), 'titleSize': (48, 320),
     'subtitlePosition': (6, 94), 'musicVolume': (0, 100),
 }
-MODELS = ['OmniVoice', 'IndexTTS 2.5', 'IndexTTS 2.0', 'Fish Audio S2 Pro', 'VoiceStudio · OmniVoice 原生', 'CosyVoice 3']
+MODELS = list(MODEL_BACKENDS)
 ENUMS = {
     'audioProvider': ['edge-tts', 'omnivoice'], 'localBackend': MODELS,
     'omniExpression': ['follow_reference', 'calm', 'happy', 'sad', 'energetic', 'serious', 'whisper'],
-    'imageMode': ['generate', 'upload', 'url'], 'provider': ['drawthings', 'seedream'],
+    'imageMode': ['generate', 'upload', 'url', 'random'], 'provider': ['drawthings', 'seedream'],
     'queueScheduledOutput': ['mp3', 'mp4'], 'musicLoop': [120, 180, 300], 'subtitleSize': [28, 36, 48, 60, 72],
 }
 PROFILE_FIELDS = {
@@ -39,7 +40,9 @@ def normalize(value):
     text_fields = {'edgeVoice', 'omniVoice', 'titleFont', 'subtitleFont', 'musicTrack', 'model'}
     colors = {'titleColor', 'subtitleColor'}
     for key, raw in controls.items():
-        if key in BOOL_FIELDS:
+        if key == 'randomPhotoCount':
+            valid = type(raw) is int and 1 <= raw <= 50
+        elif key in BOOL_FIELDS:
             valid = isinstance(raw, bool)
         elif key in RANGES:
             valid = isinstance(raw, (int, float)) and not isinstance(raw, bool) and math.isfinite(raw) and RANGES[key][0] <= raw <= RANGES[key][1]

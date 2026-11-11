@@ -17,6 +17,7 @@ from aiohttp import WSServerHandshakeError
 from PIL import Image
 import app
 import omnivoice_local as omni
+from model_availability import REQUIRED_FILES
 import speech
 import subtitles
 
@@ -29,6 +30,7 @@ class OmniVoiceTests(unittest.TestCase):
         for p in ['.venv/bin','mlx_indextts','models/OmniVoice-bfloat16']:(self.model/p).mkdir(parents=True,exist_ok=True)
         (self.model/'.venv/bin/python').symlink_to(app.sys.executable)
         (self.model/'mlx_indextts/webui.py').write_text('')
+        self.install_model('OmniVoice')
         self.voice_id = 'a'*16
         self.library = self.model/'outputs/webui/voices/library'/self.voice_id; self.library.mkdir(parents=True)
         (self.library/'metadata.json').write_text(json.dumps({'id':self.voice_id,'name':'测试音色','source_filename':'source.wav'}))
@@ -37,6 +39,37 @@ class OmniVoiceTests(unittest.TestCase):
         self.enterContext(patch.object(omni, 'project_root', return_value=self.model))
         self.enterContext(patch.dict(os.environ,{'INDEXTTS_PROJECT_ROOT':str(self.model)}))
         self.client=app.app.test_client();self.headers={'Host':'127.0.0.1','X-Local-Token':app.TOKEN}
+
+    def install_model(self, backend):
+        for name in REQUIRED_FILES[backend]:
+            path = self.model / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b'fixture')
+
+    def test_dropdown_rescans_local_files_on_every_page_load(self):
+        def selector():
+            page = self.client.get('/', headers=self.headers).get_data(as_text=True)
+            return page.split('<select id="localBackend"', 1)[1].split('</select>', 1)[0]
+
+        backend = 'IndexTTS 2.0'
+        self.assertIn('value="OmniVoice"', selector())
+        self.assertNotIn(backend, selector())
+        self.install_model(backend)
+        weight = self.model / 'models/mlx-IndexTTS-2/gpt.safetensors'
+        marker = weight.with_name(weight.name + '.aria2')
+        marker.touch()
+        self.assertNotIn(backend, selector())
+        marker.unlink()
+        self.assertIn(backend, selector())
+        self.assertEqual(self.client.get('/api/omnivoice', headers=self.headers).json['models'],
+                         ['OmniVoice', backend])
+        weight.unlink()
+        self.assertNotIn(backend, selector())
+        with self.assertRaisesRegex(ValueError, '文件不完整'):
+            omni.settings({'voice_id': self.voice_id, 'backend': backend})
+        (self.model / REQUIRED_FILES['OmniVoice'][0]).unlink()
+        self.assertIn(' disabled>', selector())
+        self.assertFalse(self.client.get('/api/omnivoice', headers=self.headers).json['available'])
 
     def job(self):
         photo=io.BytesIO();Image.new('RGB',(640,360),'#334455').save(photo,'PNG')
@@ -57,6 +90,19 @@ class OmniVoiceTests(unittest.TestCase):
         with self.assertRaisesRegex(speech.SpeechServiceError,'HTTP 403'):
             asyncio.run(speech.synthesize('测试','voice',self.root,app.Control(),lambda _:None,factory=Forbidden))
         self.assertEqual(len(calls),1);self.assertFalse((self.root/'audio.mp3').exists())
+
+    def test_only_validated_omni_upgrade_uses_isolated_python(self):
+        legacy = self.model / '.venv/bin/python'
+        self.assertEqual(omni.runtime_python('OmniVoice'), legacy)
+        upgraded = self.model / '.omnivoice-venv'
+        (upgraded/'bin').mkdir(parents=True)
+        (upgraded/'bin/python').symlink_to(app.sys.executable)
+        self.assertEqual(omni.runtime_python('OmniVoice'), legacy)
+        (upgraded/'validated.json').write_text(json.dumps({'ok': True, 'mlx_audio': '0.6.3'}))
+        self.assertEqual(omni.runtime_python('OmniVoice'), upgraded/'bin/python')
+        self.assertIn('OmniVoice 运行库 0.6.3', omni.capabilities()['message'])
+        for backend in ['Fish Audio S2 Pro', 'IndexTTS 2.5', 'CosyVoice 3', 'VoiceStudio · OmniVoice 原生']:
+            self.assertEqual(omni.runtime_python(backend), legacy)
 
     def test_api_retry_uses_selected_voice_keeps_cloud_parts_and_real_mp3(self):
         j=self.job();identifier=j['id'];directory=app.folder(identifier)

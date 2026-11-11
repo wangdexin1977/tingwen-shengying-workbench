@@ -3,6 +3,7 @@ const queueStateNames={waiting:'待制作',running:'正在制作',audio_ready:'M
 function queueSettings(){return {voice,...audioOptions(),title:currentTitle(),title_enabled:$('showTitle').checked,
   title_settings:titleSettings(),subtitle_settings:subtitleSettings(),music_settings:musicSettings(),avatar_settings:avatarSettings()};}
 async function queuePictures(){
+  if(!$('audioOnly').checked&&$('imageMode').value==='random')return randomPhotoPayload();
   if($('imageMode').value==='upload'&&selectedLocalPhotos.length)return readPhotos(selectedLocalPhotos.map(item=>item.file));
   if($('imageMode').value==='url'&&$('photoUrl').value.trim())return {photo_url:$('photoUrl').value.trim()};
   if(job?.image_state==='ready')return {source_job_id:job.id,image_version:job.image_version};

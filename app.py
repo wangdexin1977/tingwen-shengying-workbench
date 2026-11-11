@@ -26,7 +26,7 @@ from seedream import MODELS, SeedreamError, SubmissionUnknown
 from drawthings import DrawThingsClient, DrawThingsError
 from image_sources import SOURCES, client_for
 from speech import Cancelled, VOICES, synthesize, speech_error_message
-from photo_import import PhotoError, local_photos, download_photo, public_target
+from photo_import import PhotoError, local_photos, download_photo, public_target, MAX_REQUEST_BYTES as PHOTO_REQUEST_BYTES
 import records
 from PIL import Image
 import subtitles
@@ -34,6 +34,8 @@ import omnivoice_local
 import background_music
 import avatar
 import audio_import
+import photo_import
+import random_photos
 VOICE_IMPORT_LOCK = threading.Lock()
 MUSIC_IMPORT_LOCK = threading.Lock()
 
@@ -47,6 +49,7 @@ LOCK = threading.RLock()
 CONTROLS = {}
 ACTIVE = set()
 STATES_BUSY = {"queued", "working"}
+PHOTO_UPLOAD_ENDPOINTS = {'create', 'use_image', 'save_projects', 'replace_images'}
 
 
 class Control:
@@ -558,6 +561,9 @@ def guard():
     if request.path == "/api/jobs/import-audio":
         request.max_content_length = audio_import.MAX_REQUEST_BYTES
         request.max_form_memory_size = audio_import.MAX_FORM_MEMORY_BYTES
+    elif request.endpoint in PHOTO_UPLOAD_ENDPOINTS:
+        request.max_content_length = PHOTO_REQUEST_BYTES
+        request.max_form_memory_size = 64 * 1024 * 1024
     if request.host.split(":")[0] not in {"127.0.0.1", "localhost"}:
         abort(403, "仅允许从本机工作台访问，请使用 http://127.0.0.1:8092/ 打开")
     if request.method == "POST" or request.path == "/api/session":
@@ -572,8 +578,31 @@ def guard():
                                code="local_session_expired" if supplied else "local_session_missing")
             response.headers["Cache-Control"] = "no-store"
             return response, 403
-        if not request.is_json and not (request.path == "/api/jobs/import-audio" and request.mimetype == "multipart/form-data"):
+        if not request.is_json and not ((request.path == "/api/jobs/import-audio" or request.endpoint in PHOTO_UPLOAD_ENDPOINTS) and request.mimetype == "multipart/form-data"):
             abort(415)
+
+
+def request_payload():
+    if request.mimetype != 'multipart/form-data':
+        return request.get_json()
+    try:
+        data = json.loads(request.form.get('metadata', '{}'))
+        if not isinstance(data, dict):
+            raise ValueError('素材设置无效')
+        uploads = request.files.getlist('photos')
+        if uploads:
+            if 'photos' in data:
+                raise ValueError('照片上传数据重复，请重新选择')
+            data['photos'] = photo_import.uploaded_photos(uploads)
+        return data
+    except (ValueError, PhotoError) as exc:
+        abort(400, str(exc))
+
+
+def import_photos(data):
+    if data.get('random_photo_selection'):
+        return random_photos.photos(data['random_photo_selection'])
+    return local_photos(data)
 
 
 @app.errorhandler(400)
@@ -584,14 +613,18 @@ def guard():
 def error(exc):
     if exc.code == 413:
         if request.path == "/api/jobs/import-audio":
-            return jsonify(error="上传请求或素材设置超过导入限制：单个音频最多 500 MB，照片合计最多 40 MB；请减少本次素材或文案后重试"), 413
+            return jsonify(error="上传请求或素材设置超过导入限制：单个音频最多 500 MB，照片合计最多 500 MB；请减少本次素材或文案后重试"), 413
+        if request.endpoint in PHOTO_UPLOAD_ENDPOINTS:
+            return jsonify(error="上传请求或素材设置超过照片导入限制：照片合计最多 500 MB、单张最多 20 MB；请减少本次素材或文案后重试"), 413
         return jsonify(error="上传内容超过本机服务的 64 MB 请求限制，请减少照片或压缩后重试"), 413
     return jsonify(error=getattr(exc, "description", "请求失败")), exc.code
 
 
 @app.get("/")
 def index():
-    response = make_response(render_template("index.html", voices=VOICES, token=TOKEN, models=MODELS, sources=SOURCES, subtitle_fonts=subtitles.FONTS, title_fonts=TITLE_FONTS, version=records.VERSION))
+    response = make_response(render_template("index.html", voices=VOICES, token=TOKEN, models=MODELS,
+                                             local_models=omnivoice_local.installed_models(), sources=SOURCES,
+                                             subtitle_fonts=subtitles.FONTS, title_fonts=TITLE_FONTS, version=records.VERSION))
     response.headers["Cache-Control"] = "no-store"
     return response
 
@@ -849,7 +882,7 @@ def check_drawthings():
 
 @app.post("/api/jobs")
 def create():
-    data = request.get_json()
+    data = request_payload()
     text = str(data.get("text", "")).strip()
     prompt = str(data.get("prompt", "")).strip()
     title = unified_title(data.get("title", ""), data.get("title_secondary", ""))
@@ -887,7 +920,7 @@ def create():
         config, key = {"provider": "manual", "model": "", "image_mode": mode}, ""
         try:
             if mode == "upload":
-                photos = local_photos(data)
+                photos = import_photos(data)
             elif mode == "url":
                 photo_url = str(data.get("photo_url", "")).strip()
                 public_target(photo_url)
@@ -921,10 +954,41 @@ def create():
     return jsonify(job_view(read_job(job_id))), 201
 
 
+@app.get('/api/random-photos')
+def random_photo_status():
+    try:
+        return jsonify(random_photos.status())
+    except PhotoError as exc:
+        abort(400, str(exc))
+
+
+@app.post('/api/random-photos/open')
+def open_random_photo_directory():
+    try:
+        info = random_photos.status()
+        subprocess.Popen(['open', info['directory']])
+        return jsonify(info)
+    except (PhotoError, OSError) as exc:
+        abort(400, str(exc))
+
+
+@app.post('/api/random-photos/select')
+def select_random_photos():
+    data = request.get_json()
+    if not isinstance(data, dict):
+        abort(400, '随机配图设置无效')
+    try:
+        response = jsonify(random_photos.select(data.get('count', 7)))
+        response.headers['Cache-Control'] = 'no-store'
+        return response
+    except PhotoError as exc:
+        abort(400, str(exc))
+
+
 @app.post('/api/jobs/import-audio')
 def create_from_audio():
     try:
-        data = json.loads(request.form.get('metadata', '{}'))
+        data = request_payload()
         if not isinstance(data, dict):
             raise ValueError('素材设置无效')
         text = str(data.get('text', '')).strip()
@@ -941,7 +1005,7 @@ def create_from_audio():
             avatar.require_available()
         if music['enabled']:
             background_music.entry(music['track_id'])
-        photos = local_photos(data)
+        photos = import_photos(data)
         with tempfile.TemporaryDirectory(prefix='tingwen-audio-import-') as temporary:
             source, metadata = audio_import.save_upload(request.files.get('audio'), temporary)
             with LOCK:
@@ -997,7 +1061,7 @@ def status(job_id):
 
 @app.post("/api/jobs/<job_id>/use-image")
 def use_image(job_id):
-    data = request.get_json()
+    data = request_payload()
     identity = (job_id, "image-import")
     with LOCK:
         job = read_job(job_id)
@@ -1010,7 +1074,7 @@ def use_image(job_id):
     try:
         mode = data.get("image_mode")
         if mode == "upload":
-            photos = local_photos(data)
+            photos = import_photos(data)
         elif mode == "url":
             raw, metadata = download_photo(str(data.get("photo_url", "")).strip())
         else:

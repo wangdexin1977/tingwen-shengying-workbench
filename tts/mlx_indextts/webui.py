@@ -1544,6 +1544,8 @@ def _concatenate_wav_batches(
     batch_paths: list[Path],
     target_path: Path,
     gap_ms: int = 0,
+    *,
+    gap_is_minimum: bool = False,
 ) -> None:
     """Join disk-backed WAV batches without loading the full result into memory."""
     if not batch_paths:
@@ -1560,9 +1562,20 @@ def _concatenate_wav_batches(
         command.extend(["-i", str(batch_path)])
     filter_parts: list[str] = []
     concat_inputs: list[str] = []
-    gap_seconds = max(0, int(gap_ms)) / 1000
     for index in range(len(batch_paths)):
         label = f"a{index}"
+        gap_seconds = max(0, int(gap_ms)) / 1000
+        if gap_is_minimum and gap_seconds and index < len(batch_paths) - 1:
+            import soundfile as sf
+            with sf.SoundFile(batch_paths[index]) as left, sf.SoundFile(batch_paths[index + 1]) as right:
+                if left.samplerate != right.samplerate or left.samplerate != OmniVoiceTTS.sample_rate:
+                    raise ValueError('OmniVoice 分批音频采样率不一致')
+                frames = round((gap_seconds + .1) * left.samplerate)
+                left.seek(max(0, len(left) - frames))
+                tail = left.read(dtype='float32')
+                head = right.read(frames, dtype='float32')
+                combined = OmniVoiceTTS._join_audio([tail, head], gap_ms)
+                gap_seconds = max(0, len(combined) - len(tail) - len(head)) / left.samplerate
         if gap_seconds and index < len(batch_paths) - 1:
             filter_parts.append(f"[{index}:a]apad=pad_dur={gap_seconds:.3f}[{label}]")
         else:
@@ -3842,7 +3855,8 @@ def _synthesize_unlocked_impl(
         partial_path = output_path.with_name(f"{output_path.stem}.partial.wav")
         try:
             if completed_batches:
-                _concatenate_wav_batches(completed_batches, partial_path, int(interval_silence))
+                _concatenate_wav_batches(completed_batches, partial_path, int(interval_silence),
+                                         gap_is_minimum=model_backend == 'OmniVoice')
                 return partial_path
             partial_batches = sorted(batch_directory.glob("batch_*.partial.wav"))
             if partial_batches:
@@ -4161,7 +4175,8 @@ def _synthesize_unlocked_impl(
                 total=total_segments,
                 message=f"全部 {len(prepared_batches)} 个批次已通过音质检查，正在合并音频",
             )
-        _concatenate_wav_batches(completed_batches, output_path, int(interval_silence))
+        _concatenate_wav_batches(completed_batches, output_path, int(interval_silence),
+                                 gap_is_minimum=model_backend == 'OmniVoice')
         fish_gain_db = 0.0
         if model_backend == "Fish Audio S2 Pro":
             fish_gain_db = boost_wav(output_path)
